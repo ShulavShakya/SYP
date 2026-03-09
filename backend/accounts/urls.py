@@ -12,6 +12,6 @@ urlpatterns = [
     path('dashboard/doctor/', DoctorDashboardView.as_view(), name='doctor_dashboard'),
     path('dashboard/receptionist/', ReceptionistDashboardView.as_view(), name='receptionist_dashboard'),
     path('dashboard/admin/', AdminDashboardView.as_view(), name='admin_dashboard'),
-    path('appointments/', AppointmentView.as_view(), name='appointments_list'),  # List only
-    path('appointments/create/', create_payment_and_appointment, name='create_appointment'),  # POST payment + appointment
+    path('appointments/', AppointmentView.as_view(), name='appointments_list'),  
+    path('appointments/create/', create_payment_and_appointment, name='create_appointment'),  
 ]
