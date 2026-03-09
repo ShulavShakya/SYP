@@ -18,7 +18,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             Conversation.objects.get
         )(id=self.conversation_id)
 
-        # Security check
+        
         if (
             hasattr(self.user, 'patient') and
             conversation.patient.user == self.user
