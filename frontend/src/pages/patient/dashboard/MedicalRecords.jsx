@@ -57,7 +57,7 @@ const mobileNavItems = [
 
 export default function MedicalRecords() {
   return (
-    <div className="flex h-screen overflow-hidden bg-[#f8fafc] text-slate-900">
+    <div className="flex h-screen overflow-hidden text-slate-900">
       <main className="flex min-w-0 flex-1 flex-col overflow-y-auto">
         <div className="mx-auto w-full max-w-[1440px] p-4 md:p-8">
           {/* Patient summary */}

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../auth/AuthContext";
 import {
@@ -8,10 +8,11 @@ import {
   Lock,
   User,
   Stethoscope,
-  ShieldCheck,
   LogIn,
   ArrowLeft,
   HeartPulse,
+  ClipboardPlus,
+  ShieldCheck,
 } from "lucide-react";
 
 export default function Login() {
@@ -19,32 +20,44 @@ export default function Login() {
   const { login } = useAuth();
 
   const [role, setRole] = useState("patient");
+  const [staffRole, setStaffRole] = useState("doctor");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [keepSignedIn, setKeepSignedIn] = useState(false);
 
+  const effectiveRole = useMemo(() => {
+    if (role === "staff") return staffRole;
+    return role;
+  }, [role, staffRole]);
+
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    login({ email, role });
+    login({
+      email,
+      role: effectiveRole,
+      primaryRole: role,
+      subRole: role === "staff" ? staffRole : null,
+    });
 
-    if (role === "patient") navigate("/patient/profile");
-    else navigate("/reception");
+    if (effectiveRole === "patient") navigate("/patient");
+    else if (effectiveRole === "doctor") navigate("/doctor");
+    else if (effectiveRole === "receptionist") navigate("/reception");
+    else if (effectiveRole === "admin") navigate("/admin");
   };
 
   return (
     <div className="min-h-screen bg-[#F7FAFA] text-[#2C3E50] flex flex-col">
-      {/* Header */}
       <header className="sticky top-0 z-50 border-b border-[#008080]/10 bg-white/80 backdrop-blur-md">
-        <div className="mx-auto flex  items-center justify-between px-6 py-3 lg:px-10">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3 lg:px-10">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#008080]/10">
               <HeartPulse className="text-[#008080]" size={22} />
             </div>
             <div>
               <h2 className="text-xl font-extrabold tracking-tight text-[#1F2937]">
-                MedFlow
+                Upachaar
               </h2>
             </div>
           </div>
@@ -63,10 +76,8 @@ export default function Login() {
         </div>
       </header>
 
-      {/* Main */}
       <main className="flex flex-1 items-center justify-center px-4 py-8 lg:px-6">
         <div className="flex w-full max-w-5xl flex-col items-center gap-10 py-6">
-          {/* Intro */}
           <div className="text-center">
             <h1 className="text-4xl font-extrabold tracking-tight text-[#2C3E50] lg:text-5xl">
               Welcome to MedFlow
@@ -77,10 +88,8 @@ export default function Login() {
             </p>
           </div>
 
-          {/* Card */}
           <div className="w-full max-w-md overflow-hidden rounded-2xl border border-[#E0E6ED] bg-white shadow-xl">
             <div className="p-6 lg:p-8">
-              {/* Back */}
               <button
                 type="button"
                 onClick={() => navigate("/")}
@@ -90,8 +99,7 @@ export default function Login() {
                 Back
               </button>
 
-              {/* Role Selection */}
-              <div className="mx-auto mb-10 grid max-w-sm grid-cols-3 gap-3">
+              <div className="mx-auto mb-6 grid max-w-sm grid-cols-3 gap-3">
                 <RoleCard
                   active={role === "patient"}
                   onClick={() => setRole("patient")}
@@ -112,13 +120,33 @@ export default function Login() {
                 />
               </div>
 
-              {/* Form */}
+              {role === "staff" && (
+                <div className="mx-auto mb-10 max-w-sm">
+                  <p className="mb-3 text-[11px] font-bold uppercase tracking-wider text-[#7F8C8D]">
+                    Select staff role
+                  </p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <RoleCard
+                      active={staffRole === "doctor"}
+                      onClick={() => setStaffRole("doctor")}
+                      icon={<Stethoscope size={18} />}
+                      label="Doctor"
+                    />
+                    <RoleCard
+                      active={staffRole === "receptionist"}
+                      onClick={() => setStaffRole("receptionist")}
+                      icon={<ClipboardPlus size={18} />}
+                      label="Receptionist"
+                    />
+                  </div>
+                </div>
+              )}
+
               <form
                 onSubmit={handleSubmit}
                 className="mx-auto max-w-sm space-y-6"
               >
                 <div className="space-y-4">
-                  {/* Email */}
                   <div>
                     <label className="mb-2 block text-xs font-bold text-[#2C3E50]">
                       Email or Username
@@ -138,7 +166,6 @@ export default function Login() {
                     </div>
                   </div>
 
-                  {/* Password */}
                   <div>
                     <label className="mb-2 block text-xs font-bold text-[#2C3E50]">
                       Password
@@ -166,7 +193,6 @@ export default function Login() {
                   </div>
                 </div>
 
-                {/* Options */}
                 <div className="flex items-center justify-between pt-1">
                   <label className="flex cursor-pointer items-center gap-2">
                     <input
@@ -188,7 +214,6 @@ export default function Login() {
                   </button>
                 </div>
 
-                {/* Divider */}
                 <div className="relative flex items-center gap-3 py-1">
                   <div className="flex-grow border-t border-[#E0E6ED]" />
                   <span className="shrink-0 text-[10px] font-bold uppercase tracking-wider text-[#7F8C8D]">
@@ -197,14 +222,10 @@ export default function Login() {
                   <div className="flex-grow border-t border-[#E0E6ED]" />
                 </div>
 
-                {/* Google Button */}
                 <button
                   type="button"
                   className="flex w-full items-center justify-center gap-3 rounded-lg border border-[#E0E6ED] bg-white py-3 text-sm font-bold text-[#2C3E50] shadow-sm transition hover:bg-slate-50"
                 >
-                  {/* <div className="flex h-5 w-5 items-center justify-center rounded-full border border-slate-200 text-[10px] font-bold text-slate-600">
-                    G
-                  </div> */}
                   <svg className="h-5 w-5" viewBox="0 0 24 24">
                     <path
                       d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -226,7 +247,6 @@ export default function Login() {
                   <span>Continue with Google</span>
                 </button>
 
-                {/* Submit */}
                 <button
                   type="submit"
                   className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-[#008080] py-3.5 text-sm font-bold text-white shadow-lg shadow-[#008080]/20 transition hover:bg-[#006666]"
@@ -240,7 +260,6 @@ export default function Login() {
         </div>
       </main>
 
-      {/* Footer */}
       <footer className="mt-auto py-6 text-center text-sm text-[#7F8C8D]">
         <div className="flex items-center justify-center gap-6">
           <button type="button" className="transition hover:text-[#008080]">

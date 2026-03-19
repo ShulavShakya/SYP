@@ -14,6 +14,19 @@ import Billing from "../pages/receptionist/dashboard/Billing.jsx";
 import AppointmentHistory from "../pages/patient/dashboard/AppointmentHistory.jsx";
 import PatientBilling from "../pages/patient/dashboard/PatientBilling.jsx";
 import MedicalRecords from "../pages/patient/dashboard/MedicalRecords.jsx";
+import Prescriptions from "../pages/patient/dashboard/Prescriptions.jsx";
+import LabReports from "../pages/patient/dashboard/LabReports.jsx";
+import ReceptionistHome from "../pages/receptionist/dashboard/ReceptionistHome.jsx";
+import RegisterPatient from "../pages/receptionist/dashboard/RegisterPatient.jsx";
+import PatientRecord from "../pages/receptionist/dashboard/PatientRecord.jsx";
+import ReceptionsitAppointment from "../pages/receptionist/dashboard/AppointmentManagement.jsx";
+import ScheduleAppointment from "../pages/receptionist/dashboard/ScheduleAppointment.jsx";
+import MessagesPage from "../pages/receptionist/dashboard/MessagePage.jsx";
+import DoctorLayout from "../pages/doctor/layout/DoctorLayout.jsx";
+import DoctorHome from "../pages/doctor/dashboard/DoctorHome.jsx";
+import PatientQueue from "../pages/doctor/dashboard/PatientQueue.jsx";
+import ConsultationSession from "../pages/doctor/dashboard/ConsultationSession.jsx";
+import PrescriptionCreation from "../pages/doctor/dashboard/PrescriptionCreation.jsx";
 
 export default [
   { path: "/", element: <Landing /> },
@@ -33,19 +46,42 @@ export default [
       { path: "appointment-history", element: <AppointmentHistory /> },
       { path: "billing", element: <PatientBilling /> },
       { path: "medical-records", element: <MedicalRecords /> },
+      { path: "prescriptions", element: <Prescriptions /> },
+      { path: "lab-reports", element: <LabReports /> },
     ],
   },
   {
     path: "/reception",
     element: (
-      <ProtectedRoute allowedRoles={["staff"]}>
+      <ProtectedRoute allowedRoles={["receptionist"]}>
         <ReceptionistLayout />
       </ProtectedRoute>
     ),
     children: [
-      { index: true, element: <Approvals /> },
+      { index: true, element: <ReceptionistHome /> },
+      { path: "approvals", element: <Approvals /> },
       { path: "assign", element: <AssignDoctor /> },
       { path: "billing", element: <Billing /> },
+      { path: "register", element: <RegisterPatient /> },
+      { path: "records", element: <PatientRecord /> },
+      { path: "appointments", element: <ReceptionsitAppointment /> },
+      { path: "add-appointment", element: <ScheduleAppointment /> },
+      { path: "messages", element: <MessagesPage /> },
     ],
+  },
+  {
+    path: "/doctor",
+    element: (
+      <ProtectedRoute allowedRoles={["doctor"]}>
+        <DoctorLayout />
+      </ProtectedRoute>
+    ),
+    children: [
+      { index: true, element: <DoctorHome /> },
+      { path: "patient-queue", element: <PatientQueue /> },
+      { path: "consultations/:id", element: <ConsultationSession /> },
+      { path: "prescription-creation", element: <PrescriptionCreation /> },
+    ],
+    // { path: "*", element: },
   },
 ];

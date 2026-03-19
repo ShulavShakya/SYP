@@ -68,11 +68,9 @@ const records = [
 
 export default function PatientHome() {
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 p-7">
       <section>
-        <h2 className="text-lg font-bold text-slate-800 mt-6">
-          Health Summary
-        </h2>
+        <h2 className="text-lg font-bold text-slate-800 ">Health Summary</h2>
         <div className="mt-6 grid grid-cols-4 gap-6">
           {summaryCards.map((card) => {
             const Icon = card.icon;
