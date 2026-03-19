@@ -1,165 +1,323 @@
-import React, { useState } from "react";
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import React, { useMemo, useState } from "react";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
+  Bell,
+  CalendarClock,
+  CircleUserRound,
   ClipboardCheck,
   CreditCard,
+  Heart,
   LogOut,
   Menu,
-  Stethoscope,
+  Search,
   UserCog,
   X,
 } from "lucide-react";
 import { useAuth } from "../../../auth/AuthContext";
 
-const navItem = ({ isActive }) =>
-  [
-    "flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-black transition-colors",
-    isActive
-      ? "bg-[#1E88E5]/10 text-[#1E88E5]"
-      : "text-slate-600 hover:bg-slate-50",
-  ].join(" ");
+const navItems = [
+  { label: "Dashboard", to: "/reception", icon: UserCog, end: true },
+  {
+    label: "Approvals",
+    to: "/reception/approvals",
+    icon: ClipboardCheck,
+    end: true,
+  },
+  {
+    label: "Messages",
+    to: "/reception/messages",
+    icon: Bell,
+  },
+  {
+    label: "Patient Records",
+    to: "/reception/records",
+    icon: CalendarClock,
+    end: true,
+  },
+  {
+    label: "Appointments",
+    to: "/reception/appointments",
+    icon: CalendarClock,
+    end: true,
+  },
+  {
+    label: "Billing",
+    to: "/reception/billing",
+    icon: CreditCard,
+  },
+];
+
+const pageTitles = {
+  "/reception": "Hello Receptionist, welcome back!",
+  "/reception/approvals": "Appointment Approvals",
+  "/reception/assign": "Assign Doctor",
+  "/reception/billing": "Billing Management",
+  "/reception/records": "Patient Records",
+  "/reception/appointments": "Manage Appointments",
+  "/reception/messages": "Messages",
+};
+
+function toNameFromEmail(email) {
+  if (!email) return "Reception Staff";
+  const head =
+    email.split("@")[0]?.replace(/[._-]+/g, " ") || "Reception Staff";
+  return head
+    .split(" ")
+    .filter(Boolean)
+    .map((chunk) => chunk[0].toUpperCase() + chunk.slice(1))
+    .join(" ");
+}
 
 export default function ReceptionistLayout() {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [hideTopbar, setHideTopbar] = useState(false);
+
+  const [notifications] = useState([
+    {
+      id: 1,
+      message: "3 new appointment approvals are waiting.",
+      time: "15 minutes ago",
+    },
+    {
+      id: 2,
+      message: "A doctor assignment request needs review.",
+      time: "1 hour ago",
+    },
+    {
+      id: 3,
+      message: "Billing record updated successfully.",
+      time: "Today",
+    },
+  ]);
+
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, logout } = useAuth();
-  const [open, setOpen] = useState(false);
+
+  const displayName = useMemo(
+    () => toNameFromEmail(user?.email),
+    [user?.email],
+  );
+
+  const title = useMemo(() => {
+    return pageTitles[location.pathname] || "Reception Dashboard";
+  }, [location.pathname]);
+
+  React.useEffect(() => {
+    setNotificationsOpen(false);
+    setMenuOpen(false);
+  }, [location.pathname]);
+
+  const today = useMemo(() => {
+    const d = new Date();
+    return d.toLocaleDateString("en-US", {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
+  }, []);
 
   const onLogout = () => {
     logout();
     navigate("/");
   };
 
-  const Links = ({ onNavigate }) => (
-    <>
-      <NavLink to="/reception" end className={navItem} onClick={onNavigate}>
-        <ClipboardCheck size={16} />
-        Approvals
-      </NavLink>
-
-      <NavLink to="/reception/assign" className={navItem} onClick={onNavigate}>
-        <Stethoscope size={16} />
-        Assign Doctor
-      </NavLink>
-
-      <NavLink to="/reception/billing" className={navItem} onClick={onNavigate}>
-        <CreditCard size={16} />
-        Billing
-      </NavLink>
-    </>
-  );
+  const closeMenu = () => setMenuOpen(false);
 
   return (
-    <div className="min-h-screen bg-[#F4F8FB]">
-      {/* Topbar (tablet + mobile) */}
-      <header className="lg:hidden bg-white border-b border-slate-200">
-        <div className="mx-auto max-w-7xl px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-9 h-9 rounded-xl bg-[#1E88E5] flex items-center justify-center shadow">
-              <UserCog size={16} className="text-white" />
+    <div className="min-h-screen bg-[#f4f6f8]">
+      <div className="flex h-screen w-full">
+        <aside className="hidden w-[260px] shrink-0 flex-col border-r border-[#e6eaef] bg-white lg:flex">
+          <div className="flex items-center gap-3 p-8">
+            <div className="flex size-10 items-center justify-center rounded-xl bg-[#0b8a8e] text-white">
+              <Heart size={24} />
             </div>
-            <div className="min-w-0">
-              <div className="text-sm font-black text-[#263238] leading-tight">
-                Reception
-              </div>
-              <div className="text-xs font-semibold text-[#607D8B] truncate max-w-[160px]">
-                {user?.email || "staff@hospital.com"}
-              </div>
-            </div>
+            <span
+              className="cursor-pointer text-xl font-bold tracking-tight text-[#0b8a8e]"
+              onClick={() => navigate("/")}
+            >
+              Upachaar
+            </span>
           </div>
 
-          {/* Tablet nav */}
-          <nav className="hidden sm:flex items-center gap-2">
-            <Links />
-            <button
-              onClick={onLogout}
-              className="ml-2 rounded-xl border border-slate-200 px-3 py-2 text-sm font-black text-slate-600 hover:bg-slate-50 flex items-center gap-2"
-            >
-              <LogOut size={16} />
-              Logout
-            </button>
+          <nav className="flex-1 space-y-2 px-4 py-4">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <NavLink
+                  key={item.label}
+                  to={item.to}
+                  end={item.end}
+                  className={({ isActive }) =>
+                    [
+                      "flex items-center gap-4 rounded-xl px-4 py-3 font-semibold transition-colors",
+                      isActive
+                        ? "bg-[#e6edef] text-[#0b8a8e]"
+                        : "text-[#62708b] hover:bg-[#eef3f5]",
+                    ].join(" ")
+                  }
+                >
+                  <Icon size={20} />
+                  <span>{item.label}</span>
+                </NavLink>
+              );
+            })}
           </nav>
 
-          {/* Mobile menu */}
-          <button
-            onClick={() => setOpen((s) => !s)}
-            className="sm:hidden rounded-xl border border-slate-200 px-2.5 py-2 text-slate-600 hover:bg-slate-50"
-            aria-label="Open menu"
-          >
-            {open ? <X size={18} /> : <Menu size={18} />}
-          </button>
-        </div>
-
-        {/* Mobile dropdown */}
-        {open && (
-          <div className="sm:hidden px-4 pb-3">
-            <div className="mt-2 bg-white border border-slate-200 rounded-2xl p-2 space-y-1">
-              <Links onNavigate={() => setOpen(false)} />
-              <button
-                onClick={() => {
-                  setOpen(false);
-                  onLogout();
-                }}
-                className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm font-black text-slate-600 hover:bg-slate-50 flex items-center justify-center gap-2"
-              >
-                <LogOut size={16} />
-                Logout
-              </button>
-            </div>
-          </div>
-        )}
-      </header>
-
-      {/* Desktop layout */}
-      <div className="mx-auto max-w-7xl px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-[250px_1fr] gap-6">
-          {/* Sidebar desktop */}
-          <aside className="hidden lg:block bg-white border border-slate-200 rounded-2xl p-4 h-fit sticky top-6">
-            <div className="flex items-center gap-3 px-2 py-2">
-              <div className="w-10 h-10 rounded-xl bg-[#1E88E5] flex items-center justify-center shadow">
-                <UserCog className="text-white" size={18} />
+          <div className="flex flex-col items-center border-t border-[#e6eaef] p-6">
+            <div className="flex w-full items-center gap-3">
+              <div className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#d4ecec]">
+                <CircleUserRound size={24} className="text-[#0b8a8e]" />
               </div>
               <div className="min-w-0">
-                <div className="text-sm font-black text-[#263238]">
-                  Reception
-                </div>
-                <div className="text-xs font-semibold text-[#607D8B] truncate max-w-[160px]">
-                  {user?.email || "staff@hospital.com"}
-                </div>
+                <p className="truncate text-sm font-semibold text-[#1f2a44]">
+                  Dr. {displayName}
+                </p>
+                <p className="truncate text-xs text-[#62708b]">
+                  General Physician
+                </p>
               </div>
             </div>
 
-            <div className="mt-4 space-y-2">
-              <Links />
-              <button
-                onClick={onLogout}
-                className="mt-4 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm font-black text-slate-600 hover:bg-slate-50 flex items-center justify-center gap-2"
-              >
-                <LogOut size={16} />
-                Logout
-              </button>
-            </div>
-          </aside>
+            <button
+              onClick={onLogout}
+              className="mt-4 w-full rounded-lg bg-[#0b8a8e] py-2.5 text-xs font-bold text-white transition-colors hover:bg-[#096d72]"
+            >
+              Logout
+            </button>
+          </div>
+        </aside>
 
-          <section className="space-y-4">
-            <div className="hidden lg:flex bg-white border border-slate-200 rounded-2xl p-4 items-center justify-between">
-              <div>
-                <div className="text-sm font-black text-[#263238]">
-                  Reception Dashboard
+        <main className="flex flex-1 flex-col overflow-y-auto">
+          {!hideTopbar && (
+            <header className="flex h-20 shrink-0 items-center justify-between border-b border-gray-200 bg-white px-10">
+              <div className="lg:hidden">
+                <button
+                  type="button"
+                  onClick={() => setMenuOpen((prev) => !prev)}
+                  className="rounded-xl border border-[#dbe2ea] bg-white p-2 text-[#62708b]"
+                  aria-label="Toggle navigation"
+                >
+                  {menuOpen ? <X size={18} /> : <Menu size={18} />}
+                </button>
+              </div>
+
+              <div className="flex-1 px-4 lg:px-0 lg:pl-0">
+                <h1 className="text-2xl font-bold text-slate-900">{title}</h1>
+              </div>
+
+              <div className="flex items-center gap-6">
+                <div className="relative bg-slate-100">
+                  <input
+                    type="text"
+                    placeholder="Search..."
+                    className="w-48 rounded-lg border border-[#e6eaef] py-2 pl-3 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-[#0b8a8e]"
+                  />
+                  <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#62708b]" />
                 </div>
-                <div className="text-xs font-semibold text-[#607D8B]">
-                  Approve requests, assign doctors, manage billing.
+
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setNotificationsOpen(!notificationsOpen)}
+                    className="relative text-[#8a97ab] hover:text-[#62708b]"
+                    aria-label="Notifications"
+                  >
+                    <Bell size={28} />
+                  </button>
+
+                  {notificationsOpen && (
+                    <div className="absolute right-0 top-full z-50 mt-1 w-80 rounded-lg border border-[#e6eaef] bg-white shadow-lg">
+                      <div className="border-b border-[#e6eaef] p-4">
+                        <h4 className="font-bold text-[#1f2a44]">
+                          Notifications
+                        </h4>
+                      </div>
+
+                      <div className="max-h-64 overflow-y-auto">
+                        {notifications.map((notif) => (
+                          <div
+                            key={notif.id}
+                            className="cursor-pointer border-b border-[#e6eaef] p-4 hover:bg-[#f4f6f8]"
+                          >
+                            <p className="text-sm text-[#1f2a44]">
+                              {notif.message}
+                            </p>
+                            <p className="mt-1 text-xs text-[#62708b]">
+                              {notif.time}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="p-4">
+                        <button
+                          onClick={() => setNotificationsOpen(false)}
+                          className="w-full text-center text-sm text-[#0b8a8e] hover:underline"
+                        >
+                          View All
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="border-l border-[#e1e7ef] pl-6">
+                  <p className="text-sm font-bold leading-none text-[#1f2a44]">
+                    {today}
+                  </p>
                 </div>
               </div>
-              <div className="text-xs font-bold text-[#607D8B]">
-                Role: <span className="text-[#263238]">Staff</span>
+            </header>
+          )}
+
+          {!hideTopbar && menuOpen && (
+            <div className="px-4 pb-3 lg:hidden">
+              <div className="space-y-1 rounded-2xl border border-[#dbe2ea] bg-white p-2">
+                {navItems.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <NavLink
+                      key={item.label}
+                      to={item.to}
+                      end={item.end}
+                      onClick={closeMenu}
+                      className={({ isActive }) =>
+                        [
+                          "flex items-center gap-4 rounded-xl px-4 py-3 font-semibold transition-colors",
+                          isActive
+                            ? "bg-[#e6edef] text-[#0b8a8e]"
+                            : "text-[#62708b] hover:bg-[#eef3f5]",
+                        ].join(" ")
+                      }
+                    >
+                      <Icon size={20} />
+                      <span>{item.label}</span>
+                    </NavLink>
+                  );
+                })}
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    closeMenu();
+                    onLogout();
+                  }}
+                  className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-[#dbe2ea] px-4 py-3 font-semibold text-[#62708b]"
+                >
+                  <LogOut size={16} />
+                  Logout
+                </button>
               </div>
             </div>
+          )}
 
-            <div className="bg-white border border-slate-200 rounded-2xl p-4">
-              <Outlet />
-            </div>
-          </section>
-        </div>
+          <div className="flex-1">
+            <Outlet context={{ setHideTopbar }} />
+          </div>
+        </main>
       </div>
     </div>
   );

@@ -164,7 +164,7 @@ export default function PatientProfile() {
         </section>
 
         {/* Footer Row */}
-        <section className="mt-8 border-t border-gray-200 pt-6">
+        {/* <section className="mt-8 border-t border-gray-200 pt-6">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <p className="text-lg italic text-textSecondary">
               Last updated: Oct 24, 2023 at 10:45 AM
@@ -175,7 +175,7 @@ export default function PatientProfile() {
               Logout from Account
             </button>
           </div>
-        </section>
+        </section> */}
 
         {/* Copyright */}
         <p className="mt-14 text-center text-sm text-slate-400">

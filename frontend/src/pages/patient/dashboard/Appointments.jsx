@@ -1,18 +1,16 @@
 import React, { useState } from "react";
 import { DayPicker } from "react-day-picker";
 import {
-  Bell,
-  CalendarDays,
+  Search,
   ChevronDown,
-  ChevronLeft,
-  ChevronRight,
   CircleCheck,
+  Star,
+  CalendarDays,
   Clock3,
   Info,
-  Search,
-  Star,
-  UserRoundSearch,
   ArrowLeft,
+  Bell,
+  HeartPulse,
 } from "lucide-react";
 import "react-day-picker/dist/style.css";
 import { useNavigate } from "react-router-dom";
@@ -57,109 +55,99 @@ const times = [
   "09:00 AM",
   "09:30 AM",
   "10:00 AM",
+  "10:30 AM",
   "11:00 AM",
   "11:30 AM",
-  "01:00 PM",
+  "12:00 PM",
+  "12:30 PM",
+  "02:00 PM",
   "02:30 PM",
-  "04:00 PM",
-  "04:30 PM",
+  "03:00 PM",
+  "03:30 PM",
 ];
 
 export default function Appointments() {
-  const Navigate = useNavigate();
+  const navigate = useNavigate();
 
   const [department, setDepartment] = useState(DEPARTMENTS[0]);
   const [selectedDoctor, setSelectedDoctor] = useState(DOCTORS[0]);
-  // const [selectedDate, setSelectedDate] = useState("14");
   const [selectedTime, setSelectedTime] = useState("10:00 AM");
   const [selectedDate, setSelectedDate] = useState(new Date());
-
-  // const calendarDays = [
-  //   "25",
-  //   "26",
-  //   "27",
-  //   "28",
-  //   "29",
-  //   "30",
-  //   "1",
-  //   "2",
-  //   "3",
-  //   "4",
-  //   "5",
-  //   "6",
-  //   "7",
-  //   "8",
-  //   "9",
-  //   "10",
-  //   "11",
-  //   "12",
-  //   "13",
-  //   "14",
-  //   "15",
-  // ];
-  // const disabledDays = ["25", "26", "27", "28", "29", "30"];
+  const [reason, setReason] = useState("");
 
   return (
-    <main className="min-h-screen bg-background text-textMain antialiased">
-      {/* <header className="h-16 flex items-center justify-between px-8 bg-card border-b border-divider">
-        <h1 className="text-xl font-bold text-textMain">Book an Appointment</h1>
-        <div className="flex items-center gap-4">
-          <button className="p-2 text-textSecondary hover:bg-mint/10 rounded-full relative transition-colors">
-            <Bell size={20} className="text-primary" />
-            <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full" />
-          </button>
-          <div className="h-8 w-[1px] bg-divider mx-2" />
-          <p className="text-sm text-textSecondary font-medium">
-            Monday, Oct 14, 2023
-          </p>
+    <main className="min-h-screen bg-[#f6f7f8] text-slate-900 antialiased">
+      {/* Header */}
+      {/* <header className="sticky top-0 z-50 border-b border-slate-200 bg-white px-8 py-4">
+        <div className="mx-auto flex w-full max-w-6xl items-center justify-between">
+          <div className="flex items-center gap-8">
+            <div className="flex items-center gap-3 text-primary">
+              <HeartPulse size={28} className="text-primary" />
+              <h2 className="text-xl font-extrabold tracking-tight text-primary">
+                MedFlow
+              </h2>
+            </div>
+
+            <nav className="hidden items-center gap-6 md:flex">
+              <button className="text-sm font-semibold text-slate-600 transition-colors hover:text-primary">
+                Dashboard
+              </button>
+              <button className="border-b-2 border-primary pb-1 text-sm font-bold text-primary">
+                Appointments
+              </button>
+              <button className="text-sm font-semibold text-slate-600 transition-colors hover:text-primary">
+                Patients
+              </button>
+              <button className="text-sm font-semibold text-slate-600 transition-colors hover:text-primary">
+                Reports
+              </button>
+            </nav>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <button
+              type="button"
+              className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 text-slate-700"
+            >
+              <Bell size={18} />
+            </button>
+
+            <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border-2 border-primary/20 bg-secondary/30">
+              <img
+                className="h-full w-full object-cover"
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuB2s_kdwssPV8-znYz2eAXmuLVLXm_l5_foDHRXyu-ZFC2NlJCEQd6YvUAasHIST7g4wm6PoH7587gEzJK0l1sCfU6MN77iL7-WGrwAjanoqq6VLeXIszPaxS7UFapSI7TADipvbv2D0Q5FzDI5eaPe_8lBC6PFLEVgUDqpU_Bsz_ABI28jgyocD653HLcdYfIDsXtnLuHE67QVm82hkGNPdnB_2YYyUKBDuCJbAH6HHVrhRE19XK4eCyHD5DYPztdkYdosMvHSw4AD"
+                alt="Profile"
+              />
+            </div>
+          </div>
         </div>
       </header> */}
 
-      <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-        <div className="max-w-5xl mx-auto">
-          {/* Step Indicator */}
-          <div className="flex items-center justify-center mb-10">
-            <div className="flex items-center w-full max-w-2xl">
-              <div className="flex flex-col items-center flex-1">
-                <div className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm">
-                  1
-                </div>
-                <span className="text-xs mt-2 font-medium text-primary">
-                  Department
-                </span>
-              </div>
-              <div className="h-[2px] flex-1 bg-primary/30 mx-2" />
-              <div className="flex flex-col items-center flex-1 text-textSecondary">
-                <div className="w-10 h-10 rounded-full bg-divider flex items-center justify-center font-bold text-sm">
-                  2
-                </div>
-                <span className="text-xs mt-2 font-medium">Doctor</span>
-              </div>
-              <div className="h-[2px] flex-1 bg-divider mx-2" />
-              <div className="flex flex-col items-center flex-1 text-textSecondary">
-                <div className="w-10 h-10 rounded-full bg-divider flex items-center justify-center font-bold text-sm">
-                  3
-                </div>
-                <span className="text-xs mt-2 font-medium">Schedule</span>
-              </div>
-            </div>
+      <div className="flex flex-1 flex-col items-center px-4 py-10">
+        <div className="w-full max-w-4xl overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl">
+          {/* Header Banner */}
+          <div className="bg-primary p-8 text-white">
+            <h1 className="text-3xl font-black tracking-tight">
+              Schedule Appointment
+            </h1>
+            <p className="mt-2 opacity-90">
+              Patient Portal • Medical Appointment Booking
+            </p>
           </div>
 
-          {/* Main Card */}
-          <div className="bg-card rounded-xl shadow-xl shadow-primary/10 border border-divider p-8">
-            {/* Department Section */}
-            <section className="mb-10">
-              <div className="flex items-center gap-2 mb-4">
-                <span className="material-symbols-outlined text-primary">
-                  local_hospital
-                </span>
-                <h2 className="text-lg font-bold text-textMain">
-                  1. Select Department
-                </h2>
-              </div>
-              <div className="relative group">
+          <div className="space-y-8 p-8">
+            {/* Department */}
+            <section>
+              <label className="mb-2 block text-sm font-bold text-slate-700">
+                Department
+              </label>
+              <div className="relative">
+                <Search
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                  size={18}
+                />
                 <select
-                  className="w-full h-14 pl-12 pr-4 bg-background border border-divider rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all appearance-none cursor-pointer text-textMain"
+                  className="w-full appearance-none rounded-lg border-2 border-slate-100 bg-slate-50 p-4 pl-12 pr-10 text-base focus:border-primary focus:ring-0"
                   value={department}
                   onChange={(e) => setDepartment(e.target.value)}
                 >
@@ -169,52 +157,47 @@ export default function Appointments() {
                     </option>
                   ))}
                 </select>
-                <Search
-                  className="absolute left-4 top-1/2 -translate-y-1/2 text-primary pointer-events-none"
-                  size={20}
-                />
                 <ChevronDown
-                  className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-textSecondary"
-                  size={20}
+                  className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-400"
+                  size={18}
                 />
               </div>
             </section>
 
-            {/* Doctor Section */}
-            <section className="mb-10">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <UserRoundSearch className="text-primary" size={20} />
-                  <h2 className="text-lg font-bold text-textMain">
-                    2. Select Doctor
-                  </h2>
-                </div>
-                <button className="text-sm font-semibold text-primary hover:underline transition-colors">
+            {/* Doctors */}
+            <section>
+              <div className="mb-3 flex items-center justify-between">
+                <label className="block text-sm font-bold text-slate-700">
+                  Select Doctor
+                </label>
+                <button className="text-sm font-semibold text-primary hover:underline">
                   View All Doctors
                 </button>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {DOCTORS.map((doc) => (
                   <article
                     key={doc.name}
-                    className={[
-                      "flex cursor-pointer gap-4 rounded-xl border p-4 transition-all",
-                      doc === selectedDoctor
-                        ? "border-primary bg-primary/5 ring-2 ring-primary"
-                        : "border-divider hover:border-mint",
-                    ].join(" ")}
                     onClick={() => setSelectedDoctor(doc)}
+                    className={[
+                      "flex cursor-pointer gap-4 rounded-xl border-2 p-4 transition-all",
+                      doc === selectedDoctor
+                        ? "border-primary bg-primary/5"
+                        : "border-slate-100 bg-white hover:border-secondary",
+                    ].join(" ")}
                   >
                     <img
                       alt={doc.name}
-                      className="h-16 w-16 rounded-lg object-cover flex-shrink-0"
+                      className="h-16 w-16 rounded-lg object-cover"
                       src={doc.image}
                     />
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-bold text-textMain truncate">
+
+                    <div className="min-w-0 flex-1">
+                      <h3 className="truncate font-bold text-slate-800">
                         {doc.name}
                       </h3>
-                      <p className="mb-2 text-xs text-textSecondary truncate">
+                      <p className="mb-2 truncate text-xs text-slate-500">
                         {doc.role}
                       </p>
                       <div className="flex items-center gap-1">
@@ -223,13 +206,14 @@ export default function Appointments() {
                           size={14}
                         />
                         <span className="text-xs font-bold">{doc.rating}</span>
-                        <span className="text-xs text-textSecondary">
+                        <span className="text-xs text-slate-400">
                           {doc.reviews}
                         </span>
                       </div>
                     </div>
+
                     {doc === selectedDoctor && (
-                      <div className="flex items-center flex-shrink-0">
+                      <div className="flex items-center">
                         <CircleCheck className="text-primary" size={20} />
                       </div>
                     )}
@@ -238,41 +222,44 @@ export default function Appointments() {
               </div>
             </section>
 
-            {/* Date & Time Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-              {/* Date Selection */}
-              <section>
-                <div className="flex items-center gap-2 mb-4">
-                  <CalendarDays className="text-primary" size={20} />
-                  <h2 className="text-lg font-bold text-textMain">
-                    3. Select Date
-                  </h2>
-                </div>
-                <div className="bg-background rounded-xl p-6 border border-divider">
+            {/* Date + Time */}
+            <div className="grid grid-cols-1 gap-8 lg:grid-cols-5">
+              {/* Date */}
+              <div className="space-y-3 lg:col-span-2">
+                <label className="block text-sm font-bold text-slate-700">
+                  Appointment Date
+                </label>
+
+                <div className="rounded-lg border-2 border-slate-100 bg-slate-50 p-4">
                   <DayPicker
                     mode="single"
                     selected={selectedDate}
                     onSelect={setSelectedDate}
                     disabled={{ before: new Date() }}
-                    className="text-textMain"
+                    className="text-slate-900"
                     classNames={{
                       months: "flex justify-center",
                       month: "space-y-4",
+
+                      // --- UPDATED CAPTION CLASSES ---
                       caption:
-                        "flex justify-center pt-1 relative items-center mb-4",
-                      caption_label: "text-sm font-bold text-textMain",
-                      nav: "flex items-center gap-2",
+                        "relative flex justify-center items-center h-10 px-10",
+                      caption_label: "text-sm font-bold text-slate-800",
+
+                      nav: "flex items-center",
                       nav_button:
-                        "h-8 w-8 bg-transparent hover:bg-mint/20 rounded-full inline-flex items-center justify-center text-textSecondary transition-colors",
+                        "h-8 w-8 bg-transparent hover:bg-slate-200 rounded-full flex items-center justify-center text-slate-500 transition absolute top-1",
+                      nav_button_previous: "absolute left-2",
+                      nav_button_next: "absolute right-2",
+                      // -------------------------------
+
                       table: "w-full border-collapse",
                       head_row: "flex",
-                      head_cell:
-                        "text-textSecondary rounded-md w-10 font-bold text-xs uppercase",
-                      row: "flex w-full mt-2",
-                      cell: "w-10 h-10 text-center text-sm p-0 relative",
-                      day: "h-10 w-10 rounded-lg text-sm font-medium hover:bg-mint/20 text-textMain transition-colors",
-                      day_selected:
-                        "bg-mint text-white hover:bg-mint font-bold",
+                      head_cell: "w-10 text-[11px] font-bold text-slate-400",
+                      row: "flex w-full mt-1",
+                      cell: "h-8 w-10 text-center text-sm",
+                      day: "h-8 w-8 rounded hover:bg-primary/10",
+                      day_selected: "bg-primary text-white font-bold",
                       day_today:
                         "border border-primary text-primary font-semibold",
                       day_disabled:
@@ -280,75 +267,86 @@ export default function Appointments() {
                     }}
                   />
                 </div>
-              </section>
+              </div>
 
-              {/* Time Selection */}
-              <section>
-                <div className="flex items-center gap-2 mb-4">
-                  <Clock3 className="text-primary" size={20} />
-                  <h2 className="text-lg font-bold text-textMain">
-                    4. Select Time
-                  </h2>
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-8">
+              {/* Time */}
+              <div className="space-y-3 lg:col-span-3">
+                <label className="block text-sm font-bold text-slate-700">
+                  Select Time Slot
+                </label>
+
+                <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
                   {times.map((time) => {
                     const isSelected = time === selectedTime;
-                    const isDisabled = time === "11:30 AM";
+                    const isDisabled = time === "11:00 AM";
+
                     return (
                       <button
                         key={time}
-                        className={[
-                          "py-3 px-4 rounded-lg text-sm font-semibold transition-colors",
-                          isSelected
-                            ? "bg-primary text-white border border-primary"
-                            : isDisabled
-                              ? "border border-divider bg-slate-100 opacity-50 cursor-not-allowed"
-                              : "border border-divider text-textMain hover:bg-primary/10",
-                        ].join(" ")}
-                        disabled={isDisabled}
                         type="button"
+                        disabled={isDisabled}
                         onClick={() => !isDisabled && setSelectedTime(time)}
+                        className={[
+                          "rounded-lg border-2 px-2 py-3 text-sm font-semibold transition-all",
+                          isSelected
+                            ? "border-primary bg-primary/5 text-primary"
+                            : isDisabled
+                              ? "cursor-not-allowed border-slate-100 bg-slate-100 text-slate-400 line-through"
+                              : "border-slate-100 bg-white hover:border-secondary",
+                        ].join(" ")}
                       >
                         {time}
                       </button>
                     );
                   })}
                 </div>
+              </div>
+            </div>
 
-                {/* Info Box */}
-                <div className="p-4 bg-primary/5 rounded-lg border border-primary/10">
-                  <div className="flex items-start gap-3">
-                    <Info
-                      className="mt-0.5 text-primary flex-shrink-0"
-                      size={16}
-                    />
-                    <p className="text-xs text-textSecondary leading-relaxed">
-                      Booking fee of{" "}
-                      <span className="font-bold text-primary">$25.00</span>{" "}
-                      will be charged upon confirmation. You can reschedule up
-                      to 24 hours before the appointment.
-                    </p>
-                  </div>
-                </div>
-              </section>
+            {/* Reason */}
+            <section>
+              <label className="mb-2 block text-sm font-bold text-slate-700">
+                Reason for Visit
+              </label>
+              <textarea
+                rows={4}
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                className="w-full resize-none rounded-lg border-2 border-slate-100 bg-slate-50 p-4 text-base transition-all focus:border-primary focus:ring-0"
+                placeholder="Briefly describe the symptoms or reason for the appointment..."
+              />
+            </section>
+
+            {/* Info Box */}
+            <div className="rounded-lg border border-primary/10 bg-primary/5 p-4">
+              <div className="flex items-start gap-3">
+                <Info className="mt-0.5 shrink-0 text-primary" size={18} />
+                <p className="text-sm leading-relaxed text-slate-600">
+                  Booking fee of{" "}
+                  <span className="font-bold text-primary">$25.00</span> will be
+                  charged upon confirmation. You can reschedule up to 24 hours
+                  before the appointment.
+                </p>
+              </div>
             </div>
 
             {/* Action Buttons */}
-            <div className="mt-12 pt-8 border-t border-divider flex items-center justify-between">
-              <button className="flex items-center gap-2 text-textSecondary font-semibold hover:text-textMain transition-colors">
-                <ArrowLeft size={18} />
-                <span
-                  className="hover:cursor-pointer"
-                  onClick={() => {
-                    Navigate(-1);
-                  }}
-                >
-                  Cancel Booking
-                </span>
+            <div className="flex flex-col gap-4 pt-4 sm:flex-row">
+              <button
+                type="button"
+                className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary py-4 font-bold text-white shadow-lg shadow-primary/20 transition-all hover:bg-primary/90"
+              >
+                <CalendarDays size={18} />
+                Book Appointment
               </button>
 
-              <button className="px-10 py-4 bg-primary text-white font-bold rounded-xl shadow-lg shadow-primary/30 hover:bg-primary/90 transition-all transform hover:-translate-y-0.5 active:translate-y-0">
-                Confirm Appointment
+              <button
+                type="button"
+                onClick={() => navigate(-1)}
+                className="flex flex-1 items-center justify-center gap-2 rounded-lg border-2 border-slate-200 py-4 font-bold text-slate-600 transition-all hover:bg-slate-50"
+              >
+                <ArrowLeft size={18} />
+                Cancel
               </button>
             </div>
           </div>
