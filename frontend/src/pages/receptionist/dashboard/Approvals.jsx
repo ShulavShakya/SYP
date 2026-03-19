@@ -1,297 +1,300 @@
-import React, { useMemo, useState } from "react";
-import { readJSON, writeJSON } from "../../../utils/storage";
+import React from "react";
 import {
-  BadgeCheck,
-  Ban,
-  CalendarDays,
-  Clock,
-  Stethoscope,
+  Download,
+  Eye,
+  Hospital,
+  Bell,
+  Settings,
   Search,
-  CheckCircle2,
-  XCircle,
+  ArrowRight,
 } from "lucide-react";
 
-const APPT_KEY = "hms_patient_appointments_v1";
-
-const DOCTORS = [
-  { id: "d1", name: "Dr. Asha Karki", dept: "Cardiology" },
-  { id: "d2", name: "Dr. Bikash Shrestha", dept: "General Medicine" },
-  { id: "d3", name: "Dr. Nisha Gurung", dept: "Dermatology" },
-  { id: "d4", name: "Dr. Ramesh Adhikari", dept: "Orthopedics" },
-  { id: "d5", name: "Dr. Suman Thapa", dept: "ENT" },
+const requests = [
+  {
+    id: "#REQ-1024",
+    name: "Alice Johnson",
+    avatar:
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuChZgI7O-zw0l31_8Ah2SJCmmTECcT8nOVAzrXia7fx3OJiB1RZrgg1Q1Y6zRo_6QuwL5BPfjtGXMOAE6_wCTYpp5BgjPqaS5Abit0m6e5CNW8P85OM7UvvO54nlv3gCoois9Iix8sfLpSBLTzmyGH6VXdw2fS_vouZbl_CJXw05fruz4qcHkmeTbQ01iCcuGGlDLxrr7308j3d5L7ckCajzNuEY9bkUBYkNDPblyxL_LpgOBeKf9t0uCUzbcKZLU0EzE87fIq8G7sT",
+    type: "Insurance Verification",
+    doctor: "Dr. Smith",
+    date: "Oct 24, 2023",
+    status: "Pending",
+  },
+  {
+    id: "#REQ-1025",
+    name: "Bob Wilson",
+    avatar:
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuAjbqLWVTg-7-bj2_KKu_DCk5mklaseT2X4ALhk7jhs3pwZpHTxYhSj3pK3shqB8g1TLJ6TZYPn0-zYVHpq0pkJncUt7NSP494Cn55vF8mnGRnReA5t-xzYgIgePl3tc1wdOsbhDBXUAR9wIyOS4hUL-8nHexGuTWiNBqhVHEUdmVabzHI2wB1mbvaJon7QpD2-hCC6fD6IG-B26xSZS61E5-1D-30ZQIHT3T4lneWG83yRhZsK_Ilxi79S9eocxb9MvlwCH2lalu0H",
+    type: "Emergency Appointment",
+    doctor: "Dr. Adams",
+    date: "Oct 24, 2023",
+    status: "Approved",
+  },
+  {
+    id: "#REQ-1026",
+    name: "Charlie Brown",
+    avatar:
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuAzO_tQs73I_rfuxtU6WmKXAS1G_S0qH2qbGZXBm4LNYNdZLpL4RpLim6YMHbUv3pj3oKRc_NI7Ko6tMwb8ikk9B4qfGPiyInktrMzQmEtbuxkziLD_eqOW_Srf0H-hbaT0ClxLYYPJSEK8oq1-FMoo6VPjXKYNNrKONOCewkcJcImL9x794vUYaVt5bP3cAEshNhPYpGGL6FdFmuMxqmeq8JBQ1tMBfCxcEOzqO89KD6dwKS94wza7XFpcO03Gu0j3hLUuLc0JB_R6",
+    type: "Special Consultation",
+    doctor: "Dr. Lee",
+    date: "Oct 23, 2023",
+    status: "Rejected",
+  },
+  {
+    id: "#REQ-1027",
+    name: "Diana Prince",
+    avatar:
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuDr2uBLDYiIRH_MdjosEpwB-IgPMTCRLhl4bWeSndMjsJvEFEekV1E73V_feSJI97mPNR3ePDQjMlpLhVsYr2lW-QbwqBXrFg6T92nS53x6ix07y3eJ66nb1Pko5-_pB1FZOf--ENZFjOeTwvXe5uP2kY7hJs-ohpEp95V_syuAY1w1bmvHdC1Ry4p5g5ybYXAdGTPb9iHJjy9ChuUL94ZG2lUpQ5SKl5ZCp4ToWTxHz0UkbPibqbCKhSNkd_znhFfD_J5kGunALaZu",
+    type: "Insurance Verification",
+    doctor: "Dr. Smith",
+    date: "Oct 23, 2023",
+    status: "Pending",
+  },
 ];
 
-function formatDateTime(dateStr, timeStr) {
-  if (!dateStr) return "";
-  const d = new Date(`${dateStr}T${timeStr || "00:00"}`);
-  if (Number.isNaN(d.getTime())) return `${dateStr} ${timeStr || ""}`.trim();
-  return d.toLocaleString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
+const statusStyles = {
+  Pending: "bg-amber-100 text-amber-800",
+  Approved: "bg-emerald-100 text-emerald-800",
+  Rejected: "bg-rose-100 text-rose-800",
+};
 
-function statusPill(status) {
-  const base =
-    "inline-flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-black border";
-  switch (status) {
-    case "APPROVED":
-      return `${base} bg-green-50 text-green-700 border-green-200`;
-    case "COMPLETED":
-      return `${base} bg-slate-50 text-slate-700 border-slate-200`;
-    case "CANCELLED":
-      return `${base} bg-red-50 text-red-700 border-red-200`;
-    case "REJECTED":
-      return `${base} bg-red-50 text-red-700 border-red-200`;
-    default:
-      return `${base} bg-amber-50 text-amber-700 border-amber-200`; // PENDING
-  }
-}
-
-export default function Approvals() {
-  const initial = useMemo(() => readJSON(APPT_KEY, []), []);
-  const [appointments, setAppointments] = useState(initial);
-
-  const [query, setQuery] = useState("");
-  const [msg, setMsg] = useState({ type: "idle", text: "" });
-
-  const persist = (next) => {
-    setAppointments(next);
-    writeJSON(APPT_KEY, next);
-  };
-
-  const pending = useMemo(
-    () => appointments.filter((a) => a.status === "PENDING"),
-    [appointments],
-  );
-
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return pending;
-    return pending.filter((a) => {
-      const hay =
-        `${a.department} ${a.doctorName} ${a.notes || ""} ${a.date} ${a.time}`.toLowerCase();
-      return hay.includes(q);
-    });
-  }, [pending, query]);
-
-  const pickDoctorsForDept = (dept) => DOCTORS.filter((d) => d.dept === dept);
-
-  const approve = (id, doctorId) => {
-    const doctor = DOCTORS.find((d) => d.id === doctorId) || null;
-    if (!doctor) {
-      setMsg({
-        type: "error",
-        text: "Please select a doctor before approving.",
-      });
-      return;
-    }
-
-    const next = appointments.map((a) =>
-      a.id === id
-        ? {
-            ...a,
-            status: "APPROVED",
-            doctorId: doctor.id,
-            doctorName: doctor.name,
-            approvedAt: new Date().toISOString(),
-          }
-        : a,
-    );
-
-    persist(next);
-    setMsg({
-      type: "success",
-      text: "Appointment approved and doctor assigned.",
-    });
-  };
-
-  const reject = (id) => {
-    const next = appointments.map((a) =>
-      a.id === id
-        ? { ...a, status: "REJECTED", rejectedAt: new Date().toISOString() }
-        : a,
-    );
-    persist(next);
-    setMsg({ type: "success", text: "Appointment rejected." });
-  };
-
+export default function ApprovalRequests() {
   return (
-    <div className="space-y-4">
-      <div>
-        <h2 className="text-lg font-black text-[#263238]">
-          Approve Appointments
-        </h2>
-        <p className="mt-1 text-sm font-semibold text-[#607D8B]">
-          Review pending requests and assign a doctor. (Local storage for now.)
-        </p>
-      </div>
+    <div className="min-h-screen bg-background-light font-display text-slate-900">
+      <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden">
+        <div className="layout-container flex h-full grow flex-col">
+          {/* <header className="flex items-center justify-between whitespace-nowrap border-b border-slate-200 bg-white px-10 py-3">
+            <div className="flex items-center gap-8">
+              <div className="flex items-center gap-4 text-primary">
+                <div className="flex size-6 items-center justify-center">
+                  <Hospital className="h-7 w-7" />
+                </div>
+                <h2 className="text-lg font-bold leading-tight tracking-tight text-slate-900">
+                  Modern Wellness
+                </h2>
+              </div>
 
-      {msg.type !== "idle" && (
-        <div
-          className={[
-            "rounded-xl border px-3 py-2 text-sm font-bold flex items-center gap-2",
-            msg.type === "success"
-              ? "border-green-200 bg-green-50 text-green-800"
-              : "border-red-200 bg-red-50 text-red-800",
-          ].join(" ")}
-        >
-          {msg.type === "success" ? (
-            <CheckCircle2 size={16} />
-          ) : (
-            <XCircle size={16} />
-          )}
-          <span>{msg.text}</span>
+              <nav className="flex items-center gap-6">
+                <a
+                  className="text-sm font-medium text-slate-600 transition-colors hover:text-primary"
+                  href="#"
+                >
+                  Dashboard
+                </a>
+                <a
+                  className="text-sm font-medium text-slate-600 transition-colors hover:text-primary"
+                  href="#"
+                >
+                  Patients
+                </a>
+                <a
+                  className="text-sm font-medium text-slate-600 transition-colors hover:text-primary"
+                  href="#"
+                >
+                  Schedules
+                </a>
+                <a
+                  className="border-b-2 border-primary pb-1 text-sm font-bold text-primary"
+                  href="#"
+                >
+                  Approvals
+                </a>
+              </nav>
+            </div>
+
+            <div className="flex flex-1 items-center justify-end gap-6">
+              <label className="flex h-10 min-w-40 max-w-64 flex-col">
+                <div className="flex h-full w-full flex-1 items-stretch rounded-lg bg-slate-100">
+                  <div className="flex items-center justify-center pl-4 text-slate-500">
+                    <Search className="h-5 w-5" />
+                  </div>
+                  <input
+                    className="form-input flex w-full min-w-0 flex-1 border-none bg-transparent px-2 text-base font-normal placeholder:text-slate-500 focus:ring-0"
+                    placeholder="Search requests..."
+                    defaultValue=""
+                  />
+                </div>
+              </label>
+
+              <div className="flex gap-2">
+                <button className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 text-slate-700 transition-colors hover:bg-slate-200">
+                  <Bell className="h-5 w-5" />
+                </button>
+                <button className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 text-slate-700 transition-colors hover:bg-slate-200">
+                  <Settings className="h-5 w-5" />
+                </button>
+              </div>
+
+              <div className="size-10 rounded-full border border-slate-200 bg-cover bg-center bg-no-repeat">
+                <img
+                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuBZc5pNUxrRmHIGjlEqEpOUyrPnAeGsZ64Lse0ZDTOIaET3L8KSR68ekEtrAa07tCWX4EGa9gfxUww3pmXLiWVw1zaU3jgEwgJ1JQKTOeq-20BNazfjguwKBWDYMI8tjIM1Vec_Eqrdbgt9wNSNjx0qqq88i4eeCm_f7VWecr_tK0-3F2YK_eVr4NAT09iWt5ZIW7j-NZnU1QAUfkssQK4e6sZ0DWuWAgI4vN2rgU5SitXZcSbkNE_-kvR6LFVIbdcOwm821eR6izWs"
+                  alt="Receptionist avatar"
+                  className="h-full w-full rounded-full object-cover"
+                />
+              </div>
+            </div>
+          </header> */}
+
+          <main className="flex flex-1 px-10 py-8">
+            <div className="flex flex-1 flex-col gap-6">
+              {/* <div className="flex items-end justify-between">
+                <div>
+                  <h2 className="text-3xl font-black tracking-tight text-slate-900">
+                    Approval Requests
+                  </h2>
+                  <p className="mt-1 text-slate-500">
+                    Manage and review pending patient requests and insurance
+                    verifications.
+                  </p>
+                </div>
+
+                <div className="flex gap-3">
+                  <button className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm transition-colors hover:bg-slate-50">
+                    <Download className="h-4 w-4" />
+                    Export Report
+                  </button>
+                </div>
+              </div> */}
+
+              <div className="flex border-b border-slate-200">
+                <button className="border-b-2 border-primary px-6 py-3 text-sm font-bold text-primary">
+                  All Requests
+                </button>
+                <button className="px-6 py-3 text-sm font-medium text-slate-500 transition-colors hover:text-slate-700">
+                  Pending
+                </button>
+                <button className="px-6 py-3 text-sm font-medium text-slate-500 transition-colors hover:text-slate-700">
+                  Approved
+                </button>
+                <button className="px-6 py-3 text-sm font-medium text-slate-500 transition-colors hover:text-slate-700">
+                  Rejected
+                </button>
+              </div>
+
+              <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left">
+                    <thead>
+                      <tr className="border-b border-slate-200 bg-slate-50">
+                        <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">
+                          Request ID
+                        </th>
+                        <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">
+                          Patient Name
+                        </th>
+                        <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">
+                          Type
+                        </th>
+                        <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">
+                          Doctor
+                        </th>
+                        <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">
+                          Date
+                        </th>
+                        <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">
+                          Status
+                        </th>
+                        <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+
+                    <tbody className="divide-y divide-slate-200">
+                      {requests.map((request) => (
+                        <tr
+                          key={request.id}
+                          className="transition-colors hover:bg-slate-50/50"
+                        >
+                          <td className="px-6 py-4 text-sm font-medium text-slate-900">
+                            {request.id}
+                          </td>
+
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-3">
+                              <div className="h-8 w-8 rounded-full bg-slate-200">
+                                <img
+                                  src={request.avatar}
+                                  alt={request.name}
+                                  className="h-full w-full rounded-full object-cover"
+                                />
+                              </div>
+                              <span className="text-sm font-semibold text-slate-700">
+                                {request.name}
+                              </span>
+                            </div>
+                          </td>
+
+                          <td className="px-6 py-4 text-sm text-slate-600">
+                            {request.type}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-slate-600">
+                            {request.doctor}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-slate-600">
+                            {request.date}
+                          </td>
+
+                          <td className="px-6 py-4">
+                            <span
+                              className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold ${statusStyles[request.status]}`}
+                            >
+                              {request.status}
+                            </span>
+                          </td>
+
+                          <td className="px-6 py-4">
+                            {request.status === "Pending" ? (
+                              <div className="flex items-center gap-2">
+                                <button className="rounded bg-primary px-3 py-1 text-xs font-bold text-white transition-colors hover:bg-primary/90">
+                                  Approve
+                                </button>
+                                <button className="rounded bg-rose-100 px-3 py-1 text-xs font-bold text-rose-700 transition-colors hover:bg-rose-200">
+                                  Reject
+                                </button>
+                                <a
+                                  className="p-1 text-slate-400 transition-colors hover:text-primary"
+                                  href="#"
+                                >
+                                  <Eye className="h-5 w-5" />
+                                </a>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                <a
+                                  className="flex items-center gap-1 text-xs font-bold text-primary hover:underline"
+                                  href="#"
+                                >
+                                  View Details
+                                  <ArrowRight className="h-4 w-4" />
+                                </a>
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50 px-6 py-4">
+                  <p className="text-xs font-medium tracking-wide text-slate-500">
+                    Showing 1 to 4 of 24 requests
+                  </p>
+                  <div className="flex gap-2">
+                    <button className="rounded border border-slate-200 bg-white px-3 py-1 text-xs font-bold text-slate-600 transition-colors hover:bg-slate-50">
+                      Previous
+                    </button>
+                    <button className="rounded border border-slate-200 bg-white px-3 py-1 text-xs font-bold text-slate-600 transition-colors hover:bg-slate-50">
+                      Next
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </main>
         </div>
-      )}
-
-      {/* Search */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-4">
-        <div className="text-sm font-black text-[#263238]">
-          Pending Requests
-        </div>
-
-        <div className="mt-3 relative">
-          <Search
-            size={16}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-          />
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search by department, date, notes..."
-            className="w-full rounded-xl border border-slate-200 px-10 py-2.5 text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#1E88E5]/20"
-          />
-        </div>
-
-        <div className="mt-3 text-xs font-bold text-[#607D8B]">
-          Showing: <span className="text-[#263238]">{filtered.length}</span> /{" "}
-          <span className="text-[#263238]">{pending.length}</span> pending
-        </div>
-      </div>
-
-      {/* List */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-4">
-        {filtered.length === 0 ? (
-          <div className="text-sm font-semibold text-[#607D8B]">
-            No pending requests found.
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {filtered.map((a) => (
-              <ApprovalCard
-                key={a.id}
-                appt={a}
-                pickDoctorsForDept={pickDoctorsForDept}
-                onApprove={approve}
-                onReject={reject}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-
-      <div className="text-xs font-semibold text-[#607D8B]">
-        Next steps: we’ll build Assign Doctor (for already approved) and Billing
-        pages.
       </div>
     </div>
   );
 }
-
-function ApprovalCard({ appt, pickDoctorsForDept, onApprove, onReject }) {
-  const doctors = pickDoctorsForDept(appt.department);
-  const [doctorId, setDoctorId] = useState(doctors[0]?.id || "");
-
-  return (
-    <div className="rounded-2xl border border-slate-200 p-3 space-y-3">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className={statusPill(appt.status)}>{appt.status}</span>
-            <div className="text-sm font-black text-[#263238] truncate">
-              {appt.department}
-            </div>
-          </div>
-
-          <div className="mt-1 text-xs font-semibold text-[#607D8B] flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-1">
-              <CalendarDays size={14} />
-              {formatDateTime(appt.date, appt.time)}
-            </span>
-            <span className="inline-flex items-center gap-1">
-              <Clock size={14} />
-              Requested: {new Date(appt.createdAt).toLocaleString()}
-            </span>
-          </div>
-
-          {appt.notes ? (
-            <div className="mt-2 text-sm font-semibold text-slate-700">
-              <span className="font-black text-[#263238]">Notes: </span>
-              {appt.notes}
-            </div>
-          ) : null}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_auto] gap-2 items-end">
-        {/* Doctor select */}
-        <div>
-          <label className="text-sm font-black text-[#263238]">
-            Assign Doctor
-          </label>
-          <div className="mt-1 relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
-              <Stethoscope size={16} />
-            </span>
-            <select
-              value={doctorId}
-              onChange={(e) => setDoctorId(e.target.value)}
-              className="w-full appearance-none rounded-xl border border-slate-200 pl-10 pr-3 py-2.5 text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#1E88E5]/20 bg-white"
-            >
-              {doctors.length === 0 ? (
-                <option value="">No doctors for dept</option>
-              ) : (
-                doctors.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.name}
-                  </option>
-                ))
-              )}
-            </select>
-          </div>
-          <div className="mt-1 text-[11px] font-bold text-[#607D8B]">
-            Dept doctors shown only.
-          </div>
-        </div>
-
-        <button
-          type="button"
-          onClick={() => onReject(appt.id)}
-          className="rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-black text-slate-700 hover:bg-slate-50 flex items-center justify-center gap-2"
-        >
-          <Ban size={16} />
-          Reject
-        </button>
-
-        <button
-          type="button"
-          onClick={() => onApprove(appt.id, doctorId)}
-          className="rounded-xl bg-[#1E88E5] hover:bg-[#1E88E5]/90 text-white px-3 py-2.5 text-sm font-black shadow flex items-center justify-center gap-2"
-        >
-          <BadgeCheck size={16} />
-          Approve
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// function statusPill(status) {
-//   const base =
-//     "inline-flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-black border";
-//   return `${base} bg-amber-50 text-amber-700 border-amber-200`;
-// }

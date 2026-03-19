@@ -1,7 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
-  ShieldCheck,
   User,
   Mail,
   Phone,
@@ -13,9 +12,12 @@ import {
   ArrowRight,
   ArrowLeft,
   HeartPulse,
+  Image as ImageIcon,
+  Shield,
+  Users,
 } from "lucide-react";
 
-export default function Signup() {
+export default function PatientSignup() {
   const navigate = useNavigate();
 
   const [form, setForm] = useState({
@@ -23,12 +25,17 @@ export default function Signup() {
     email: "",
     phone: "",
     dob: "",
+    gender: "",
     address: "",
+    emergencyContactName: "",
+    emergencyContactPhone: "",
     password: "",
     confirmPassword: "",
+    profileImage: null,
     agree: false,
   });
 
+  const [imagePreview, setImagePreview] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [showCpw, setShowCpw] = useState(false);
   const [err, setErr] = useState("");
@@ -47,6 +54,10 @@ export default function Signup() {
       form.email.trim() &&
       form.phone.trim() &&
       form.dob.trim() &&
+      form.gender.trim() &&
+      form.address.trim() &&
+      form.emergencyContactName.trim() &&
+      form.emergencyContactPhone.trim() &&
       form.password.trim() &&
       form.confirmPassword.trim() &&
       !pwMismatch &&
@@ -55,8 +66,20 @@ export default function Signup() {
   }, [form, pwMismatch]);
 
   const onChange = (key) => (e) => {
-    const v = e.target.type === "checkbox" ? e.target.checked : e.target.value;
-    setForm((p) => ({ ...p, [key]: v }));
+    const value =
+      e.target.type === "checkbox" ? e.target.checked : e.target.value;
+    setForm((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const onImageChange = (e) => {
+    const file = e.target.files?.[0] || null;
+    setForm((prev) => ({ ...prev, profileImage: file }));
+
+    if (file) {
+      setImagePreview(URL.createObjectURL(file));
+    } else {
+      setImagePreview("");
+    }
   };
 
   const onSubmit = (e) => {
@@ -68,36 +91,39 @@ export default function Signup() {
       !form.email ||
       !form.phone ||
       !form.dob ||
-      !form.password
+      !form.gender ||
+      !form.address ||
+      !form.emergencyContactName ||
+      !form.emergencyContactPhone ||
+      !form.password ||
+      !form.confirmPassword
     ) {
       setErr("Please fill all required fields.");
       return;
     }
+
     if (pwMismatch) {
       setErr("Passwords do not match.");
       return;
     }
+
     if (!form.agree) {
       setErr("Please accept the terms to continue.");
       return;
     }
 
-    // UI-only: go to login
     navigate("/login");
   };
 
   return (
-    <div className="min-h-screen bg-[#f0fdfa] text-slate-900 flex flex-col">
-      {/* Header */}
+    <div className="min-h-screen bg-[#f0fdfa] text-slate-900">
       <header className="sticky top-0 z-50 border-b border-[#008080]/10 bg-white/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3 lg:px-10">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#008080]/10">
               <HeartPulse className="text-[#008080]" size={22} />
             </div>
-            <h2 className="text-xl font-bold tracking-tight text-slate-900">
-              MedFlow
-            </h2>
+            <h2 className="text-xl font-bold tracking-tight">MedFlow</h2>
           </div>
 
           <div className="flex items-center gap-4">
@@ -106,7 +132,7 @@ export default function Signup() {
             </p>
             <Link
               to="/login"
-              className="inline-flex h-10 items-center justify-center rounded-xl bg-[#008080] px-5 text-sm font-bold text-white shadow-sm transition hover:bg-[#007070]"
+              className="inline-flex h-10 items-center justify-center rounded-xl bg-[#008080] px-5 text-sm font-bold text-white transition hover:bg-[#007070]"
             >
               Login
             </Link>
@@ -114,25 +140,24 @@ export default function Signup() {
         </div>
       </header>
 
-      {/* Main */}
-      <main className="flex flex-1 flex-col items-center justify-center bg-gradient-to-b from-[#f0fdfa] to-white px-4 pb-12 pt-6 md:pb-20 md:pt-10">
-        <div className="flex w-full flex-col items-center gap-8 py-4">
-          <div className="text-center">
-            <h1 className="mb-4 text-4xl font-extrabold tracking-tight text-slate-900 lg:text-5xl">
-              Create your account
+      <main className="bg-gradient-to-b from-[#f0fdfa] to-white px-4 py-8 md:py-12">
+        <div className="mx-auto max-w-4xl">
+          <div className="mb-8 text-center">
+            <h1 className="mb-3 text-4xl font-extrabold tracking-tight lg:text-5xl">
+              Create your patient account
             </h1>
-            <p className="mx-auto max-w-xl text-lg text-slate-500">
-              Join our medical community for seamless wellness management.
+            <p className="mx-auto max-w-2xl text-lg text-slate-500">
+              Register once to manage appointments, prescriptions, billing, and
+              medical records in one place.
             </p>
           </div>
 
-          <div className="w-full max-w-[640px] rounded-2xl border border-[#008080]/5 bg-white p-8 shadow-xl md:p-12">
-            {/* Back */}
+          <div className="rounded-2xl border border-[#008080]/5 bg-white p-6 shadow-xl md:p-10">
             <div className="mb-6">
               <button
                 type="button"
                 onClick={() => navigate("/")}
-                className="group flex items-center gap-2 text-sm font-medium text-slate-500 transition-colors hover:text-[#008080]"
+                className="group flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-[#008080]"
               >
                 <ArrowLeft
                   size={18}
@@ -142,15 +167,18 @@ export default function Signup() {
               </button>
             </div>
 
-            {/* Error */}
             {err && (
               <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
                 {err}
               </div>
             )}
 
-            {/* Form */}
-            <form onSubmit={onSubmit} className="space-y-6">
+            <form onSubmit={onSubmit} className="space-y-8">
+              <SectionTitle
+                icon={<User size={18} />}
+                title="Personal Information"
+              />
+
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <Field
                   label="Full Name"
@@ -162,30 +190,118 @@ export default function Signup() {
 
                 <Field
                   label="Email Address"
+                  type="email"
                   value={form.email}
                   onChange={onChange("email")}
-                  placeholder="email@example.com"
+                  placeholder="john@example.com"
                   icon={<Mail size={18} />}
-                  type="email"
                 />
 
                 <Field
                   label="Phone Number"
+                  type="tel"
                   value={form.phone}
                   onChange={onChange("phone")}
                   placeholder="+1 (555) 000-0000"
                   icon={<Phone size={18} />}
-                  type="tel"
                 />
 
                 <Field
                   label="Date of Birth"
+                  type="date"
                   value={form.dob}
                   onChange={onChange("dob")}
                   icon={<Calendar size={18} />}
-                  type="date"
                 />
 
+                <SelectField
+                  label="Gender"
+                  value={form.gender}
+                  onChange={onChange("gender")}
+                  icon={<Users size={18} />}
+                  options={["Male", "Female", "Other", "Prefer not to say"]}
+                />
+
+                <Field
+                  label="Residential Address"
+                  value={form.address}
+                  onChange={onChange("address")}
+                  placeholder="123 Medical Way, Health City"
+                  icon={<MapPin size={18} />}
+                />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-semibold text-slate-700">
+                  Profile Image
+                </label>
+                <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4">
+                  <div className="flex flex-col gap-4 md:flex-row md:items-center">
+                    <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-xl bg-white ring-1 ring-slate-200">
+                      {imagePreview ? (
+                        <img
+                          src={imagePreview}
+                          alt="Profile preview"
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <ImageIcon size={28} className="text-slate-400" />
+                      )}
+                    </div>
+
+                    <div className="flex-1">
+                      <label className="inline-flex cursor-pointer items-center justify-center rounded-xl bg-[#008080] px-4 py-2 text-sm font-semibold text-white hover:bg-[#007070]">
+                        Choose Image
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={onImageChange}
+                          className="hidden"
+                        />
+                      </label>
+                      <p className="mt-2 text-xs text-slate-500">
+                        Optional, but helpful for profile identification.
+                      </p>
+                      {form.profileImage && (
+                        <p className="mt-1 text-xs font-medium text-slate-700">
+                          {form.profileImage.name}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <SectionTitle
+                icon={<Shield size={18} />}
+                title="Emergency Contact"
+              />
+
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <Field
+                  label="Emergency Contact Name"
+                  value={form.emergencyContactName}
+                  onChange={onChange("emergencyContactName")}
+                  placeholder="Jane Doe"
+                  icon={<User size={18} />}
+                />
+
+                <Field
+                  label="Emergency Contact Phone"
+                  type="tel"
+                  value={form.emergencyContactPhone}
+                  onChange={onChange("emergencyContactPhone")}
+                  placeholder="+1 (555) 111-2222"
+                  icon={<Phone size={18} />}
+                />
+              </div>
+
+              <SectionTitle
+                icon={<Lock size={18} />}
+                title="Account Security"
+              />
+
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <PasswordField
                   label="Password"
                   value={form.password}
@@ -204,23 +320,14 @@ export default function Signup() {
                 />
               </div>
 
-              <Field
-                label="Residential Address"
-                value={form.address}
-                onChange={onChange("address")}
-                placeholder="123 Medical Way, Health City, HC 12345"
-                icon={<MapPin size={18} />}
-              />
-
               <label className="flex items-start gap-3 pt-2">
                 <input
-                  id="terms"
                   type="checkbox"
                   checked={form.agree}
                   onChange={onChange("agree")}
                   className="mt-0.5 h-4 w-4 rounded border-slate-300 text-[#008080] focus:ring-[#008080]"
                 />
-                <span className="text-sm text-slate-600 leading-relaxed">
+                <span className="text-sm leading-relaxed text-slate-600">
                   I agree to the{" "}
                   <a href="#" className="text-[#008080] hover:underline">
                     Terms of Service
@@ -229,56 +336,28 @@ export default function Signup() {
                   <a href="#" className="text-[#008080] hover:underline">
                     Privacy Policy
                   </a>
+                  .
                 </span>
               </label>
-
-              <div className="relative flex items-center py-1">
-                <div className="flex-grow border-t border-slate-200" />
-                <span className="mx-4 shrink-0 text-xs font-bold uppercase tracking-widest text-slate-400">
-                  OR
-                </span>
-                <div className="flex-grow border-t border-slate-200" />
-              </div>
-
-              <button
-                type="button"
-                className="mb-4 flex w-full items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-4 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
-              >
-                <svg className="h-5 w-5" viewBox="0 0 24 24">
-                  <path
-                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                    fill="#4285F4"
-                  />
-                  <path
-                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                    fill="#34A853"
-                  />
-                  <path
-                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                    fill="#FBBC05"
-                  />
-                  <path
-                    d="M12 5.38c1.62 0 3.06.56 4.21 1.66l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                    fill="#EA4335"
-                  />
-                </svg>
-                Continue with Google
-              </button>
 
               <button
                 type="submit"
                 disabled={!canSubmit}
                 className={[
-                  "group flex w-full items-center justify-center gap-2 rounded-xl py-4 font-bold text-white shadow-lg transition-all",
+                  "group flex w-full items-center justify-center gap-2 rounded-xl py-4 font-bold text-white transition-all",
                   canSubmit
-                    ? "bg-[#008080] shadow-[#008080]/20 hover:bg-[#007070]"
-                    : "cursor-not-allowed bg-slate-300 shadow-none",
+                    ? "bg-[#008080] hover:bg-[#007070]"
+                    : "cursor-not-allowed bg-slate-300",
                 ].join(" ")}
               >
                 Create Account
                 <ArrowRight
                   size={18}
-                  className={`transition-transform ${canSubmit ? "group-hover:translate-x-1" : ""}`}
+                  className={
+                    canSubmit
+                      ? "transition-transform group-hover:translate-x-1"
+                      : ""
+                  }
                 />
               </button>
             </form>
@@ -286,12 +365,20 @@ export default function Signup() {
         </div>
       </main>
 
-      {/* Footer */}
       <footer className="border-t border-[#008080]/5 bg-white py-6 text-center">
         <p className="text-xs text-slate-400">
           © 2024 MedFlow Health Systems. All rights reserved.
         </p>
       </footer>
+    </div>
+  );
+}
+
+function SectionTitle({ icon, title }) {
+  return (
+    <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
+      <span className="text-[#008080]">{icon}</span>
+      <h3 className="text-base font-bold text-slate-900">{title}</h3>
     </div>
   );
 }
@@ -309,6 +396,35 @@ function Field({ label, icon, type = "text", ...props }) {
           className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-4 text-sm text-slate-700 outline-none transition-all placeholder:text-slate-400 focus:border-[#008080] focus:ring-2 focus:ring-[#008080]/20"
           {...props}
         />
+      </div>
+    </div>
+  );
+}
+
+function SelectField({ label, icon, options, ...props }) {
+  return (
+    <div className="flex flex-col gap-2">
+      <label className="text-sm font-semibold text-slate-700">{label}</label>
+      <div className="relative">
+        <span className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-slate-400">
+          {icon}
+        </span>
+
+        <select
+          className="h-[48px] w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-10 text-sm text-slate-700 outline-none transition-all focus:border-[#008080] focus:ring-2 focus:ring-[#008080]/20"
+          {...props}
+        >
+          <option value="">Select</option>
+          {options.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
+
+        <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
+          ▾
+        </span>
       </div>
     </div>
   );
