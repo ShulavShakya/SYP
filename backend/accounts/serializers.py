@@ -5,14 +5,30 @@ from .models import Patient, Appointment, Doctor
 # Appointment Serializer
 # -----------------------------
 class AppointmentSerializer(serializers.ModelSerializer):
-    patient_username = serializers.CharField(source='patient.user.username', read_only=True)
-    doctor_username = serializers.CharField(source='doctor.user.username', read_only=True)
+    patient_username = serializers.CharField(
+        source='patient.user.username',
+        read_only=True
+    )
 
     class Meta:
         model = Appointment
-        fields = ['id', 'patient', 'patient_username', 'doctor', 'doctor_username', 'date', 'time', 'reason', 'created_at', 'updated_at']
-        read_only_fields = ['created_at', 'updated_at', 'patient_username', 'doctor_username']
+        fields = [
+            'id',
+            'patient',
+            'patient_username',
+            'department_name',
+            'doctor_name',
+            'date',
+            'time',
+            'created_at',
+            'updated_at'
+        ]
 
+        read_only_fields = [
+            'created_at',
+            'updated_at',
+            'patient_username'
+        ]
 # -----------------------------
 # Patient Registration Serializer
 # -----------------------------

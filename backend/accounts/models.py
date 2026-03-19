@@ -6,15 +6,30 @@ from django.db import models
 # -----------------------------
 # Patient
 # -----------------------------
+from django.db import models
+from django.contrib.auth.models import User
+
 class Patient(models.Model):
+    BLOOD_GROUP_CHOICES = [
+        ('A+', 'A+'),
+        ('A-', 'A-'),
+        ('B+', 'B+'),
+        ('B-', 'B-'),
+        ('AB+', 'AB+'),
+        ('AB-', 'AB-'),
+        ('O+', 'O+'),
+        ('O-', 'O-'),
+    ]
+
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     dob = models.DateField()
     phone = models.CharField(max_length=15)
     address = models.TextField()
+    blood_group = models.CharField(max_length=3, choices=BLOOD_GROUP_CHOICES, blank=True, null=True)
+    profile_image = models.ImageField(upload_to='media/profile_images/patient/', blank=True, null=True)
 
     def __str__(self):
         return f"{self.user.username} (Patient)"
-
 
 # -----------------------------
 # Doctor
@@ -52,16 +67,24 @@ class Admin(models.Model):
 # Appointment
 # -----------------------------
 class Appointment(models.Model):
-    patient = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='appointments')
+    patient = models.ForeignKey(
+        Patient,
+        on_delete=models.CASCADE,
+        related_name='appointments'
+    )
+
+    department_name = models.CharField(max_length=100)
+    doctor_name = models.CharField(max_length=100)
+
     date = models.DateField()
     time = models.TimeField()
     reason = models.CharField(max_length=255, blank=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"Appointment: {self.patient.user.username} on {self.date} at {self.time}"
-    
+        return f"{self.patient.user.username} - Dr. {self.doctor_name} ({self.department_name}) on {self.date} at {self.time}"
 # -----------------------------
 # Conversation
 # -----------------------------

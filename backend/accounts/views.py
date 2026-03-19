@@ -7,11 +7,11 @@ from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 
 from .serializers import PatientRegisterSerializer, AppointmentSerializer
-from .models import Appointment, Patient, Doctor
+from .models import Admin, Appointment, Patient, Doctor, Receptionist
 from datetime import date, time
 import uuid
 from rest_framework.decorators import api_view
-from .models import Payment
+
 @api_view(['POST'])
 def create_payment_and_appointment(request):
     user = request.user
@@ -24,7 +24,7 @@ def create_payment_and_appointment(request):
     appointment_time = request.data.get('time', time(10, 0))
     reason = request.data.get('reason', '')
 
-    # Simulate payment success
+    
     payment = Payment.objects.create(
         patient=patient,
         amount=amount,
@@ -130,7 +130,7 @@ class LoginView(APIView):
 # Patient Dashboard
 # -----------------------------
 class PatientDashboardView(APIView):
-    permission_classes = [IsAuthenticated, IsPatient]
+    permission_classes = [IsAuthenticated, Patient]
 
     def get(self, request):
         patient = request.user.patient
@@ -147,7 +147,7 @@ class PatientDashboardView(APIView):
 # Doctor Dashboard
 # -----------------------------
 class DoctorDashboardView(APIView):
-    permission_classes = [IsAuthenticated, IsDoctor]
+    permission_classes = [IsAuthenticated, Doctor]
 
     def get(self, request):
         doctor = request.user.doctor
@@ -163,7 +163,7 @@ class DoctorDashboardView(APIView):
 # Receptionist Dashboard
 # -----------------------------
 class ReceptionistDashboardView(APIView):
-    permission_classes = [IsAuthenticated, IsReceptionist]
+    permission_classes = [IsAuthenticated, Receptionist]
 
     def get(self, request):
         receptionist = request.user.receptionist
@@ -178,7 +178,7 @@ class ReceptionistDashboardView(APIView):
 # Admin Dashboard
 # -----------------------------
 class AdminDashboardView(APIView):
-    permission_classes = [IsAuthenticated, IsAdmin]
+    permission_classes = [IsAuthenticated, Admin]
 
     def get(self, request):
         return Response({
