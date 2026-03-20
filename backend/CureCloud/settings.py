@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-cu0gjm2g4^)efw3j%ulame(m^!gdzxsr4_dd)w^*s__7c%4g45
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -141,3 +141,8 @@ CHANNEL_LAYERS = {
         },
     },
 }
+
+ESEWA_PRODUCT_CODE = "EPAYTEST"
+ESEWA_SECRET_KEY = "8gBm/:&EnhH.1/q"
+
+ESEWA_BASE_URL = "https://rc-epay.esewa.com.np/api/epay/main/v2/form"

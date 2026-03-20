@@ -9,43 +9,8 @@ from django.contrib.auth.models import User
 from .serializers import PatientRegisterSerializer, AppointmentSerializer
 from .models import Admin, Appointment, Patient, Doctor, Receptionist
 from datetime import date, time
-import uuid
-from rest_framework.decorators import api_view
 
-@api_view(['POST'])
-def create_payment_and_appointment(request):
-    user = request.user
-    if not hasattr(user, 'patient'):
-        return Response({"error": "Only patients can create appointment"}, status=status.HTTP_403_FORBIDDEN)
 
-    patient = user.patient
-    amount = request.data.get('amount', 500)
-    appointment_date = request.data.get('date', date.today())
-    appointment_time = request.data.get('time', time(10, 0))
-    reason = request.data.get('reason', '')
-
-    
-    payment = Payment.objects.create(
-        patient=patient,
-        amount=amount,
-        status='success',
-        transaction_id=str(uuid.uuid4())
-    )
-
-    # Create appointment after payment
-    appointment = Appointment.objects.create(
-        payment=payment,
-        patient=patient,
-        date=appointment_date,
-        time=appointment_time,
-        reason=reason
-    )
-
-    return Response({
-        "message": "Payment successful, appointment created",
-        "appointment_id": appointment.id,
-        "transaction_id": payment.transaction_id
-    }, status=status.HTTP_201_CREATED)
 # -----------------------------
 # Appointment View
 # -----------------------------
