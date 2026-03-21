@@ -5,8 +5,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
-
-from .serializers import PatientRegisterSerializer, AppointmentSerializer
+from rest_framework.decorators import api_view, permission_classes
+from .serializers import PatientRegisterSerializer, AppointmentSerializer, LoginSerializer
 from .models import Admin, Appointment, Patient, Doctor, Receptionist
 from datetime import date, time
 
@@ -42,72 +42,79 @@ class AppointmentView(generics.ListAPIView):
 # -----------------------------
 # Patient Registration
 # -----------------------------
-class PatientRegisterView(APIView):
-    """
-    Only patients can register themselves.
-    Doctors, Receptionists, Admins cannot register via this API.
-    """
-    def post(self, request):
-        serializer = PatientRegisterSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({"message": "Patient registered successfully"}, status=status.HTTP_201_CREATED)
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework import status
+
+from .serializers import PatientRegisterSerializer
+
+
+@api_view(['POST'])
+def register_patient(request):
+    serializer = PatientRegisterSerializer(data=request.data)
+
+    if serializer.is_valid():
+        serializer.save()
+        return Response(
+            {"message": "Patient registered successfully"},
+            status=status.HTTP_201_CREATED
+        )
+
+    print(serializer.errors)  # Debugging line to see validation errors
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+from django.contrib.auth import authenticate
+from rest_framework_simplejwt.tokens import RefreshToken
+
+@api_view(['POST'])
+def login_user(request):
+    serializer = LoginSerializer(data=request.data)
+
+    if not serializer.is_valid():
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    username = serializer.validated_data['username']
+    password = serializer.validated_data['password']
 
-# -----------------------------
-# Login (JWT for all roles)
-# -----------------------------
-class LoginView(APIView):
-    """
-    Login for all roles: patient, doctor, receptionist, admin
-    """
-    def post(self, request):
-        username = request.data.get('username')
-        password = request.data.get('password')
+    user = authenticate(username=username, password=password)
 
-        user = authenticate(username=username, password=password)
-        if user:
-            refresh = RefreshToken.for_user(user)
+    if user and user.is_active:
+        refresh = RefreshToken.for_user(user)
 
-            # Identify role for frontend dashboard
-            if hasattr(user, 'patient'):
-                role = 'patient'
-            elif hasattr(user, 'doctor'):
-                role = 'doctor'
-            elif hasattr(user, 'receptionist'):
-                role = 'receptionist'
-            elif hasattr(user, 'admin'):
-                role = 'admin'
-            else:
-                role = 'unknown'
+        if hasattr(user, 'patient'):
+            role = 'patient'
+        elif hasattr(user, 'doctor'):
+            role = 'doctor'
+        elif hasattr(user, 'receptionist'):
+            role = 'receptionist'
+        elif hasattr(user,'admin') or user.is_superuser:
+            role = 'admin'
+        else:
+            role = 'unknown'
 
-            return Response({
-                'refresh': str(refresh),
-                'access': str(refresh.access_token),
-                'role': role,
-                'username': user.username
-            })
-        return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
-
-
-# -----------------------------
-# Patient Dashboard
-# -----------------------------
-class PatientDashboardView(APIView):
-    permission_classes = [IsAuthenticated, Patient]
-
-    def get(self, request):
-        patient = request.user.patient
         return Response({
-            'username': request.user.username,
-            'dob': patient.dob,
-            'phone': patient.phone,
-            'address': patient.address,
-            'message': 'Welcome to patient dashboard'
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+            'role': role,
+            'username': user.username
         })
 
+    return Response(
+        {"error": "Invalid credentials"},
+        status=status.HTTP_401_UNAUTHORIZED
+    )
+@api_view(['GET'])
+@permission_classes([IsAuthenticated, Patient])
+def patient_dashboard(request):
+    patient = request.user.patient
 
+    return Response({
+        'username': request.user.username,
+        'dob': patient.dob,
+        'phone': patient.phone,
+        'address': patient.address,
+        'message': 'Welcome to patient dashboard'
+    })
 # -----------------------------
 # Doctor Dashboard
 # -----------------------------

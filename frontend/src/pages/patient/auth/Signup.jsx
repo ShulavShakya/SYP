@@ -39,6 +39,7 @@ export default function PatientSignup() {
   const [showPw, setShowPw] = useState(false);
   const [showCpw, setShowCpw] = useState(false);
   const [err, setErr] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const pwMismatch = useMemo(() => {
     return (
@@ -82,9 +83,10 @@ export default function PatientSignup() {
     }
   };
 
-  const onSubmit = (e) => {
+  const onSubmit = async (e) => {
     e.preventDefault();
     setErr("");
+    setLoading(true);
 
     if (
       !form.fullName ||
@@ -99,20 +101,54 @@ export default function PatientSignup() {
       !form.confirmPassword
     ) {
       setErr("Please fill all required fields.");
+      setLoading(false);
       return;
     }
 
     if (pwMismatch) {
       setErr("Passwords do not match.");
+      setLoading(false);
       return;
     }
 
     if (!form.agree) {
       setErr("Please accept the terms to continue.");
+      setLoading(false);
       return;
     }
 
-    navigate("/login");
+    const formData = new FormData();
+    formData.append('fullname', form.fullName);
+    formData.append('email', form.email);
+    formData.append('password', form.password);
+    formData.append('phone', form.phone);
+    formData.append('dob', form.dob);
+    formData.append('gender', form.gender);
+    formData.append('address', form.address);
+    formData.append('emergency_contact_name', form.emergencyContactName);
+    formData.append('emergency_contact_phone', form.emergencyContactPhone);
+    if (form.profileImage) {
+      formData.append('profile_image', form.profileImage);
+    }
+
+    try {
+      const response = await fetch('http://localhost:8000/api/users/register-patient/', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (response.ok) {
+        navigate('/login');
+      } else {
+        const data = await response.json();
+        setErr(JSON.stringify(data));
+        // setErr(data.message || 'Registration failed. Please try again.');
+      }
+    } catch (error) {
+      setErr('Network error. Please check your connection.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -222,13 +258,22 @@ export default function PatientSignup() {
                   options={["Male", "Female", "Other", "Prefer not to say"]}
                 />
 
-                <Field
+                <SelectField
+  label="Blood Group"
+  value={form.bloodGroup}
+  onChange={onChange("bloodGroup")}
+  options={["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"]}
+/>
+
+                <div className="md:col-span-2">
+                  <Field
                   label="Residential Address"
                   value={form.address}
                   onChange={onChange("address")}
                   placeholder="123 Medical Way, Health City"
                   icon={<MapPin size={18} />}
                 />
+                </div>
               </div>
 
               <div className="flex flex-col gap-2">

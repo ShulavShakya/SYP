@@ -14,8 +14,7 @@ urlpatterns = [
     path("patient/update/", update_patient_info, name="update_patient_info"),
     path("patient/change-password/", change_patient_password, name="change_patient_password"),
 
-    # 🔹 Appointment + Payment (eSewa)
     path("appointment/book/", create_appointment_and_pay, name="create_appointment_and_pay"),
     path("payment/success/", payment_success, name="payment_success"),
     path("payment/failure/", payment_failed, name="payment_failed"),
-]
+] 
