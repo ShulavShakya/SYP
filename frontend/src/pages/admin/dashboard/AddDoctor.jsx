@@ -10,7 +10,6 @@ import {
   HeartPulse,
   HelpCircle,
   Image as ImageIcon,
-  Info,
   KeyRound,
   LayoutDashboard,
   Mail,
@@ -23,7 +22,6 @@ import {
   Users,
   Bell,
   BarChart3,
-  Building2,
   ClipboardList,
   CreditCard,
 } from "lucide-react";
@@ -50,12 +48,6 @@ const shiftOptions = [
   "Afternoon (14:00 - 20:00)",
   "Night (20:00 - 02:00)",
 ];
-const branchOptions = [
-  "Main Center - Downtown",
-  "East Wing Clinic",
-  "Suburban Specialist Hub",
-];
-const statusOptions = ["Active", "On Leave", "Training"];
 const genderOptions = ["Male", "Female", "Other"];
 const availableDayOptions = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
 
@@ -79,9 +71,6 @@ export default function AddDoctor() {
     joiningDate: "",
     availableDays: ["MON", "WED", "THU"],
     shiftTime: "Morning (08:00 - 14:00)",
-    roomNo: "",
-    branchLocation: "Main Center - Downtown",
-    initialStatus: "Active",
     username: "",
     temporaryPassword: "",
     confirmPassword: "",
@@ -115,7 +104,7 @@ export default function AddDoctor() {
         form.qualification &&
         form.licenseNo
       ),
-      !!(form.shiftTime && form.branchLocation && form.initialStatus),
+      !!form.shiftTime,
       !!(form.username && form.temporaryPassword && form.confirmPassword),
     ];
 
@@ -167,9 +156,6 @@ export default function AddDoctor() {
       joiningDate: "",
       availableDays: ["MON", "WED", "THU"],
       shiftTime: "Morning (08:00 - 14:00)",
-      roomNo: "",
-      branchLocation: "Main Center - Downtown",
-      initialStatus: "Active",
       username: "",
       temporaryPassword: "",
       confirmPassword: "",
@@ -507,8 +493,8 @@ export default function AddDoctor() {
                   title="Work Assignment"
                 />
 
-                <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
-                  <div className="md:col-span-2 flex flex-col gap-3">
+                <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2 items-start">
+                  <div className="flex flex-col gap-3">
                     <label className="text-sm font-semibold text-slate-700">
                       Available Days
                     </label>
@@ -540,30 +526,6 @@ export default function AddDoctor() {
                     onChange={onChange("shiftTime")}
                     icon={<Clock3 size={18} />}
                     options={shiftOptions}
-                  />
-
-                  <Field
-                    label="Room / OP No"
-                    value={form.roomNo}
-                    onChange={onChange("roomNo")}
-                    placeholder="e.g. B-204"
-                    icon={<Building2 size={18} />}
-                  />
-
-                  <SelectField
-                    label="Branch Location"
-                    value={form.branchLocation}
-                    onChange={onChange("branchLocation")}
-                    icon={<MapPin size={18} />}
-                    options={branchOptions}
-                  />
-
-                  <SelectField
-                    label="Initial Status"
-                    value={form.initialStatus}
-                    onChange={onChange("initialStatus")}
-                    icon={<Info size={18} />}
-                    options={statusOptions}
                   />
                 </div>
               </section>
@@ -695,7 +657,6 @@ export default function AddDoctor() {
         <footer className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-200 bg-white/90 px-4 py-4 backdrop-blur-md md:left-64 md:px-8">
           <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 sm:flex-row">
             <div className="flex items-center gap-2 text-slate-500">
-              <Info size={16} />
               <span className="text-xs font-medium">
                 Auto-saving as draft... Last saved 2m ago
               </span>
