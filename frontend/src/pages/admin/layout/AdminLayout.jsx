@@ -3,36 +3,60 @@ import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
 import {
   Bell,
   CircleUserRound,
-  FileText,
   LogOut,
   Menu,
-  MessageSquare,
+  Search,
   Settings,
   X,
-  Send,
-  Trash2,
-  Search,
-  Users,
   LayoutDashboard,
+  Users,
+  CalendarDays,
+  Wallet,
   Stethoscope,
+  ShieldCheck,
+  FileText,
+  MessageSquare,
+  ClipboardList,
+  BadgeCheck,
+  Activity,
   HelpCircle,
+  UserCog,
 } from "lucide-react";
 import { useAuth } from "../../../auth/AuthContext";
 
 const navItems = [
-  { label: "Dashboard", to: "/doctor", icon: LayoutDashboard, end: true },
-  { label: "Patients", to: "/doctor/patient-queue", icon: Users },
+  { label: "Dashboard", to: "/admin", icon: LayoutDashboard, end: true },
+  { label: "Doctors", to: "/admin/doctor-management", icon: Stethoscope },
+  { label: "Patients", to: "/admin/patient-management", icon: Users },
   {
-    label: "Consultation",
-    to: "/doctor/consultations",
-    icon: Stethoscope,
+    label: "Receptionists",
+    to: "/admin/receptionist-management",
+    icon: BadgeCheck,
   },
-  { label: "Profile", to: "/doctor/profile", icon: Settings },
+  {
+    label: "Appointments",
+    to: "/admin/appointment-management",
+    icon: CalendarDays,
+  },
+  { label: "Billing", to: "/admin/billing-management", icon: Wallet },
+  // { label: "Approvals", to: "/admin/approvals", icon: ShieldCheck },
+  // { label: "Messages", to: "/admin/manage-messages", icon: MessageSquare },
 ];
 
+const pageTitles = {
+  "/admin": "Dashboard",
+  "/admin/doctor-management": "Doctors",
+  "/admin/patient-management": "Patients",
+  "/admin/receptionist-management": "Receptionists",
+  "/admin/appointment-management": "Appointments",
+  "/admin/billing-management": "Billing",
+  // "/admin/approvals": "Approvals",
+  // "/admin/manage-messages": "Messages",
+};
+
 function toNameFromEmail(email) {
-  if (!email) return "Doctor";
-  const head = email.split("@")[0]?.replace(/[._-]+/g, " ") || "Doctor";
+  if (!email) return "Sarah Chen";
+  const head = email.split("@")[0]?.replace(/[._-]+/g, " ") || "Admin";
   return head
     .split(" ")
     .filter(Boolean)
@@ -40,48 +64,9 @@ function toNameFromEmail(email) {
     .join(" ");
 }
 
-export default function DoctorLayout() {
+export default function AdminLayout() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [messagingOpen, setMessagingOpen] = useState(false);
-  const [confirmClearChat, setConfirmClearChat] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [messageInput, setMessageInput] = useState("");
-
-  const [messages, setMessages] = useState([
-    {
-      id: 1,
-      sender: "Patient",
-      text: "Good morning doctor, I have uploaded my latest test report.",
-      time: "9:10 AM",
-    },
-    {
-      id: 2,
-      sender: "You",
-      text: "Thank you. I’ll review it before our appointment.",
-      time: "9:14 AM",
-    },
-  ]);
-
-  const notifications = useMemo(
-    () => [
-      {
-        id: 1,
-        message: "You have 3 appointments scheduled for this afternoon.",
-        time: "30 mins ago",
-      },
-      {
-        id: 2,
-        message: "New lab report received from Emma Wilson.",
-        time: "2 hours ago",
-      },
-      {
-        id: 3,
-        message: "Payment for consultation has been completed.",
-        time: "1 day ago",
-      },
-    ],
-    [],
-  );
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -92,30 +77,9 @@ export default function DoctorLayout() {
     [user?.email],
   );
 
-  const firstName = useMemo(
-    () => displayName.split(" ")[0] || "Doctor",
-    [displayName],
-  );
-
   const title = useMemo(() => {
-    if (location.pathname === "/doctor") {
-      return `Welcome back, Dr. ${firstName}`;
-    }
-
-    if (location.pathname === "/doctor/patient-queue") {
-      return "My Patients";
-    }
-
-    if (location.pathname.startsWith("/doctor/consultations")) {
-      return "Consultation Session";
-    }
-
-    if (location.pathname === "/doctor/profile") {
-      return "Profile Settings";
-    }
-
-    return `Welcome back, Dr. ${firstName}`;
-  }, [location.pathname, firstName]);
+    return pageTitles[location.pathname] || "Dashboard";
+  }, [location.pathname]);
 
   const today = useMemo(() => {
     return new Date().toLocaleDateString("en-US", {
@@ -125,44 +89,33 @@ export default function DoctorLayout() {
     });
   }, []);
 
+  const notifications = useMemo(
+    () => [
+      {
+        id: 1,
+        message: "3 critical alerts require immediate review.",
+        time: "5 mins ago",
+      },
+      {
+        id: 2,
+        message: "12 appointments are scheduled for today.",
+        time: "20 mins ago",
+      },
+      {
+        id: 3,
+        message: "2 new doctor approval requests were submitted.",
+        time: "1 hour ago",
+      },
+    ],
+    [],
+  );
+
   const onLogout = () => {
     logout();
     navigate("/");
   };
 
   const closeMenu = () => setMenuOpen(false);
-
-  const handleSendMessage = () => {
-    if (!messageInput.trim()) return;
-
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: prev.length + 1,
-        sender: "You",
-        text: messageInput.trim(),
-        time: new Date().toLocaleTimeString("en-US", {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-      },
-    ]);
-
-    setMessageInput("");
-  };
-
-  const handleClearChat = () => {
-    setConfirmClearChat(true);
-  };
-
-  const confirmClear = () => {
-    setMessages([]);
-    setConfirmClearChat(false);
-  };
-
-  const cancelClear = () => {
-    setConfirmClearChat(false);
-  };
 
   const navLinkClass = ({ isActive }) =>
     [
@@ -180,28 +133,28 @@ export default function DoctorLayout() {
   return (
     <div className="min-h-screen bg-[#f7fafa] text-[#181c1d]">
       <div className="flex h-screen w-full overflow-hidden">
-        <aside className="hidden w-[270px] shrink-0 flex-col bg-white shadow-[4px_0_20px_rgba(0,101,101,0.05)] lg:flex">
+        <aside className="hidden lg:flex w-[270px] shrink-0 flex-col bg-white shadow-[4px_0_20px_rgba(0,101,101,0.05)]">
           <div className="px-6 py-8">
             <div
-              className="flex cursor-pointer items-center gap-3"
-              onClick={() => navigate("/doctor")}
+              className="flex items-center gap-3 cursor-pointer"
+              onClick={() => navigate("/admin")}
             >
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#006565] text-white shadow-lg">
-                <Stethoscope size={20} />
+                <Activity size={20} />
               </div>
 
               <div>
-                <h1 className="text-xl font-bold leading-none tracking-tight text-teal-800">
-                  Upachaar Doctor
+                <h1 className="font-bold text-xl leading-none tracking-tight text-teal-800">
+                  Upachaar
                 </h1>
                 <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">
-                  Doctor Portal
+                  Admin Console
                 </p>
               </div>
             </div>
           </div>
 
-          <nav className="flex-1 space-y-1 overflow-y-auto px-4 py-2">
+          <nav className="flex-1 overflow-y-auto px-4 py-2 space-y-1">
             {navItems.map((item) => {
               const Icon = item.icon;
               return (
@@ -216,11 +169,27 @@ export default function DoctorLayout() {
                 </NavLink>
               );
             })}
+
+            {/* <div className="px-4 pt-4 pb-2">
+              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">
+                System
+              </span>
+            </div> */}
+
+            {/* {systemItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <NavLink key={item.label} to={item.to} className={navLinkClass}>
+                  <Icon size={18} />
+                  <span>{item.label}</span>
+                </NavLink>
+              );
+            })} */}
           </nav>
 
           <div className="mt-auto bg-slate-50 p-4">
             <div className="flex items-center justify-between rounded-2xl bg-white p-3 shadow-sm">
-              <div className="min-w-0 flex items-center gap-3">
+              <div className="flex items-center gap-3 min-w-0">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-50 text-teal-700">
                   <CircleUserRound size={22} />
                 </div>
@@ -230,7 +199,7 @@ export default function DoctorLayout() {
                     Dr. {displayName}
                   </p>
                   <p className="text-[11px] font-medium text-slate-500">
-                    General Physician
+                    Super Admin
                   </p>
                 </div>
               </div>
@@ -250,7 +219,7 @@ export default function DoctorLayout() {
         <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
           <header className="h-16 shrink-0 border-b border-teal-50 bg-white/80 backdrop-blur-xl">
             <div className="flex h-full items-center justify-between px-4 md:px-6 lg:px-8">
-              <div className="min-w-0 flex items-center gap-4">
+              <div className="flex items-center gap-4 min-w-0">
                 <button
                   type="button"
                   onClick={() => setMenuOpen((prev) => !prev)}
@@ -278,7 +247,7 @@ export default function DoctorLayout() {
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 group-focus-within:text-teal-600" />
                   <input
                     type="text"
-                    placeholder="Search patients, consultations, or reports..."
+                    placeholder="Search patients, records, or doctors..."
                     className="w-full rounded-xl border-none bg-[#f1f4f4] py-2 pl-10 pr-4 text-sm text-[#181c1d] outline-none ring-0 placeholder:text-slate-400 focus:bg-white"
                   />
                 </div>
@@ -305,16 +274,16 @@ export default function DoctorLayout() {
                       </div>
 
                       <div className="max-h-72 overflow-y-auto">
-                        {notifications.map((notif) => (
+                        {notifications.map((notification) => (
                           <div
-                            key={notif.id}
+                            key={notification.id}
                             className="border-b border-slate-100 px-4 py-3 hover:bg-slate-50"
                           >
                             <p className="text-sm text-[#181c1d]">
-                              {notif.message}
+                              {notification.message}
                             </p>
                             <p className="mt-1 text-xs text-slate-500">
-                              {notif.time}
+                              {notification.time}
                             </p>
                           </div>
                         ))}
@@ -344,9 +313,8 @@ export default function DoctorLayout() {
                 <button
                   type="button"
                   className="hidden rounded-lg bg-teal-50 px-4 py-2 text-xs font-semibold text-teal-700 transition-all hover:bg-[#006565] hover:text-white md:inline-flex"
-                  onClick={() => setMessagingOpen(true)}
                 >
-                  Patient Messages
+                  Support
                 </button>
               </div>
             </div>
@@ -355,7 +323,7 @@ export default function DoctorLayout() {
           {menuOpen && (
             <div className="border-b border-slate-200 bg-white px-4 py-4 lg:hidden">
               <div className="space-y-1 rounded-2xl border border-slate-200 p-2">
-                {navItems.map((item) => {
+                {[...navItems, ...systemItems].map((item) => {
                   const Icon = item.icon;
                   return (
                     <NavLink
@@ -390,113 +358,6 @@ export default function DoctorLayout() {
             <Outlet />
           </div>
         </main>
-      </div>
-
-      <div className="fixed bottom-6 right-6 z-40">
-        {!messagingOpen && (
-          <button
-            onClick={() => setMessagingOpen(true)}
-            className="flex h-14 w-14 items-center justify-center rounded-full bg-[#006565] text-white shadow-lg transition-colors hover:bg-[#005454]"
-            aria-label="Open messaging"
-          >
-            <MessageSquare size={24} />
-          </button>
-        )}
-
-        {messagingOpen && (
-          <div className="flex h-[32rem] w-[28rem] flex-col overflow-hidden rounded-2xl border border-[#e6eaef] bg-white shadow-2xl">
-            <div className="flex items-center justify-between bg-[#006565] p-4 text-white">
-              <h3 className="font-bold">Patient Messages</h3>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handleClearChat}
-                  className="rounded-lg p-1 transition-colors hover:bg-[#005454]"
-                  title="Clear chat"
-                >
-                  <Trash2 size={18} />
-                </button>
-                <button
-                  onClick={() => setMessagingOpen(false)}
-                  className="rounded-lg p-1 transition-colors hover:bg-[#005454]"
-                >
-                  <X size={20} />
-                </button>
-              </div>
-            </div>
-
-            <div className="flex-1 space-y-4 overflow-y-auto bg-[#f4f6f8] p-4">
-              {messages.map((msg) => (
-                <div
-                  key={msg.id}
-                  className={`flex ${msg.sender === "You" ? "justify-end" : "justify-start"}`}
-                >
-                  <div
-                    className={`max-w-xs rounded-lg px-4 py-2 ${
-                      msg.sender === "You"
-                        ? "bg-[#006565] text-white"
-                        : "border border-[#e6eaef] bg-white text-[#1f2a44]"
-                    }`}
-                  >
-                    <p className="text-sm">{msg.text}</p>
-                    <p
-                      className={`mt-1 text-xs ${
-                        msg.sender === "You"
-                          ? "text-teal-100"
-                          : "text-[#62708b]"
-                      }`}
-                    >
-                      {msg.time}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="flex gap-2 border-t border-[#e6eaef] bg-white p-4">
-              <input
-                type="text"
-                placeholder="Reply to patient..."
-                value={messageInput}
-                onChange={(e) => setMessageInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-                className="flex-1 rounded-lg border border-[#e6eaef] px-4 py-2 text-sm focus:border-[#006565] focus:outline-none focus:ring-2 focus:ring-[#006565]/20"
-              />
-              <button
-                onClick={handleSendMessage}
-                className="flex items-center justify-center rounded-lg bg-[#006565] px-3 py-2 text-white transition-colors hover:bg-[#005454]"
-              >
-                <Send size={18} />
-              </button>
-            </div>
-
-            {confirmClearChat && (
-              <div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-black/40">
-                <div className="w-60 rounded-lg border border-[#e6eaef] bg-white p-3 shadow-lg">
-                  <h4 className="mb-1 text-sm font-bold text-[#1f2a44]">
-                    Clear Chat?
-                  </h4>
-                  <p className="mb-3 text-xs text-[#62708b]">
-                    Delete all messages from this conversation?
-                  </p>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={cancelClear}
-                      className="flex-1 rounded-lg border border-[#e6eaef] px-3 py-1.5 text-xs text-[#62708b] transition-colors hover:bg-[#f4f6f8]"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={confirmClear}
-                      className="flex-1 rounded-lg bg-red-500 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-red-600"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
       </div>
     </div>
   );

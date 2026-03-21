@@ -12,6 +12,9 @@ import {
   Search,
   UserCog,
   X,
+  HelpCircle,
+  Activity,
+  MessageSquare,
 } from "lucide-react";
 import { useAuth } from "../../../auth/AuthContext";
 
@@ -26,7 +29,7 @@ const navItems = [
   {
     label: "Messages",
     to: "/reception/messages",
-    icon: Bell,
+    icon: MessageSquare,
   },
   {
     label: "Patient Records",
@@ -48,7 +51,7 @@ const navItems = [
 ];
 
 const pageTitles = {
-  "/reception": "Hello Receptionist, welcome back!",
+  "/reception": "Reception Dashboard",
   "/reception/approvals": "Appointment Approvals",
   "/reception/assign": "Assign Doctor",
   "/reception/billing": "Billing Management",
@@ -61,6 +64,7 @@ function toNameFromEmail(email) {
   if (!email) return "Reception Staff";
   const head =
     email.split("@")[0]?.replace(/[._-]+/g, " ") || "Reception Staff";
+
   return head
     .split(" ")
     .filter(Boolean)
@@ -73,27 +77,30 @@ export default function ReceptionistLayout() {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [hideTopbar, setHideTopbar] = useState(false);
 
-  const [notifications] = useState([
-    {
-      id: 1,
-      message: "3 new appointment approvals are waiting.",
-      time: "15 minutes ago",
-    },
-    {
-      id: 2,
-      message: "A doctor assignment request needs review.",
-      time: "1 hour ago",
-    },
-    {
-      id: 3,
-      message: "Billing record updated successfully.",
-      time: "Today",
-    },
-  ]);
-
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
+
+  const notifications = useMemo(
+    () => [
+      {
+        id: 1,
+        message: "3 new appointment approvals are waiting.",
+        time: "15 minutes ago",
+      },
+      {
+        id: 2,
+        message: "A doctor assignment request needs review.",
+        time: "1 hour ago",
+      },
+      {
+        id: 3,
+        message: "Billing record updated successfully.",
+        time: "Today",
+      },
+    ],
+    [],
+  );
 
   const displayName = useMemo(
     () => toNameFromEmail(user?.email),
@@ -104,15 +111,8 @@ export default function ReceptionistLayout() {
     return pageTitles[location.pathname] || "Reception Dashboard";
   }, [location.pathname]);
 
-  React.useEffect(() => {
-    setNotificationsOpen(false);
-    setMenuOpen(false);
-  }, [location.pathname]);
-
   const today = useMemo(() => {
-    const d = new Date();
-    return d.toLocaleDateString("en-US", {
-      weekday: "long",
+    return new Date().toLocaleDateString("en-US", {
       month: "long",
       day: "numeric",
       year: "numeric",
@@ -126,23 +126,44 @@ export default function ReceptionistLayout() {
 
   const closeMenu = () => setMenuOpen(false);
 
+  const navLinkClass = ({ isActive }) =>
+    [
+      "group flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-sm font-semibold",
+      isActive
+        ? "bg-teal-50 text-teal-700 border-r-4 border-teal-600"
+        : "text-slate-500 hover:text-teal-600 hover:bg-teal-50",
+    ].join(" ");
+
+  React.useEffect(() => {
+    setNotificationsOpen(false);
+    setMenuOpen(false);
+  }, [location.pathname]);
+
   return (
-    <div className="min-h-screen bg-[#f4f6f8]">
-      <div className="flex h-screen w-full">
-        <aside className="hidden w-[260px] shrink-0 flex-col border-r border-[#e6eaef] bg-white lg:flex">
-          <div className="flex items-center gap-3 p-8">
-            <div className="flex size-10 items-center justify-center rounded-xl bg-[#0b8a8e] text-white">
-              <Heart size={24} />
-            </div>
-            <span
-              className="cursor-pointer text-xl font-bold tracking-tight text-[#0b8a8e]"
-              onClick={() => navigate("/")}
+    <div className="min-h-screen bg-[#f7fafa] text-[#181c1d]">
+      <div className="flex h-screen w-full overflow-hidden">
+        <aside className="hidden w-[270px] shrink-0 flex-col bg-white shadow-[4px_0_20px_rgba(0,101,101,0.05)] lg:flex">
+          <div className="px-6 py-8">
+            <div
+              className="flex cursor-pointer items-center gap-3"
+              onClick={() => navigate("/reception")}
             >
-              Upachaar
-            </span>
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#006565] text-white shadow-lg">
+                <Heart size={20} />
+              </div>
+
+              <div>
+                <h1 className="text-xl font-bold leading-none tracking-tight text-teal-800">
+                  Upachaar
+                </h1>
+                <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">
+                  Reception Portal
+                </p>
+              </div>
+            </div>
           </div>
 
-          <nav className="flex-1 space-y-2 px-4 py-4">
+          <nav className="flex-1 space-y-1 overflow-y-auto px-4 py-2">
             {navItems.map((item) => {
               const Icon = item.icon;
               return (
@@ -150,132 +171,146 @@ export default function ReceptionistLayout() {
                   key={item.label}
                   to={item.to}
                   end={item.end}
-                  className={({ isActive }) =>
-                    [
-                      "flex items-center gap-4 rounded-xl px-4 py-3 font-semibold transition-colors",
-                      isActive
-                        ? "bg-[#e6edef] text-[#0b8a8e]"
-                        : "text-[#62708b] hover:bg-[#eef3f5]",
-                    ].join(" ")
-                  }
+                  className={navLinkClass}
                 >
-                  <Icon size={20} />
+                  <Icon size={18} />
                   <span>{item.label}</span>
                 </NavLink>
               );
             })}
           </nav>
 
-          <div className="flex flex-col items-center border-t border-[#e6eaef] p-6">
-            <div className="flex w-full items-center gap-3">
-              <div className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#d4ecec]">
-                <CircleUserRound size={24} className="text-[#0b8a8e]" />
-              </div>
-              <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-[#1f2a44]">
-                  Dr. {displayName}
-                </p>
-                <p className="truncate text-xs text-[#62708b]">
-                  General Physician
-                </p>
-              </div>
-            </div>
+          <div className="mt-auto bg-slate-50 p-4">
+            <div className="flex items-center justify-between rounded-2xl bg-white p-3 shadow-sm">
+              <div className="min-w-0 flex items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-50 text-teal-700">
+                  <CircleUserRound size={22} />
+                </div>
 
-            <button
-              onClick={onLogout}
-              className="mt-4 w-full rounded-lg bg-[#0b8a8e] py-2.5 text-xs font-bold text-white transition-colors hover:bg-[#096d72]"
-            >
-              Logout
-            </button>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-bold text-[#181c1d]">
+                    {displayName}
+                  </p>
+                  <p className="text-[11px] font-medium text-slate-500">
+                    Receptionist
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={onLogout}
+                className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-red-500"
+                aria-label="Logout"
+              >
+                <LogOut size={18} />
+              </button>
+            </div>
           </div>
         </aside>
 
-        <main className="flex flex-1 flex-col overflow-y-auto">
+        <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
           {!hideTopbar && (
-            <header className="flex h-20 shrink-0 items-center justify-between border-b border-gray-200 bg-white px-10">
-              <div className="lg:hidden">
-                <button
-                  type="button"
-                  onClick={() => setMenuOpen((prev) => !prev)}
-                  className="rounded-xl border border-[#dbe2ea] bg-white p-2 text-[#62708b]"
-                  aria-label="Toggle navigation"
-                >
-                  {menuOpen ? <X size={18} /> : <Menu size={18} />}
-                </button>
-              </div>
-
-              <div className="flex-1 px-4 lg:px-0 lg:pl-0">
-                <h1 className="text-2xl font-bold text-slate-900">{title}</h1>
-              </div>
-
-              <div className="flex items-center gap-6">
-                <div className="relative bg-slate-100">
-                  <input
-                    type="text"
-                    placeholder="Search..."
-                    className="w-48 rounded-lg border border-[#e6eaef] py-2 pl-3 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-[#0b8a8e]"
-                  />
-                  <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#62708b]" />
-                </div>
-
-                <div className="relative">
+            <header className="h-16 shrink-0 border-b border-teal-50 bg-white/80 backdrop-blur-xl">
+              <div className="flex h-full items-center justify-between px-4 md:px-6 lg:px-8">
+                <div className="min-w-0 flex items-center gap-4">
                   <button
                     type="button"
-                    onClick={() => setNotificationsOpen(!notificationsOpen)}
-                    className="relative text-[#8a97ab] hover:text-[#62708b]"
-                    aria-label="Notifications"
+                    onClick={() => setMenuOpen((prev) => !prev)}
+                    className="rounded-xl border border-slate-200 bg-white p-2 text-slate-600 lg:hidden"
+                    aria-label="Toggle navigation"
                   >
-                    <Bell size={28} />
+                    {menuOpen ? <X size={18} /> : <Menu size={18} />}
                   </button>
 
-                  {notificationsOpen && (
-                    <div className="absolute right-0 top-full z-50 mt-1 w-80 rounded-lg border border-[#e6eaef] bg-white shadow-lg">
-                      <div className="border-b border-[#e6eaef] p-4">
-                        <h4 className="font-bold text-[#1f2a44]">
-                          Notifications
-                        </h4>
-                      </div>
-
-                      <div className="max-h-64 overflow-y-auto">
-                        {notifications.map((notif) => (
-                          <div
-                            key={notif.id}
-                            className="cursor-pointer border-b border-[#e6eaef] p-4 hover:bg-[#f4f6f8]"
-                          >
-                            <p className="text-sm text-[#1f2a44]">
-                              {notif.message}
-                            </p>
-                            <p className="mt-1 text-xs text-[#62708b]">
-                              {notif.time}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-
-                      <div className="p-4">
-                        <button
-                          onClick={() => setNotificationsOpen(false)}
-                          className="w-full text-center text-sm text-[#0b8a8e] hover:underline"
-                        >
-                          View All
-                        </button>
-                      </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-3">
+                      <h2 className="truncate text-lg font-bold text-teal-800">
+                        {title}
+                      </h2>
+                      <div className="hidden h-4 w-px bg-slate-200 md:block" />
+                      <span className="hidden text-sm font-medium text-slate-500 md:block">
+                        {today}
+                      </span>
                     </div>
-                  )}
+                  </div>
                 </div>
 
-                <div className="border-l border-[#e1e7ef] pl-6">
-                  <p className="text-sm font-bold leading-none text-[#1f2a44]">
-                    {today}
-                  </p>
+                <div className="mx-4 hidden max-w-md flex-1 md:block">
+                  <div className="group relative rounded-xl transition-all focus-within:ring-2 focus-within:ring-teal-500/20">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 group-focus-within:text-teal-600" />
+                    <input
+                      type="text"
+                      placeholder="Search records, appointments, or bills..."
+                      className="w-full rounded-xl border-none bg-[#f1f4f4] py-2 pl-10 pr-4 text-sm text-[#181c1d] outline-none ring-0 placeholder:text-slate-400 focus:bg-white"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 md:gap-4">
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setNotificationsOpen((prev) => !prev)}
+                      className="relative rounded-lg p-2 text-slate-600 transition-colors hover:text-teal-600"
+                      aria-label="Notifications"
+                    >
+                      <Bell size={22} />
+                      <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
+                    </button>
+
+                    {notificationsOpen && (
+                      <div className="absolute right-0 top-full z-50 mt-2 w-80 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl">
+                        <div className="border-b border-slate-100 px-4 py-3">
+                          <h4 className="text-sm font-bold text-[#181c1d]">
+                            Notifications
+                          </h4>
+                        </div>
+
+                        <div className="max-h-72 overflow-y-auto">
+                          {notifications.map((notif) => (
+                            <div
+                              key={notif.id}
+                              className="border-b border-slate-100 px-4 py-3 hover:bg-slate-50"
+                            >
+                              <p className="text-sm text-[#181c1d]">
+                                {notif.message}
+                              </p>
+                              <p className="mt-1 text-xs text-slate-500">
+                                {notif.time}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="p-3">
+                          <button
+                            type="button"
+                            onClick={() => setNotificationsOpen(false)}
+                            className="w-full rounded-xl bg-teal-50 px-3 py-2 text-sm font-semibold text-teal-700 transition-colors hover:bg-teal-100"
+                          >
+                            View All
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <button
+                    type="button"
+                    className="rounded-lg p-2 text-slate-600 transition-colors hover:text-teal-600"
+                    aria-label="Help"
+                  >
+                    <HelpCircle size={22} />
+                  </button>
                 </div>
               </div>
             </header>
           )}
 
           {!hideTopbar && menuOpen && (
-            <div className="px-4 pb-3 lg:hidden">
-              <div className="space-y-1 rounded-2xl border border-[#dbe2ea] bg-white p-2">
+            <div className="border-b border-slate-200 bg-white px-4 py-4 lg:hidden">
+              <div className="space-y-1 rounded-2xl border border-slate-200 p-2">
                 {navItems.map((item) => {
                   const Icon = item.icon;
                   return (
@@ -284,16 +319,9 @@ export default function ReceptionistLayout() {
                       to={item.to}
                       end={item.end}
                       onClick={closeMenu}
-                      className={({ isActive }) =>
-                        [
-                          "flex items-center gap-4 rounded-xl px-4 py-3 font-semibold transition-colors",
-                          isActive
-                            ? "bg-[#e6edef] text-[#0b8a8e]"
-                            : "text-[#62708b] hover:bg-[#eef3f5]",
-                        ].join(" ")
-                      }
+                      className={navLinkClass}
                     >
-                      <Icon size={20} />
+                      <Icon size={18} />
                       <span>{item.label}</span>
                     </NavLink>
                   );
@@ -305,7 +333,7 @@ export default function ReceptionistLayout() {
                     closeMenu();
                     onLogout();
                   }}
-                  className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-[#dbe2ea] px-4 py-3 font-semibold text-[#62708b]"
+                  className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-600"
                 >
                   <LogOut size={16} />
                   Logout
@@ -314,7 +342,7 @@ export default function ReceptionistLayout() {
             </div>
           )}
 
-          <div className="flex-1">
+          <div className="flex-1 overflow-y-auto">
             <Outlet context={{ setHideTopbar }} />
           </div>
         </main>

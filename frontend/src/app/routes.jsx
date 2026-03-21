@@ -27,6 +27,17 @@ import DoctorHome from "../pages/doctor/dashboard/DoctorHome.jsx";
 import PatientQueue from "../pages/doctor/dashboard/PatientQueue.jsx";
 import ConsultationSession from "../pages/doctor/dashboard/ConsultationSession.jsx";
 import PrescriptionCreation from "../pages/doctor/dashboard/PrescriptionCreation.jsx";
+import DoctorProfile from "../pages/doctor/dashboard/DoctorProfile.jsx";
+import AdminLayout from "../pages/admin/layout/AdminLayout.jsx";
+import AdminHome from "../pages/admin/dashboard/AdminHome.jsx";
+import DoctorManagement from "../pages/admin/dashboard/DoctorManagement.jsx";
+import PatientManagement from "../pages/admin/dashboard/PatientManagement.jsx";
+import ReceptionistManagement from "../pages/admin/dashboard/ReceptionistManagement.jsx";
+import AdminAppointmentManagement from "../pages/admin/dashboard/AdminAppointmentManagement.jsx";
+import BillingManagement from "../pages/admin/dashboard/BillingManagement.jsx";
+import ManageMessages from "../pages/admin/dashboard/ManageMessages.jsx";
+import AddDoctor from "../pages/admin/dashboard/AddDoctor.jsx";
+import AddReceptionist from "../pages/admin/dashboard/AddReceptionist.jsx";
 
 export default [
   { path: "/", element: <Landing /> },
@@ -79,9 +90,37 @@ export default [
     children: [
       { index: true, element: <DoctorHome /> },
       { path: "patient-queue", element: <PatientQueue /> },
-      { path: "consultations/:id", element: <ConsultationSession /> },
+      {
+        path: "consultations",
+        children: [
+          { index: true, element: <ConsultationSession /> },
+          { path: ":id", element: <ConsultationSession /> },
+        ],
+      },
       { path: "prescription-creation", element: <PrescriptionCreation /> },
+      { path: "profile", element: <DoctorProfile /> },
     ],
-    // { path: "*", element: },
+  },
+  {
+    path: "/admin",
+    element: (
+      <ProtectedRoute allowedRoles={["admin"]}>
+        <AdminLayout />
+      </ProtectedRoute>
+    ),
+    children: [
+      { index: true, element: <AdminHome /> },
+      { path: "doctor-management", element: <DoctorManagement /> },
+      { path: "patient-management", element: <PatientManagement /> },
+      { path: "receptionist-management", element: <ReceptionistManagement /> },
+      {
+        path: "appointment-management",
+        element: <AdminAppointmentManagement />,
+      },
+      { path: "billing-management", element: <BillingManagement /> },
+      { path: "manage-messages", element: <ManageMessages /> },
+      { path: "add-doctor", element: <AddDoctor /> },
+      { path: "add-receptionist", element: <AddReceptionist /> },
+    ],
   },
 ];
