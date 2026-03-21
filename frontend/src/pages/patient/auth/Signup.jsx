@@ -299,21 +299,20 @@ export default function PatientSignup() {
                 />
 
                 <SelectField
-                  label="Blood Group"
-                  value={form.bloodGroup}
-                  onChange={onChange("bloodGroup")}
-                  icon={<Shield size={18} />}
-                  options={["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"]}
+                 label="Blood Group"
+                 value={form.bloodGroup}
+                 onChange={onChange("bloodGroup")}
+                 options={["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"]}
                 />
 
                 <div className="md:col-span-2">
                   <Field
-                    label="Residential Address"
-                    value={form.address}
-                    onChange={onChange("address")}
-                    placeholder="123 Medical Way, Health City"
-                    icon={<MapPin size={18} />}
-                  />
+                  label="Residential Address"
+                  value={form.address}
+                  onChange={onChange("address")}
+                  placeholder="123 Medical Way, Health City"
+                  icon={<MapPin size={18} />}
+                />
                 </div>
               </div>
 

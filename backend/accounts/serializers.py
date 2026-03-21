@@ -12,18 +12,22 @@ class AppointmentSerializer(serializers.ModelSerializer):
         source='patient.user.username',
         read_only=True
     )
+    status = serializers.ChoiceField(
+        choices=Appointment.STATUS_CHOICES,
+        default='SCHEDULED'
+    )
 
     class Meta:
         model = Appointment
         fields = [
             'id',
-            'patient_username',   # 👈 keep this
+            'patient_username',   
             'department_name',
             'doctor_name',
             'date',
             'time',
-            'reason',             # 👈 add this (you had it in model)
-            'status',             # 👈 useful for frontend
+            'reason',            
+            'status',             
             'created_at',
             'updated_at'
         ]
@@ -38,26 +42,72 @@ class AppointmentSerializer(serializers.ModelSerializer):
 # -----------------------------
 # Patient Registration Serializer
 # -----------------------------
+from django.contrib.auth.models import User
+from rest_framework import serializers
+from .models import Patient
+from django.contrib.auth.password_validation import validate_password
+from .models import Patient
+
 class PatientRegisterSerializer(serializers.ModelSerializer):
+    fullname = serializers.CharField(write_only=True)
+    email = serializers.EmailField(write_only=True)
     password = serializers.CharField(write_only=True)
+    profile_image = serializers.ImageField(write_only=True, required=False)
 
     class Meta:
-        model = User
-        fields = ['username', 'email', 'password', 'first_name', 'last_name']
+        model = Patient
+        fields = [
+            'fullname',
+            'email',
+            'password',
+            'phone',
+            'dob',
+            'gender',
+            'address',
+            'blood_group',
+            'profile_image',
+            'emergency_contact_name',
+            'emergency_contact_phone',
+        ]
+
+    def validate_email(self, value):
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("A user with this email already exists.")
+        return value
+
+    def validate_password(self, value):
+        validate_password(value)
+        return value
 
     def create(self, validated_data):
+        fullname = validated_data.pop("fullname").strip()
+        email = validated_data.pop("email")
+        password = validated_data.pop("password")
+        profile_image = validated_data.pop("profile_image", None)
+
+        parts = fullname.split(None, 1)
+        first_name = parts[0]
+        last_name = parts[1] if len(parts) > 1 else ""
+
         user = User.objects.create_user(
-            username=validated_data['username'],
-            email=validated_data['email'],
-            password=validated_data['password'],
-            first_name=validated_data.get('first_name', ''),
-            last_name=validated_data.get('last_name', '')
+            username=email,
+            email=email,
+            password=password,
+            first_name=first_name,
+            last_name=last_name
         )
-        # Create Patient profile
-        Patient.objects.create(
+
+        patient = Patient.objects.create(
             user=user,
-            dob=self.context['dob'],
-            phone=self.context['phone'],
-            address=self.context['address']
+            profile_image=profile_image,
+            **validated_data
         )
-        return user
+
+        return patient
+
+# -----------------------------
+# Login Serializer
+# -----------------------------
+class LoginSerializer(serializers.Serializer):
+    username = serializers.CharField(required=True)
+    password = serializers.CharField(required=True, write_only=True)
