@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Users,
   MoreHorizontal,
@@ -21,10 +22,18 @@ const stats = [
 ];
 
 const quickActions = [
-  { label: "Add Doctor", icon: UserPlus },
-  { label: "Register Patient", icon: UserRoundPlus },
-  { label: "Add Staff", icon: BadgePlus },
-  { label: "View Reports", icon: BarChart3 },
+  { label: "Add Doctor", icon: UserPlus, path: "/admin/add-doctor" },
+  {
+    label: "Register Patient",
+    icon: UserRoundPlus,
+    path: "/admin/add-patient",
+  },
+  {
+    label: "Add Receptionist",
+    icon: BadgePlus,
+    path: "/admin/add-receptionist",
+  },
+  { label: "View Reports", icon: BarChart3, path: "/admin/view-reports" },
 ];
 
 // const approvals = [
@@ -189,7 +198,8 @@ function StaffItem({ name, role, image }) {
   );
 }
 
-export default function ClinicalSerenityAdminContent() {
+export default function AdminHome() {
+  const navigate = useNavigate();
   return (
     <div className="w-full bg-[#f7fafa] text-[#181c1d]">
       <div className="w-full px-4 py-6 sm:px-6 lg:px-8 xl:px-10">
@@ -219,7 +229,14 @@ export default function ClinicalSerenityAdminContent() {
                   </h3>
                   <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
                     {quickActions.map((action) => (
-                      <QuickAction key={action.label} {...action} />
+                      <QuickAction
+                        key={action.label}
+                        icon={action.icon}
+                        label={action.label}
+                        onClick={() => {
+                          navigate(action.path);
+                        }}
+                      />
                     ))}
                   </div>
                 </div>
