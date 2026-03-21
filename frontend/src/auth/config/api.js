@@ -1,5 +1,4 @@
 import axios from "axios";
-import camelcaseKeys from "camelcase-keys";
 
 const BASE_URL = "http://192.168.254.31:8000/api";
 
@@ -13,22 +12,6 @@ export const privateAPI = axios.create({
   baseURL: BASE_URL,
 });
 
-// Convert snake_case response keys to camelCase
-const handleResponse = (response) => {
-  if (response.data) {
-    response.data = camelcaseKeys(response.data, { deep: true });
-  }
-  return response;
-};
-
-publicAPI.interceptors.response.use(handleResponse, (error) =>
-  Promise.reject(error),
-);
-
-privateAPI.interceptors.response.use(handleResponse, (error) =>
-  Promise.reject(error),
-);
-
 // Attach JWT token from storage
 privateAPI.interceptors.request.use(
   (config) => {
@@ -41,5 +24,16 @@ privateAPI.interceptors.request.use(
 
     return config;
   },
-  (error) => Promise.reject(error),
+  (error) => Promise.reject(error)
+);
+
+// Optional: response interceptor (pass-through only)
+publicAPI.interceptors.response.use(
+  (response) => response,
+  (error) => Promise.reject(error)
+);
+
+privateAPI.interceptors.response.use(
+  (response) => response,
+  (error) => Promise.reject(error)
 );
