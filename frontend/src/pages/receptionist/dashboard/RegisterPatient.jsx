@@ -1,203 +1,386 @@
-import React from "react";
-import { Link } from "react-router-dom";
+import React, { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
+  User,
+  Mail,
+  Phone,
+  Calendar,
+  MapPin,
+  Shield,
   ArrowLeft,
   HeartPulse,
-  User,
-  Phone,
-  ShieldCheck,
+  Image as ImageIcon,
   Save,
-  ChevronLeft,
+  Users,
+  CreditCard,
 } from "lucide-react";
 
-function Field({ label, placeholder, type = "text", required = false }) {
-  return (
-    <label className="flex flex-col">
-      <span className="mb-2 text-sm font-semibold text-slate-700">{label}</span>
-      <input
-        type={type}
-        required={required}
-        placeholder={placeholder}
-        className="h-12 rounded-lg border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
-      />
-    </label>
-  );
-}
-
 export default function RegisterPatient() {
+  const navigate = useNavigate();
+
+  const [form, setForm] = useState({
+    fullName: "",
+    age: "",
+    dob: "",
+    gender: "",
+    phone: "",
+    email: "",
+    address: "",
+    emergencyContactName: "",
+    emergencyContactPhone: "",
+    insuranceProvider: "",
+    insuranceNumber: "",
+    profileImage: null,
+  });
+
+  const [imagePreview, setImagePreview] = useState("");
+  const [err, setErr] = useState("");
+
+  const canSubmit = useMemo(() => {
+    return (
+      form.fullName.trim() &&
+      form.age.toString().trim() &&
+      form.gender.trim() &&
+      form.phone.trim()
+    );
+  }, [form]);
+
+  const onChange = (key) => (e) => {
+    const value = e.target.value;
+    setForm((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const onImageChange = (e) => {
+    const file = e.target.files?.[0] || null;
+    setForm((prev) => ({ ...prev, profileImage: file }));
+
+    if (file) {
+      setImagePreview(URL.createObjectURL(file));
+    } else {
+      setImagePreview("");
+    }
+  };
+
+  const onSubmit = (e) => {
+    e.preventDefault();
+    setErr("");
+
+    if (!form.fullName || !form.age || !form.gender || !form.phone) {
+      setErr("Please fill all required fields.");
+      return;
+    }
+
+    console.log("Registered patient:", form);
+
+    navigate("/reception/records");
+  };
+
+  const onReset = () => {
+    setForm({
+      fullName: "",
+      age: "",
+      dob: "",
+      gender: "",
+      phone: "",
+      email: "",
+      address: "",
+      emergencyContactName: "",
+      emergencyContactPhone: "",
+      insuranceProvider: "",
+      insuranceNumber: "",
+      profileImage: null,
+    });
+    setImagePreview("");
+    setErr("");
+  };
+
   return (
-    <div className="min-h-screen bg-[#f6f7f8] font-display text-slate-900">
-      <div className="flex min-h-screen flex-col">
-        {/* Top Navigation Bar */}
-        {/* <header className="sticky top-0 z-50 flex items-center justify-between border-b border-slate-200 bg-white px-6 py-4 md:px-20">
-          <div className="flex items-center gap-3 text-primary">
-            <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10">
-              <HeartPulse size={18} className="text-primary" />
-            </div>
-            <h2 className="text-xl font-bold tracking-tight text-slate-900">
-              MedFlow
-            </h2>
-          </div>
+    <div className="min-h-screen text-slate-900">
+      <main className="bg-gradient-to-b px-4 py-8 md:py-12">
+        <div className="mx-auto max-w-5xl">
+          {/* <div className="mb-8 text-center">
+            <h1 className="mb-3 text-4xl font-extrabold tracking-tight lg:text-5xl">
+              Patient Registration
+            </h1>
+            <p className="mx-auto max-w-2xl text-lg text-slate-500">
+              Register a new patient into the MedFlow clinical network and save
+              their personal, contact, and insurance details.
+            </p>
+          </div> */}
 
-          <div className="flex items-center gap-6">
-            <Link
-              to="#"
-              className="flex items-center gap-2 text-sm font-semibold text-slate-600 transition-colors hover:text-primary"
-            >
-              <ArrowLeft size={16} />
-              Back to Dashboard
-            </Link>
-
-            <div
-              className="h-10 w-10 rounded-full border-2 border-primary/10 bg-cover bg-center bg-no-repeat"
-              style={{
-                backgroundImage:
-                  'url("https://lh3.googleusercontent.com/aida-public/AB6AXuA7N9Y_HvkxAMd_ONfw0zwZZK6fGL-vOT6B3OaAPUJI5g57A51K4wXWAdo_3NhbLv_lbYq2ioMVr20WYWPp2lRCPT7bCfjK3X_cQdf0PBgY7X2hEamHebsEpE3-gwUlxKv64nXok2a8kfRXb_ypSq92k34aCutipIdEi_JAZzSy8j5dvR7Q8-YYnm6-N6e8mr_shQXJRh_fIcH8aarKhOwRWEMlYcHe-gWU7oGEwpeGz_GVL72kncKdjrdeJwgzpKIqzkuQiV3fLUL2")',
-              }}
-              aria-label="User avatar"
-            />
-          </div>
-        </header> */}
-
-        <main className="flex flex-1 justify-center px-4 py-10 md:px-0">
-          <div className="flex w-full max-w-4xl flex-col space-y-8">
-            {/* Header Section */}
-            <div className="flex flex-col gap-2">
-              <h1 className="text-3xl font-black tracking-tight text-slate-900">
-                Patient Registration
-              </h1>
-              <p className="text-base text-slate-500">
-                Register a new patient to the MedFlow clinical network.
-              </p>
+          <div className="rounded-2xl border border-[#008080]/5 bg-white p-6 shadow-xl md:p-10">
+            <div className="mb-6">
+              <button
+                type="button"
+                onClick={() => navigate("/reception/records")}
+                className="group flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-[#008080]"
+              >
+                <ArrowLeft
+                  size={18}
+                  className="transition-transform group-hover:-translate-x-1"
+                />
+                Back to Records
+              </button>
             </div>
 
-            {/* Main Form Card */}
-            <form className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-              {/* Personal Information */}
-              <div className="border-b border-slate-100 p-8">
-                <div className="mb-6 flex items-center gap-2">
-                  <User size={18} className="text-primary" />
-                  <h3 className="text-lg font-bold text-slate-800">
-                    Personal Information
-                  </h3>
-                </div>
+            {err && (
+              <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+                {err}
+              </div>
+            )}
 
-                <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+            <form onSubmit={onSubmit} className="space-y-8">
+              <SectionTitle
+                icon={<User size={18} />}
+                title="Personal Information"
+              />
+
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+                <Field
+                  label="Full Name"
+                  value={form.fullName}
+                  onChange={onChange("fullName")}
+                  placeholder="Johnathan Doe"
+                  icon={<User size={18} />}
+                  required
+                />
+
+                <Field
+                  label="Age"
+                  type="number"
+                  value={form.age}
+                  onChange={onChange("age")}
+                  placeholder="25"
+                  icon={<Calendar size={18} />}
+                  required
+                />
+
+                <SelectField
+                  label="Gender"
+                  value={form.gender}
+                  onChange={onChange("gender")}
+                  icon={<Users size={18} />}
+                  options={["Male", "Female", "Other", "Prefer not to say"]}
+                  required
+                />
+
+                <div className="md:col-span-3">
                   <Field
-                    label="Full Name"
-                    placeholder="Johnathan Doe"
-                    required
+                    label="Date of Birth"
+                    type="date"
+                    value={form.dob}
+                    onChange={onChange("dob")}
+                    icon={<Calendar size={18} />}
                   />
-
-                  <Field label="Age" placeholder="25" type="number" required />
-
-                  <label className="flex flex-col">
-                    <span className="mb-2 text-sm font-semibold text-slate-700">
-                      Gender
-                    </span>
-                    <select className="h-12 rounded-lg border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20">
-                      <option value="">Select gender</option>
-                      <option value="male">Male</option>
-                      <option value="female">Female</option>
-                      <option value="other">Other</option>
-                      <option value="prefer-not">Prefer not to say</option>
-                    </select>
-                  </label>
                 </div>
               </div>
 
-              {/* Contact Information */}
-              <div className="border-b border-slate-100 bg-slate-50/30 p-8">
-                <div className="mb-6 flex items-center gap-2">
-                  <Phone size={18} className="text-primary" />
-                  <h3 className="text-lg font-bold text-slate-800">
-                    Contact Information
-                  </h3>
-                </div>
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-semibold text-slate-700">
+                  Profile Image
+                </label>
+                <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4">
+                  <div className="flex flex-col gap-4 md:flex-row md:items-center">
+                    <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-xl bg-white ring-1 ring-slate-200">
+                      {imagePreview ? (
+                        <img
+                          src={imagePreview}
+                          alt="Profile preview"
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <ImageIcon size={28} className="text-slate-400" />
+                      )}
+                    </div>
 
-                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                  <Field
-                    label="Phone Number"
-                    placeholder="+1 (555) 000-0000"
-                    type="tel"
-                  />
-
-                  <Field
-                    label="Email Address"
-                    placeholder="john.doe@example.com"
-                    type="email"
-                  />
-
-                  <div className="md:col-span-2">
-                    <Field
-                      label="Residential Address"
-                      placeholder="123 Wellness Ave, Suite 100"
-                    />
+                    <div className="flex-1">
+                      <label className="inline-flex cursor-pointer items-center justify-center rounded-xl bg-[#008080] px-4 py-2 text-sm font-semibold text-white hover:bg-[#007070]">
+                        Choose Image
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={onImageChange}
+                          className="hidden"
+                        />
+                      </label>
+                      <p className="mt-2 text-xs text-slate-500">
+                        Optional, for easier patient identification.
+                      </p>
+                      {form.profileImage && (
+                        <p className="mt-1 text-xs font-medium text-slate-700">
+                          {form.profileImage.name}
+                        </p>
+                      )}
+                    </div>
                   </div>
-
-                  <div className="md:col-span-2">
-                    <Field
-                      label="Emergency Contact (Name & Phone)"
-                      placeholder="Jane Doe - +1 (555) 111-2222"
-                    />
-                  </div>
                 </div>
               </div>
 
-              {/* Insurance Details */}
-              <div className="p-8">
-                <div className="mb-6 flex items-center gap-2">
-                  <ShieldCheck size={18} className="text-primary" />
-                  <h3 className="text-lg font-bold text-slate-800">
-                    Insurance Details
-                  </h3>
-                </div>
+              <SectionTitle
+                icon={<Phone size={18} />}
+                title="Contact Information"
+              />
 
-                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <Field
+                  label="Phone Number"
+                  type="tel"
+                  value={form.phone}
+                  onChange={onChange("phone")}
+                  placeholder="+1 (555) 000-0000"
+                  icon={<Phone size={18} />}
+                  required
+                />
+
+                <Field
+                  label="Email Address"
+                  type="email"
+                  value={form.email}
+                  onChange={onChange("email")}
+                  placeholder="john.doe@example.com"
+                  icon={<Mail size={18} />}
+                />
+
+                <div className="md:col-span-2">
                   <Field
-                    label="Insurance Provider"
-                    placeholder="HealthShield Inc."
+                    label="Residential Address"
+                    value={form.address}
+                    onChange={onChange("address")}
+                    placeholder="123 Wellness Ave, Suite 100"
+                    icon={<MapPin size={18} />}
                   />
-
-                  <Field label="Insurance Number" placeholder="HS-9988776655" />
                 </div>
               </div>
 
-              {/* Footer Actions */}
-              <div className="flex flex-col items-center justify-end gap-4 border-t border-slate-200 bg-slate-50 px-8 py-6 md:flex-row">
+              <SectionTitle
+                icon={<Shield size={18} />}
+                title="Emergency Contact"
+              />
+
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <Field
+                  label="Emergency Contact Name"
+                  value={form.emergencyContactName}
+                  onChange={onChange("emergencyContactName")}
+                  placeholder="Jane Doe"
+                  icon={<User size={18} />}
+                />
+
+                <Field
+                  label="Emergency Contact Phone"
+                  type="tel"
+                  value={form.emergencyContactPhone}
+                  onChange={onChange("emergencyContactPhone")}
+                  placeholder="+1 (555) 111-2222"
+                  icon={<Phone size={18} />}
+                />
+              </div>
+
+              <div className="flex flex-col items-center justify-end gap-4 border-t border-slate-200 pt-6 md:flex-row">
                 <button
                   type="button"
-                  onClick={() => navigate("reception/records")}
-                  className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+                  onClick={() => navigate("/reception/records")}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 md:w-auto"
                 >
-                  <ChevronLeft size={18} />
+                  <ArrowLeft size={18} />
                   Back
                 </button>
+
                 <button
-                  type="reset"
-                  className="w-full rounded-lg border border-slate-300 px-6 py-3 text-sm font-semibold text-slate-700 transition-all hover:bg-slate-100 md:w-auto"
+                  type="button"
+                  onClick={onReset}
+                  className="w-full rounded-xl border border-slate-300 px-6 py-3 text-sm font-semibold text-slate-700 transition-all hover:bg-slate-100 md:w-auto"
                 >
                   Clear Form
                 </button>
 
                 <button
                   type="submit"
-                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-10 py-3 text-sm font-bold text-white shadow-lg shadow-primary/20 transition-all hover:bg-primary/90 md:w-auto"
+                  disabled={!canSubmit}
+                  className={[
+                    "flex w-full items-center justify-center gap-2 rounded-xl px-8 py-3 text-sm font-bold text-white transition-all md:w-auto",
+                    canSubmit
+                      ? "bg-[#008080] hover:bg-[#007070]"
+                      : "cursor-not-allowed bg-slate-300",
+                  ].join(" ")}
                 >
                   <Save size={16} />
                   Save Patient
                 </button>
               </div>
             </form>
-
-            {/* Page Footer Helper */}
-            <div className="flex justify-center py-4 text-xs text-slate-400">
-              <p>
-                © 2024 MedFlow Health Systems. Secured by 256-bit encryption.
-              </p>
-            </div>
           </div>
-        </main>
+
+          <footer className="py-6 text-center">
+            <p className="text-xs text-slate-400">
+              © 2024 MedFlow Health Systems. Secured by 256-bit encryption.
+            </p>
+          </footer>
+        </div>
+      </main>
+    </div>
+  );
+}
+
+function SectionTitle({ icon, title }) {
+  return (
+    <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
+      <span className="text-[#008080]">{icon}</span>
+      <h3 className="text-base font-bold text-slate-900">{title}</h3>
+    </div>
+  );
+}
+
+function Field({ label, icon, type = "text", required = false, ...props }) {
+  return (
+    <div className="flex flex-col gap-2">
+      <label className="text-sm font-semibold text-slate-700">
+        {label}
+        {required && <span className="ml-1 text-red-500">*</span>}
+      </label>
+      <div className="relative">
+        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+          {icon}
+        </span>
+        <input
+          type={type}
+          required={required}
+          className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-4 text-sm text-slate-700 outline-none transition-all placeholder:text-slate-400 focus:border-[#008080] focus:ring-2 focus:ring-[#008080]/20"
+          {...props}
+        />
+      </div>
+    </div>
+  );
+}
+
+function SelectField({ label, icon, options, required = false, ...props }) {
+  return (
+    <div className="flex flex-col gap-2">
+      <label className="text-sm font-semibold text-slate-700">
+        {label}
+        {required && <span className="ml-1 text-red-500">*</span>}
+      </label>
+      <div className="relative">
+        <span className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-slate-400">
+          {icon}
+        </span>
+
+        <select
+          required={required}
+          className="h-[48px] w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-10 text-sm text-slate-700 outline-none transition-all focus:border-[#008080] focus:ring-2 focus:ring-[#008080]/20"
+          {...props}
+        >
+          <option value="">Select</option>
+          {options.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
+
+        <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
+          ▾
+        </span>
       </div>
     </div>
   );

@@ -337,7 +337,7 @@ export default function Appointments() {
                 className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary py-4 font-bold text-white shadow-lg shadow-primary/20 transition-all hover:bg-primary/90"
               >
                 <CalendarDays size={18} />
-                Book Appointment
+                Request Appointment
               </button>
 
               <button

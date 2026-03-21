@@ -175,7 +175,7 @@ export default function PatientQueue() {
             All Patients
           </button>
           <button className="rounded-full border border-[#E0E6ED] bg-white px-5 py-2 text-sm font-semibold text-[#2C3E50] transition-colors hover:border-[#008080]">
-            Urgent
+            Completed
           </button>
           <button className="rounded-full border border-[#E0E6ED] bg-white px-5 py-2 text-sm font-semibold text-[#2C3E50] transition-colors hover:border-[#008080]">
             Waiting

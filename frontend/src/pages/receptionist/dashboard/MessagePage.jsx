@@ -1,11 +1,12 @@
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useOutletContext } from "react-router-dom";
 
-const filters = ["All", "Unread", "Active"];
+const tabs = ["All", "Unread", "Active"];
 
 const conversations = [
   {
     id: 1,
+    role: "patient",
     name: "Sarah Jenkins",
     lastMessage: "I've arrived at the parking lot...",
     time: "10:45 AM",
@@ -19,6 +20,7 @@ const conversations = [
   },
   {
     id: 2,
+    role: "patient",
     name: "Michael Chen",
     lastMessage: "Thank you for the prescription info.",
     time: "Yesterday",
@@ -32,6 +34,7 @@ const conversations = [
   },
   {
     id: 3,
+    role: "patient",
     name: "Elena Rodriguez",
     lastMessage: "Is Dr. Smith running on time today?",
     time: "9:12 AM",
@@ -45,6 +48,7 @@ const conversations = [
   },
   {
     id: 4,
+    role: "patient",
     name: "Patient #4829",
     lastMessage: "Requesting appointment reschedule...",
     time: "08:00 AM",
@@ -57,6 +61,7 @@ const conversations = [
   },
   {
     id: 5,
+    role: "patient",
     name: "Patient #4830",
     lastMessage: "Can I upload my previous reports?",
     time: "08:05 AM",
@@ -69,6 +74,7 @@ const conversations = [
   },
   {
     id: 6,
+    role: "patient",
     name: "Patient #4831",
     lastMessage: "Please confirm my arrival time.",
     time: "08:10 AM",
@@ -81,6 +87,7 @@ const conversations = [
   },
   {
     id: 7,
+    role: "patient",
     name: "Patient #4832",
     lastMessage: "I need directions to the lab.",
     time: "08:15 AM",
@@ -93,6 +100,7 @@ const conversations = [
   },
   {
     id: 8,
+    role: "patient",
     name: "Patient #4833",
     lastMessage: "I'm running 10 minutes late.",
     time: "08:20 AM",
@@ -150,293 +158,355 @@ const quickActions = [
   "Request documents",
 ];
 
-const mobileNavItems = [
-  { label: "Alerts", icon: "notifications_active", active: false },
-  { label: "Chats", icon: "chat", active: true, filled: true },
-  { label: "Directory", icon: "contact_page", active: false },
-  { label: "Profile", icon: "account_circle", active: false },
-];
+function Avatar({ name, avatar, active, size = "h-12 w-12" }) {
+  return (
+    <div
+      className={`relative shrink-0 overflow-hidden rounded-full bg-surface-container-highest ${size}`}
+    >
+      {avatar ? (
+        <img src={avatar} alt={name} className="h-full w-full object-cover" />
+      ) : (
+        <div className="flex h-full w-full items-center justify-center">
+          <span className="material-symbols-outlined text-outline">person</span>
+        </div>
+      )}
+
+      {active ? (
+        <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white bg-primary" />
+      ) : null}
+    </div>
+  );
+}
 
 export default function MessagesPage() {
-  const [selectedFilter, setSelectedFilter] = useState("All");
-  const [selectedConversationId, setSelectedConversationId] = useState(null);
+  const outletContext = useOutletContext();
+  const setHideTopbar = outletContext?.setHideTopbar ?? (() => {});
+
+  const [activeTab, setActiveTab] = useState("All");
   const [search, setSearch] = useState("");
+  const [activeConversationId, setActiveConversationId] = useState(null);
   const [messageInput, setMessageInput] = useState("");
 
-  const { setHideTopbar } = useOutletContext();
-
   const filteredConversations = useMemo(() => {
-    return conversations.filter((item) => {
-      const matchesSearch =
-        item.name.toLowerCase().includes(search.toLowerCase()) ||
-        item.lastMessage.toLowerCase().includes(search.toLowerCase());
+    const normalizedSearch = search.trim().toLowerCase();
 
-      const matchesFilter =
-        selectedFilter === "All"
+    return conversations.filter((item) => {
+      const isAllowedConversation = item.role === "patient";
+
+      const matchesSearch =
+        !normalizedSearch ||
+        item.name.toLowerCase().includes(normalizedSearch) ||
+        item.lastMessage.toLowerCase().includes(normalizedSearch) ||
+        item.patientId.toLowerCase().includes(normalizedSearch) ||
+        item.department.toLowerCase().includes(normalizedSearch);
+
+      const matchesTab =
+        activeTab === "All"
           ? true
-          : selectedFilter === "Unread"
+          : activeTab === "Unread"
             ? item.unread
             : item.active;
 
-      return matchesSearch && matchesFilter;
+      return isAllowedConversation && matchesSearch && matchesTab;
     });
-  }, [search, selectedFilter]);
+  }, [activeTab, search]);
 
-  const selectedConversation =
-    conversations.find((c) => c.id === selectedConversationId) || null;
+  const activeConversation =
+    filteredConversations.find((item) => item.id === activeConversationId) ||
+    conversations.find((item) => item.id === activeConversationId) ||
+    null;
 
-  const selectedMessages = selectedConversation
-    ? messagesByConversation[selectedConversation.id] || []
+  const activeMessages = activeConversation
+    ? messagesByConversation[activeConversation.id] || []
     : [];
+
+  const showChatView = Boolean(activeConversation);
 
   const handleSend = () => {
     if (!messageInput.trim()) return;
     setMessageInput("");
   };
 
-  const showChatView = !!selectedConversation;
   useEffect(() => {
-    setHideTopbar(showChatView);
-
+    setHideTopbar(false);
     return () => {
       setHideTopbar(false);
     };
-  }, [showChatView, setHideTopbar]);
+  }, [setHideTopbar]);
 
   return (
-    <div className="bg-surface font-body text-on-surface selection:bg-secondary-container selection:text-on-secondary-container">
-      <main className="flex min-h-screen flex-col">
-        {!showChatView ? (
-          <section className="flex h-[calc(100vh-4rem)] w-full flex-col">
-            <div className="space-y-4 p-4">
-              {/* <div className="relative">
-                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">
-                  search
-                </span>
-                <input
-                  type="text"
-                  placeholder="Search patients..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="w-full rounded-xl border-none bg-surface-container-highest py-2.5 pl-10 pr-4 text-sm focus:ring-2 focus:ring-primary/20"
-                />
-              </div> */}
-
-              <div className="no-scrollbar flex gap-2 overflow-x-auto">
-                {filters.map((filter) => (
-                  <button
-                    key={filter}
-                    onClick={() => setSelectedFilter(filter)}
-                    className={
-                      selectedFilter === filter
-                        ? "rounded-full bg-primary px-4 py-1.5 text-sm font-medium text-white"
-                        : "rounded-full bg-surface-container-high px-4 py-1.5 text-sm font-medium text-on-surface-variant transition-colors hover:bg-surface-container-highest"
-                    }
-                  >
-                    {filter}
-                  </button>
-                ))}
-              </div>
+    <div className="h-[calc(100vh-64px)] overflow-hidden bg-[#f7fafa] font-body text-on-surface selection:bg-secondary-container selection:text-on-secondary-container">
+      <div className="flex h-full min-h-0 overflow-hidden">
+        <section
+          className={[
+            "flex h-full min-h-0 shrink-0 flex-col bg-[#f7fafa] md:w-[380px] md:border-r md:border-slate-100 xl:w-[400px]",
+            showChatView ? "hidden md:flex" : "flex w-full",
+          ].join(" ")}
+        >
+          <div className="shrink-0 border-b border-slate-100 bg-white/60 px-4 py-5 backdrop-blur-sm">
+            <div className="mb-4">
+              <h1 className="text-2xl font-black tracking-tight text-[#006565]">
+                Messages
+              </h1>
+              <p className="mt-1 text-sm font-medium text-slate-500">
+                Manage patient conversations and check-ins
+              </p>
             </div>
 
-            <div className="no-scrollbar flex-1 overflow-y-auto">
-              {filteredConversations.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => setSelectedConversationId(item.id)}
-                  className="flex w-full cursor-pointer gap-3 px-4 py-3 text-left transition-colors hover:bg-surface-container-low"
-                >
-                  <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full bg-surface-container-highest">
-                    {item.avatar ? (
-                      <img
-                        alt={item.name}
-                        className="h-full w-full object-cover"
-                        src={item.avatar}
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center">
-                        <span className="material-symbols-outlined text-outline">
-                          person
-                        </span>
-                      </div>
-                    )}
-                    {item.active && (
-                      <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white bg-primary" />
-                    )}
-                  </div>
+            <div className="relative mb-4 flex items-center rounded-full bg-[#f1f4f4] px-4 py-2 ring-[#006565]/20 transition-all focus-within:ring-2">
+              <span className="material-symbols-outlined text-xl text-slate-400">
+                search
+              </span>
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search patients, IDs, or departments..."
+                className="w-full border-none bg-transparent pl-2 text-sm font-medium outline-none focus:ring-0"
+              />
+            </div>
 
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-baseline justify-between">
-                      <h3 className="truncate text-sm font-semibold text-on-surface">
-                        {item.name}
-                      </h3>
-                      <span className="text-[10px] text-outline">
-                        {item.time}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <p className="truncate text-xs text-on-surface-variant">
-                        {item.lastMessage}
-                      </p>
-                      {item.unread && (
-                        <span className="inline-block h-2 w-2 shrink-0 rounded-full bg-primary" />
-                      )}
-                    </div>
-                  </div>
+            <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {tabs.map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={
+                    activeTab === tab
+                      ? "whitespace-nowrap rounded-full bg-[#006565] px-4 py-1.5 text-xs font-bold text-white"
+                      : "whitespace-nowrap rounded-full border border-slate-100 bg-white px-4 py-1.5 text-xs font-semibold text-slate-600 shadow-sm transition-all hover:bg-[#ebeeee]"
+                  }
+                >
+                  {tab}
                 </button>
               ))}
             </div>
-          </section>
-        ) : (
-          <section className="flex h-[calc(100vh-4rem)] flex-1 flex-col bg-surface-container-lowest">
-            <div className="flex items-center justify-between bg-white px-6 py-4 shadow-[0_2px_10px_rgba(0,101,101,0.03)]">
-              <div className="flex items-center gap-4">
-                <button
-                  onClick={() => setSelectedConversationId(null)}
-                  className="material-symbols-outlined text-outline"
-                >
-                  arrow_back
-                </button>
+          </div>
 
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h2 className="font-headline text-lg font-bold text-[#2C3E50]">
-                      {selectedConversation.name}
-                    </h2>
-                    <span className="rounded bg-secondary-container px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-on-secondary-container">
-                      {selectedConversation.status}
-                    </span>
-                  </div>
-                  <p className="text-xs text-outline">
-                    ID: {selectedConversation.patientId} •{" "}
-                    {selectedConversation.department}
+          <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
+            <div className="space-y-2">
+              {filteredConversations.length === 0 ? (
+                <div className="rounded-2xl bg-white p-6 text-center shadow-sm">
+                  <p className="text-sm font-semibold text-slate-600">
+                    No conversations found.
                   </p>
                 </div>
-              </div>
-
-              <div className="flex gap-2">
-                <button className="material-symbols-outlined rounded-full p-2 text-primary transition-colors hover:bg-surface-container">
-                  phone
-                </button>
-                <button className="material-symbols-outlined rounded-full p-2 text-primary transition-colors hover:bg-surface-container">
-                  more_vert
-                </button>
-              </div>
-            </div>
-
-            <div className="flex-1 space-y-6 overflow-y-auto bg-[#F7FAFA] p-6">
-              <div className="flex justify-center">
-                <span className="rounded-full bg-surface-container-high px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-outline">
-                  Today
-                </span>
-              </div>
-
-              {selectedMessages.map((message) => (
-                <div
-                  key={message.id}
-                  className={`flex max-w-[85%] ${
-                    message.sender === "receptionist"
-                      ? "ml-auto justify-end"
-                      : "justify-start"
-                  }`}
-                >
-                  <div
-                    className={`flex flex-col space-y-1 ${
-                      message.sender === "receptionist" ? "items-end" : ""
-                    }`}
+              ) : (
+                filteredConversations.map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => setActiveConversationId(item.id)}
+                    className={[
+                      "flex w-full gap-4 rounded-2xl p-4 text-left transition-colors",
+                      activeConversation?.id === item.id
+                        ? "border-l-4 border-[#006565] bg-white shadow-sm"
+                        : "hover:bg-white/70",
+                    ].join(" ")}
                   >
-                    <div
-                      className={`p-4 text-sm leading-relaxed shadow-sm ${
-                        message.sender === "receptionist"
-                          ? "rounded-2xl rounded-tr-none bg-primary-container text-white shadow-md"
-                          : "rounded-2xl rounded-tl-none border border-outline-variant/10 bg-white text-on-surface"
-                      }`}
-                    >
-                      {message.text}
+                    <Avatar
+                      name={item.name}
+                      avatar={item.avatar}
+                      active={item.active}
+                    />
+
+                    <div className="min-w-0 flex-1">
+                      <div className="mb-0.5 flex items-start justify-between gap-3">
+                        <h4 className="truncate text-sm font-bold text-[#181c1d]">
+                          {item.name}
+                        </h4>
+                        <span className="shrink-0 text-[10px] font-medium text-slate-400">
+                          {item.time}
+                        </span>
+                      </div>
+
+                      <p className="mb-1 text-[11px] font-bold uppercase tracking-wider text-[#006565]">
+                        {item.patientId} • {item.department}
+                      </p>
+
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="truncate text-xs font-medium text-slate-500">
+                          {item.lastMessage}
+                        </p>
+
+                        {item.unread ? (
+                          <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-[#006565] px-1.5 text-[10px] font-black text-white">
+                            •
+                          </span>
+                        ) : null}
+                      </div>
                     </div>
-                    <p
-                      className={`text-[10px] text-outline ${
-                        message.sender === "receptionist" ? "mr-1" : "ml-1"
-                      }`}
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+        </section>
+
+        <section
+          className={[
+            "flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-white",
+            showChatView ? "flex" : "hidden md:flex",
+          ].join(" ")}
+        >
+          {activeConversation ? (
+            <>
+              <header className="shrink-0 border-b border-slate-50 bg-white/80 px-6 py-4 backdrop-blur-sm">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex min-w-0 items-center gap-4">
+                    <button
+                      onClick={() => setActiveConversationId(null)}
+                      className="material-symbols-outlined rounded-xl p-2 text-slate-400 transition-all hover:bg-[#f1f4f4] hover:text-[#006565] md:hidden"
                     >
-                      {message.time}
-                    </p>
+                      arrow_back
+                    </button>
+
+                    <Avatar
+                      name={activeConversation.name}
+                      avatar={activeConversation.avatar}
+                      active={activeConversation.active}
+                      size="h-11 w-11"
+                    />
+
+                    <div className="min-w-0">
+                      <h3 className="truncate font-bold text-[#181c1d]">
+                        {activeConversation.name}
+                      </h3>
+                      <div className="flex min-w-0 items-center gap-2">
+                        <span className="shrink-0 rounded-full bg-[#93f2f2] px-2 py-0.5 text-[10px] font-bold uppercase tracking-tight text-[#002020]">
+                          {activeConversation.status}
+                        </span>
+                        <span className="truncate text-[11px] font-medium text-slate-400">
+                          {activeConversation.patientId} •{" "}
+                          {activeConversation.department}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex shrink-0 gap-2">
+                    <button className="rounded-xl p-2.5 text-slate-400 transition-all hover:bg-[#f1f4f4] hover:text-[#006565]">
+                      <span className="material-symbols-outlined">phone</span>
+                    </button>
+                    <button className="rounded-xl p-2.5 text-slate-400 transition-all hover:bg-[#f1f4f4] hover:text-[#006565]">
+                      <span className="material-symbols-outlined">
+                        more_vert
+                      </span>
+                    </button>
                   </div>
                 </div>
-              ))}
-            </div>
+              </header>
 
-            <div className="no-scrollbar flex gap-2 overflow-x-auto border-t border-outline-variant/15 bg-surface px-6 py-3">
-              {quickActions.map((action) => (
-                <button
-                  key={action}
-                  className="shrink-0 rounded-full border border-primary/20 bg-surface-container-lowest px-4 py-2 text-xs font-semibold text-primary transition-all hover:bg-primary hover:text-white"
-                >
-                  {action}
-                </button>
-              ))}
-            </div>
+              <div className="min-h-0 flex-1 overflow-y-auto bg-[#fcfdfd] p-6">
+                <div className="space-y-6">
+                  <div className="flex justify-center">
+                    <span className="rounded-full bg-slate-100 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                      Today
+                    </span>
+                  </div>
 
-            <div className="flex items-center gap-4 bg-white px-6 pb-8 pt-4">
-              <button className="material-symbols-outlined text-outline transition-colors hover:text-primary">
-                attach_file
-              </button>
-
-              <div className="relative flex-1">
-                <input
-                  type="text"
-                  placeholder="Type your message..."
-                  value={messageInput}
-                  onChange={(e) => setMessageInput(e.target.value)}
-                  className="w-full rounded-2xl border-none bg-surface-container-highest px-5 py-3 text-sm focus:ring-2 focus:ring-primary/20"
-                />
+                  {activeMessages.map((message) =>
+                    message.sender === "patient" ? (
+                      <div
+                        key={message.id}
+                        className="flex max-w-[80%] items-end gap-3"
+                      >
+                        <div className="min-w-0">
+                          <div className="rounded-r-2xl rounded-t-2xl bg-[#f1f4f4] p-4 text-sm leading-relaxed text-[#181c1d] shadow-sm">
+                            {message.text}
+                          </div>
+                          <span className="ml-1 mt-1 block text-[10px] text-slate-400">
+                            {message.time}
+                          </span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div
+                        key={message.id}
+                        className="ml-auto flex max-w-[80%] flex-col items-end gap-1"
+                      >
+                        <div className="rounded-l-2xl rounded-t-2xl bg-gradient-to-br from-[#006565] to-[#008080] p-4 text-sm leading-relaxed text-white shadow-md">
+                          {message.text}
+                        </div>
+                        <div className="mr-1 mt-1 flex items-center gap-1">
+                          <span className="text-[10px] text-slate-400">
+                            {message.time}
+                          </span>
+                          <span className="material-symbols-outlined text-[14px] text-[#006565]">
+                            done_all
+                          </span>
+                        </div>
+                      </div>
+                    ),
+                  )}
+                </div>
               </div>
 
-              <button
-                onClick={handleSend}
-                className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-white shadow-lg shadow-primary/20 transition-transform active:scale-95"
-              >
-                <span
-                  className="material-symbols-outlined"
-                  style={{ fontVariationSettings: "'FILL' 1" }}
-                >
-                  send
-                </span>
-              </button>
-            </div>
-          </section>
-        )}
-      </main>
+              <div className="shrink-0 border-t border-slate-100 bg-white px-6 py-3">
+                <div className="flex gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  {quickActions.map((action) => (
+                    <button
+                      key={action}
+                      className="shrink-0 rounded-full border border-[#006565]/15 bg-[#f7fafa] px-4 py-2 text-xs font-semibold text-[#006565] transition-all hover:bg-[#006565] hover:text-white"
+                    >
+                      {action}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-      {!showChatView && (
-        <nav className="fixed bottom-0 left-0 z-50 flex w-full items-center justify-around bg-white/80 px-4 pb-6 pt-2 shadow-[0_-8px_30px_rgba(0,101,101,0.08)] backdrop-blur-xl dark:bg-slate-900/80 md:hidden">
-          {mobileNavItems.map((item) => (
-            <a
-              key={item.label}
-              href="#"
-              className={
-                item.active
-                  ? "flex -translate-y-2 scale-110 flex-col items-center justify-center rounded-2xl bg-[#008080] p-3 text-white transition-all"
-                  : "flex flex-col items-center justify-center p-2 text-slate-400"
-              }
-            >
-              <span
-                className="material-symbols-outlined"
-                style={
-                  item.filled
-                    ? { fontVariationSettings: "'FILL' 1" }
-                    : undefined
-                }
-              >
-                {item.icon}
-              </span>
-              <span className="mt-1 font-body text-[10px] uppercase tracking-wide">
-                {item.label}
-              </span>
-            </a>
-          ))}
-        </nav>
-      )}
+              <div className="shrink-0 border-t border-slate-50 bg-white p-6">
+                <div className="group flex items-center gap-4 rounded-2xl bg-[#ebeeee] px-4 py-3 shadow-inner">
+                  <button className="p-1 text-slate-400 transition-colors hover:text-[#006565]">
+                    <span className="material-symbols-outlined">
+                      attach_file
+                    </span>
+                  </button>
+
+                  <input
+                    type="text"
+                    value={messageInput}
+                    onChange={(e) => setMessageInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleSend();
+                    }}
+                    placeholder="Type your message..."
+                    className="flex-1 border-none bg-transparent text-sm font-medium text-[#181c1d] outline-none focus:ring-0"
+                  />
+
+                  <button
+                    onClick={handleSend}
+                    className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#006565] text-white shadow-lg shadow-[#006565]/20 transition-all hover:scale-105 active:scale-95"
+                  >
+                    <span
+                      className="material-symbols-outlined text-lg"
+                      style={{ fontVariationSettings: "'FILL' 1" }}
+                    >
+                      send
+                    </span>
+                  </button>
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="hidden flex-1 items-center justify-center bg-[#fcfdfd] md:flex">
+              <div className="rounded-3xl bg-white p-10 text-center shadow-sm">
+                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#ebf7f7]">
+                  <span className="material-symbols-outlined text-[#006565]">
+                    chat
+                  </span>
+                </div>
+                <h3 className="text-lg font-bold text-slate-800">
+                  Select a conversation
+                </h3>
+                <p className="mt-2 max-w-sm text-sm font-medium text-slate-500">
+                  Choose a patient conversation from the left panel to start
+                  managing messages.
+                </p>
+              </div>
+            </div>
+          )}
+        </section>
+      </div>
     </div>
   );
 }
