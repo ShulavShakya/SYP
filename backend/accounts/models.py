@@ -8,29 +8,52 @@ from django.db import models
 # -----------------------------
 from django.db import models
 from django.contrib.auth.models import User
-
 class Patient(models.Model):
     BLOOD_GROUP_CHOICES = [
-        ('A+', 'A+'),
-        ('A-', 'A-'),
-        ('B+', 'B+'),
-        ('B-', 'B-'),
-        ('AB+', 'AB+'),
-        ('AB-', 'AB-'),
-        ('O+', 'O+'),
-        ('O-', 'O-'),
+        ('A+', 'A+'), ('A-', 'A-'),
+        ('B+', 'B+'), ('B-', 'B-'),
+        ('AB+', 'AB+'), ('AB-', 'AB-'),
+        ('O+', 'O+'), ('O-', 'O-'),
     ]
 
     user = models.OneToOneField(User, on_delete=models.CASCADE)
+
     dob = models.DateField()
     phone = models.CharField(max_length=15)
     address = models.TextField()
-    blood_group = models.CharField(max_length=3, choices=BLOOD_GROUP_CHOICES, blank=True, null=True)
-    profile_image = models.ImageField(upload_to='media/profile_images/patient/', blank=True, null=True)
+    blood_group = models.CharField(
+        max_length=3,
+        choices=BLOOD_GROUP_CHOICES,
+        blank=True,
+        null=True
+    )
+    GENDER_CHOICES = [
+    ('Male', 'Male'),
+    ('Female', 'Female'),
+    ('Other', 'Other'),
+    ]
+
+    gender = models.CharField(
+    max_length=10,
+    choices=GENDER_CHOICES,
+    blank=True,
+    null=True
+    )
+    profile_image = models.ImageField(
+        upload_to='profile_images/patient/',
+        blank=True,
+        null=True
+    )
+
+    emergency_contact_name = models.CharField(max_length=100, blank=True, null=True)
+    emergency_contact_phone = models.CharField(max_length=15, blank=True, null=True)
+
+    @property
+    def full_name(self):
+        return f"{self.user.first_name} {self.user.last_name}"
 
     def __str__(self):
-        return f"{self.user.username} (Patient)"
-
+        return self.full_name
 # -----------------------------
 # Doctor
 # -----------------------------
@@ -138,7 +161,13 @@ class Appointment(models.Model):
     date = models.DateField()
     time = models.TimeField()
     reason = models.CharField(max_length=255, blank=True)
-    status = models.CharField(max_length=20, default="PENDING")
+
+    STATUS_CHOICES = [
+        ('SCHEDULED', 'Scheduled'),
+        ('COMPLETED', 'Completed'),
+    ]
+
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='SCHEDULED')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

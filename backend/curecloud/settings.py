@@ -25,12 +25,13 @@ SECRET_KEY = 'django-insecure-cu0gjm2g4^)efw3j%ulame(m^!gdzxsr4_dd)w^*s__7c%4g45
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['192.168.254.31', '127.0.0.1', 'localhost']
 
 
 # Application definition
 
 INSTALLED_APPS = [
+    'corsheaders',
     'channels',
     'accounts',
     'django.contrib.admin',
@@ -49,6 +50,7 @@ REST_FRAMEWORK = {
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -76,6 +78,10 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'curecloud.wsgi.application'
 ASGI_APPLICATION = "curecloud.asgi.application"
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:5173','http://192.168.254.48:5173'
+]
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
@@ -146,3 +152,6 @@ ESEWA_PRODUCT_CODE = "EPAYTEST"
 ESEWA_SECRET_KEY = "8gBm/:&EnhH.1/q"
 
 ESEWA_BASE_URL = "https://rc-epay.esewa.com.np/api/epay/main/v2/form"
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+]

@@ -359,38 +359,6 @@ export default function BillingPage() {
                     </button>
                   </div>
                 </div>
-
-                <div className="rounded-2xl border border-mint/20 bg-mint/5 p-6 shadow-sm">
-                  <div className="mb-4 flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                      <ShieldCheck size={20} />
-                    </div>
-                    <h4 className="font-manrope text-lg font-bold text-[#2C3E50]">
-                      Insurance Information
-                    </h4>
-                  </div>
-
-                  <div className="space-y-2 text-sm text-slate-600">
-                    <p>
-                      <span className="font-semibold text-[#2C3E50]">
-                        Provider:
-                      </span>{" "}
-                      Blue Cross Health
-                    </p>
-                    <p>
-                      <span className="font-semibold text-[#2C3E50]">
-                        Policy:
-                      </span>{" "}
-                      #BC-88921-X
-                    </p>
-                    <p>
-                      <span className="font-semibold text-[#2C3E50]">
-                        Coverage:
-                      </span>{" "}
-                      80% Medical, 50% Lab
-                    </p>
-                  </div>
-                </div>
               </aside>
             </div>
           </main>

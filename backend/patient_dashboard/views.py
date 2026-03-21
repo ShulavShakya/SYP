@@ -107,7 +107,7 @@ import base64
 import hashlib
 import requests
 
-from .models import Payment
+from accounts.models import Payment
 from accounts.serializers import AppointmentSerializer
 
 
@@ -215,3 +215,16 @@ def payment_failed(request):
         )
 
     return HttpResponse(" Payment Failed")
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from accounts.models import Appointment
+@api_view(['GET'])
+def appointment_summary(request):
+    appointments = Appointment.objects.values(
+        'date',
+        'doctor_name',
+        'department_name',
+        'time',
+        'status'
+    )
+    return Response(appointments)

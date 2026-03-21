@@ -1,35 +1,39 @@
-import React from "react";
-import { useLocation, useParams } from "react-router-dom";
+import React, { useState } from "react";
+import { useLocation, useParams, useNavigate } from "react-router-dom";
 import {
   CheckCircle2,
   ChevronRight,
-  FlaskConical,
   History,
-  PlusCircle,
   Save,
   Search,
   Stethoscope,
   Trash2,
   Activity,
+  FileText,
+  Plus,
 } from "lucide-react";
 
-const labTests = [
-  { label: "Complete Blood Work", checked: false },
-  { label: "Chest X-Ray", checked: true },
-  { label: "MRI Brain Scan", checked: false },
-  { label: "Lipid Profile", checked: false },
+const frequencyOptions = [
+  "Once daily",
+  "Twice daily (BD)",
+  "Thrice daily (TDS)",
+  "Four times daily (QDS)",
+  "As needed (PRN)",
 ];
 
-const vitals = [
-  { label: "BP (mmHg)", value: "130/85" },
-  { label: "HEART RATE (bpm)", value: "72" },
-  { label: "TEMP (°C)", value: "36.8" },
-  { label: "SpO2 (%)", value: "98" },
-];
+const createEmptyMedicine = () => ({
+  medicineName: "",
+  dosage: "",
+  frequency: "Once daily",
+  duration: "",
+  notes: "",
+});
 
 export default function ConsultationSession() {
   const { id } = useParams();
   const location = useLocation();
+  const navigate = useNavigate();
+
   const patient = location.state?.patient;
 
   const patientData = patient || {
@@ -39,6 +43,62 @@ export default function ConsultationSession() {
     complaint: "No complaint available",
     time: "--:--",
   };
+
+  const [medicines, setMedicines] = useState([
+    {
+      medicineName: "Amlodipine 5mg",
+      dosage: "1 Tablet",
+      frequency: "Once daily (morning)",
+      duration: "",
+      notes: "",
+    },
+  ]);
+
+  const [generalNotes, setGeneralNotes] = useState("");
+
+  const handleMedicineChange = (index, field, value) => {
+    setMedicines((prev) =>
+      prev.map((item, i) => (i === index ? { ...item, [field]: value } : item)),
+    );
+  };
+
+  const addMedicineRow = () => {
+    setMedicines((prev) => [...prev, createEmptyMedicine()]);
+  };
+
+  const removeMedicineRow = (index) => {
+    setMedicines((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  if (!id || !patient) {
+    return (
+      <div className="mx-auto w-full max-w-5xl px-8 py-10">
+        <div className="rounded-2xl border border-[#E0E6ED] bg-white p-10 shadow-sm">
+          <div className="flex flex-col items-center justify-center text-center">
+            <div className="mb-4 rounded-full bg-[#008080]/10 p-4">
+              <Stethoscope className="text-[#008080]" size={32} />
+            </div>
+
+            <h2 className="text-2xl font-bold text-[#2C3E50]">
+              No consultation in progress
+            </h2>
+
+            <p className="mt-3 max-w-md text-sm text-[#7F8C8D]">
+              There is no active consultation session right now. Please go to
+              the patient queue and start a consultation for a patient.
+            </p>
+
+            <button
+              onClick={() => navigate("/doctor/patient-queue")}
+              className="mt-6 rounded-lg bg-[#008080] px-5 py-2.5 text-sm font-bold text-white hover:opacity-90"
+            >
+              Go to Patient Queue
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen flex-col bg-[#F7FAFA] text-[#2C3E50]">
@@ -128,10 +188,10 @@ export default function ConsultationSession() {
           </div>
         </section>
 
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-          <div className="space-y-8 lg:col-span-2">
-            <div className="rounded-xl border border-[#E0E6ED] bg-white p-6 shadow-sm">
-              <div className="mb-4 flex items-center gap-2">
+        <div className="grid grid-cols-1 gap-8">
+          <div className="w-full space-y-8">
+            <div className="rounded-xl border border-[#E0E6ED] bg-white p-8 shadow-sm">
+              <div className="mb-5 flex items-center gap-2">
                 <Activity size={18} className="text-[#008080]" />
                 <h4 className="font-bold text-[#2C3E50]">
                   Symptoms / Chief Complaint
@@ -139,22 +199,22 @@ export default function ConsultationSession() {
               </div>
 
               <textarea
-                rows={3}
+                rows={5}
                 defaultValue={patientData.complaint}
                 placeholder="Describe the patient's current issues and duration..."
                 className="w-full rounded-lg border border-[#E0E6ED] bg-[#F7FAFA] placeholder:text-[#2C3E50]/30 focus:border-[#008080] focus:ring-[#008080]"
               />
             </div>
 
-            <div className="rounded-xl border border-[#E0E6ED] bg-white p-6 shadow-sm">
-              <div className="mb-4 flex items-center gap-2">
+            <div className="rounded-xl border border-[#E0E6ED] bg-white p-8 shadow-sm">
+              <div className="mb-5 flex items-center gap-2">
                 <Stethoscope size={18} className="text-[#008080]" />
                 <h4 className="font-bold text-[#2C3E50]">
                   Diagnosis & Clinical Notes
                 </h4>
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-5">
                 <div>
                   <label className="mb-1 block text-xs font-bold text-[#2C3E50]/60">
                     CLINICAL DIAGNOSIS
@@ -177,7 +237,7 @@ export default function ConsultationSession() {
                     DETAILED DOCTOR NOTES
                   </label>
                   <textarea
-                    rows={6}
+                    rows={8}
                     placeholder="Enter comprehensive consultation details, physical exam findings, and clinical reasoning..."
                     className="w-full rounded-lg border border-[#E0E6ED] bg-[#F7FAFA] focus:border-[#008080] focus:ring-[#008080]"
                   />
@@ -185,136 +245,164 @@ export default function ConsultationSession() {
               </div>
             </div>
 
-            <div className="rounded-xl border border-[#E0E6ED] bg-white p-6 shadow-sm">
-              <div className="mb-4 flex items-center justify-between">
+            <div className="overflow-hidden rounded-xl border border-[#E0E6ED] bg-white shadow-sm">
+              <div className="flex items-center justify-between border-b border-[#E0E6ED] p-6">
                 <div className="flex items-center gap-2">
-                  <PlusCircle size={18} className="text-[#008080]" />
+                  <FileText size={18} className="text-[#008080]" />
                   <h4 className="font-bold text-[#2C3E50]">Prescriptions</h4>
                 </div>
 
-                <button className="flex items-center gap-1 text-sm font-bold text-[#008080] hover:text-[#008080]/80">
-                  <PlusCircle size={18} />
-                  Add Medication
+                <button
+                  type="button"
+                  onClick={addMedicineRow}
+                  className="flex items-center gap-2 rounded-lg bg-[#008080] px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:bg-[#007272]"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Medicine
                 </button>
               </div>
 
-              <div className="overflow-hidden rounded-lg border border-[#E0E6ED]">
-                <table className="w-full text-left text-sm">
-                  <thead className="bg-[#F7FAFA] font-bold text-[#2C3E50]/60">
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse text-left text-sm">
+                  <thead className="border-b border-[#E0E6ED] bg-[#F7FAFA]">
                     <tr>
-                      <th className="px-4 py-3">Drug Name</th>
-                      <th className="px-4 py-3">Dosage</th>
-                      <th className="px-4 py-3">Frequency</th>
-                      <th className="w-10 px-4 py-3" />
+                      <th className="p-4 text-xs font-bold uppercase text-[#7F8C8D]">
+                        Medicine Name
+                      </th>
+                      <th className="p-4 text-xs font-bold uppercase text-[#7F8C8D]">
+                        Dosage
+                      </th>
+                      <th className="p-4 text-xs font-bold uppercase text-[#7F8C8D]">
+                        Frequency
+                      </th>
+                      <th className="p-4 text-xs font-bold uppercase text-[#7F8C8D]">
+                        Duration
+                      </th>
+                      <th className="p-4 text-xs font-bold uppercase text-[#7F8C8D]">
+                        Notes
+                      </th>
+                      <th className="w-16 p-4 text-center text-xs font-bold uppercase text-[#7F8C8D]">
+                        Action
+                      </th>
                     </tr>
                   </thead>
 
                   <tbody className="divide-y divide-[#E0E6ED]">
-                    <tr>
-                      <td className="px-4 py-3 font-medium">Amlodipine 5mg</td>
-                      <td className="px-4 py-3">1 Tablet</td>
-                      <td className="px-4 py-3">Once daily (morning)</td>
-                      <td className="px-4 py-3">
-                        <Trash2
-                          size={16}
-                          className="cursor-pointer text-slate-300 hover:text-red-500"
-                        />
-                      </td>
-                    </tr>
+                    {medicines.map((medicine, index) => (
+                      <tr
+                        key={index}
+                        className="transition-colors hover:bg-gray-50"
+                      >
+                        <td className="p-2">
+                          <input
+                            type="text"
+                            value={medicine.medicineName}
+                            onChange={(e) =>
+                              handleMedicineChange(
+                                index,
+                                "medicineName",
+                                e.target.value,
+                              )
+                            }
+                            placeholder="e.g. Amoxicillin"
+                            className="w-full rounded bg-transparent p-2 transition focus:bg-[#f0fdfa] focus:outline-none focus:ring-2 focus:ring-[#70C1B3]"
+                          />
+                        </td>
 
-                    <tr>
-                      <td className="px-4 py-3">
-                        <input
-                          type="text"
-                          placeholder="Enter drug name..."
-                          className="w-full border-none bg-transparent p-0 text-sm placeholder:italic focus:ring-0"
-                        />
-                      </td>
-                      <td className="px-4 py-3">
-                        <input
-                          type="text"
-                          placeholder="e.g. 500mg"
-                          className="w-full border-none bg-transparent p-0 text-sm focus:ring-0"
-                        />
-                      </td>
-                      <td className="px-4 py-3">
-                        <input
-                          type="text"
-                          placeholder="e.g. Twice daily"
-                          className="w-full border-none bg-transparent p-0 text-sm focus:ring-0"
-                        />
-                      </td>
-                      <td className="px-4 py-3">
-                        <Trash2
-                          size={16}
-                          className="cursor-pointer text-slate-300 hover:text-red-500"
-                        />
-                      </td>
-                    </tr>
+                        <td className="w-32 p-2">
+                          <input
+                            type="text"
+                            value={medicine.dosage}
+                            onChange={(e) =>
+                              handleMedicineChange(
+                                index,
+                                "dosage",
+                                e.target.value,
+                              )
+                            }
+                            placeholder="1 tablet"
+                            className="w-full rounded bg-transparent p-2 transition focus:bg-[#f0fdfa] focus:outline-none focus:ring-2 focus:ring-[#70C1B3]"
+                          />
+                        </td>
+
+                        <td className="w-48 p-2">
+                          <select
+                            value={medicine.frequency}
+                            onChange={(e) =>
+                              handleMedicineChange(
+                                index,
+                                "frequency",
+                                e.target.value,
+                              )
+                            }
+                            className="w-full rounded bg-transparent p-2 transition focus:bg-[#f0fdfa] focus:outline-none focus:ring-2 focus:ring-[#70C1B3]"
+                          >
+                            {frequencyOptions.map((option) => (
+                              <option key={option} value={option}>
+                                {option}
+                              </option>
+                            ))}
+                          </select>
+                        </td>
+
+                        <td className="w-32 p-2">
+                          <input
+                            type="text"
+                            value={medicine.duration}
+                            onChange={(e) =>
+                              handleMedicineChange(
+                                index,
+                                "duration",
+                                e.target.value,
+                              )
+                            }
+                            placeholder="5 days"
+                            className="w-full rounded bg-transparent p-2 transition focus:bg-[#f0fdfa] focus:outline-none focus:ring-2 focus:ring-[#70C1B3]"
+                          />
+                        </td>
+
+                        <td className="p-2">
+                          <input
+                            type="text"
+                            value={medicine.notes}
+                            onChange={(e) =>
+                              handleMedicineChange(
+                                index,
+                                "notes",
+                                e.target.value,
+                              )
+                            }
+                            placeholder="After food"
+                            className="w-full rounded bg-transparent p-2 transition focus:bg-[#f0fdfa] focus:outline-none focus:ring-2 focus:ring-[#70C1B3]"
+                          />
+                        </td>
+
+                        <td className="p-2 text-center">
+                          <button
+                            type="button"
+                            onClick={() => removeMedicineRow(index)}
+                            className="rounded-full p-2 text-red-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                            title="Remove row"
+                          >
+                            <Trash2 className="mx-auto h-5 w-5" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
-            </div>
-          </div>
 
-          <div className="space-y-8">
-            <div className="rounded-xl border border-[#E0E6ED] bg-white p-6 shadow-sm">
-              <div className="mb-6 flex items-center gap-2">
-                <Activity size={18} className="text-[#008080]" />
-                <h4 className="font-bold text-[#2C3E50]">Patient Vitals</h4>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                {vitals.map((item) => (
-                  <div key={item.label} className="space-y-1">
-                    <label className="text-[10px] font-bold text-[#2C3E50]/50">
-                      {item.label}
-                    </label>
-                    <input
-                      type="text"
-                      defaultValue={item.value}
-                      className="w-full rounded-lg border border-[#E0E6ED] bg-[#F7FAFA] text-center font-bold text-[#008080]"
-                    />
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-6 border-t border-[#E0E6ED] pt-4">
-                <p className="text-center text-[10px] font-bold text-[#2C3E50]/40">
-                  LAST UPDATED: 10 MINS AGO
-                </p>
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-[#E0E6ED] bg-white p-6 shadow-sm">
-              <div className="mb-4 flex items-center gap-2">
-                <FlaskConical size={18} className="text-[#008080]" />
-                <h4 className="font-bold text-[#2C3E50]">Order Lab Tests</h4>
-              </div>
-
-              <div className="space-y-3">
-                {labTests.map((test) => (
-                  <label
-                    key={test.label}
-                    className="group flex cursor-pointer items-center gap-3 rounded-lg border border-[#E0E6ED] p-3 transition-colors hover:bg-[#F7FAFA]"
-                  >
-                    <input
-                      type="checkbox"
-                      defaultChecked={test.checked}
-                      className="h-5 w-5 rounded border-[#E0E6ED] text-[#008080] focus:ring-[#008080]"
-                    />
-                    <span className="text-sm font-medium text-[#2C3E50]/80">
-                      {test.label}
-                    </span>
-                  </label>
-                ))}
-              </div>
-
-              <div className="mt-4">
-                <input
-                  type="text"
-                  placeholder="+ Custom lab request"
-                  className="w-full rounded-lg border border-[#E0E6ED] bg-[#F7FAFA] py-2 text-xs"
+              <div className="bg-[#F7FAFA]/50 p-6">
+                <label className="mb-2 block text-xs font-bold uppercase text-[#7F8C8D]">
+                  General Instructions / Diagnosis
+                </label>
+                <textarea
+                  rows={3}
+                  value={generalNotes}
+                  onChange={(e) => setGeneralNotes(e.target.value)}
+                  placeholder="Additional clinical observations or lifestyle advice..."
+                  className="w-full rounded-lg border border-[#E0E6ED] p-3 text-sm focus:border-[#70C1B3] focus:outline-none focus:ring-2 focus:ring-[#70C1B3]"
                 />
               </div>
             </div>
