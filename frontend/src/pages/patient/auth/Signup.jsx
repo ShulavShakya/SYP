@@ -1,5 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { publicAPI } from "../../../auth/config/api.js";
+import { toast } from "react-toastify";
 import {
   User,
   Mail,
@@ -26,6 +28,7 @@ export default function PatientSignup() {
     phone: "",
     dob: "",
     gender: "",
+    bloodGroup: "",
     address: "",
     emergencyContactName: "",
     emergencyContactPhone: "",
@@ -38,7 +41,6 @@ export default function PatientSignup() {
   const [imagePreview, setImagePreview] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [showCpw, setShowCpw] = useState(false);
-  const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
 
   const pwMismatch = useMemo(() => {
@@ -56,6 +58,7 @@ export default function PatientSignup() {
       form.phone.trim() &&
       form.dob.trim() &&
       form.gender.trim() &&
+      form.bloodGroup.trim() &&
       form.address.trim() &&
       form.emergencyContactName.trim() &&
       form.emergencyContactPhone.trim() &&
@@ -69,12 +72,20 @@ export default function PatientSignup() {
   const onChange = (key) => (e) => {
     const value =
       e.target.type === "checkbox" ? e.target.checked : e.target.value;
-    setForm((prev) => ({ ...prev, [key]: value }));
+
+    setForm((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
   };
 
   const onImageChange = (e) => {
     const file = e.target.files?.[0] || null;
-    setForm((prev) => ({ ...prev, profileImage: file }));
+
+    setForm((prev) => ({
+      ...prev,
+      profileImage: file,
+    }));
 
     if (file) {
       setImagePreview(URL.createObjectURL(file));
@@ -83,69 +94,104 @@ export default function PatientSignup() {
     }
   };
 
-  const onSubmit = async (e) => {
-    e.preventDefault();
-    setErr("");
-    setLoading(true);
-
+  const validateForm = () => {
     if (
       !form.fullName ||
       !form.email ||
       !form.phone ||
       !form.dob ||
       !form.gender ||
+      !form.bloodGroup ||
       !form.address ||
       !form.emergencyContactName ||
       !form.emergencyContactPhone ||
       !form.password ||
       !form.confirmPassword
     ) {
-      setErr("Please fill all required fields.");
-      setLoading(false);
-      return;
+      return "Please fill all required fields.";
     }
 
     if (pwMismatch) {
-      setErr("Passwords do not match.");
-      setLoading(false);
-      return;
+      return "Passwords do not match.";
     }
 
     if (!form.agree) {
-      setErr("Please accept the terms to continue.");
-      setLoading(false);
+      return "Please accept the terms to continue.";
+    }
+
+    return "";
+  };
+
+  const buildFormData = () => {
+    const formData = new FormData();
+
+    formData.append("fullname", form.fullName);
+    formData.append("email", form.email);
+    formData.append("password", form.password);
+    formData.append("phone", form.phone);
+    formData.append("dob", form.dob);
+    formData.append("gender", form.gender);
+    formData.append("blood_group", form.bloodGroup);
+    formData.append("address", form.address);
+    formData.append("emergency_contact_name", form.emergencyContactName);
+    formData.append("emergency_contact_phone", form.emergencyContactPhone);
+
+    if (form.profileImage) {
+      formData.append("profile_image", form.profileImage);
+    }
+
+    return formData;
+  };
+
+  const onSubmit = async (e) => {
+    e.preventDefault();
+
+    const validationError = validateForm();
+    if (validationError) {
+      toast.error(validationError);
       return;
     }
 
-    const formData = new FormData();
-    formData.append('fullname', form.fullName);
-    formData.append('email', form.email);
-    formData.append('password', form.password);
-    formData.append('phone', form.phone);
-    formData.append('dob', form.dob);
-    formData.append('gender', form.gender);
-    formData.append('address', form.address);
-    formData.append('emergency_contact_name', form.emergencyContactName);
-    formData.append('emergency_contact_phone', form.emergencyContactPhone);
-    if (form.profileImage) {
-      formData.append('profile_image', form.profileImage);
-    }
+    setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:8000/api/users/register-patient/', {
-        method: 'POST',
-        body: formData,
-      });
+      const formData = buildFormData();
 
-      if (response.ok) {
-        navigate('/login');
-      } else {
-        const data = await response.json();
-        setErr(JSON.stringify(data));
-        // setErr(data.message || 'Registration failed. Please try again.');
-      }
+      const response = await publicAPI.post(
+        "/users/register-patient/",
+        formData,
+        {
+          timeout: 10000,
+        },
+      );
+
+      console.log("Registration success:", response.data);
+
+      toast.success("Account created successfully!");
+
+      setTimeout(() => {
+        navigate("/login");
+      }, 1200);
     } catch (error) {
-      setErr('Network error. Please check your connection.');
+      console.error("Axios error:", error);
+
+      if (error.code === "ERR_NETWORK") {
+        toast.error("Network error. Please check your connection.");
+      } else if (error.code === "ECONNABORTED") {
+        toast.error("Request timed out. Please try again.");
+      } else {
+        const serverData = error.response?.data;
+
+        if (typeof serverData === "string") {
+          toast.error(serverData);
+        } else if (serverData?.message) {
+          toast.error(serverData.message);
+        } else if (serverData?.detail) {
+          toast.error(serverData.detail);
+        } else {
+          toast.error("Registration failed. Please try again.");
+        }
+      }
     } finally {
       setLoading(false);
     }
@@ -203,12 +249,6 @@ export default function PatientSignup() {
               </button>
             </div>
 
-            {err && (
-              <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
-                {err}
-              </div>
-            )}
-
             <form onSubmit={onSubmit} className="space-y-8">
               <SectionTitle
                 icon={<User size={18} />}
@@ -259,11 +299,11 @@ export default function PatientSignup() {
                 />
 
                 <SelectField
-  label="Blood Group"
-  value={form.bloodGroup}
-  onChange={onChange("bloodGroup")}
-  options={["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"]}
-/>
+                 label="Blood Group"
+                 value={form.bloodGroup}
+                 onChange={onChange("bloodGroup")}
+                 options={["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"]}
+                />
 
                 <div className="md:col-span-2">
                   <Field
@@ -387,19 +427,19 @@ export default function PatientSignup() {
 
               <button
                 type="submit"
-                disabled={!canSubmit}
+                disabled={!canSubmit || loading}
                 className={[
                   "group flex w-full items-center justify-center gap-2 rounded-xl py-4 font-bold text-white transition-all",
-                  canSubmit
+                  canSubmit && !loading
                     ? "bg-[#008080] hover:bg-[#007070]"
                     : "cursor-not-allowed bg-slate-300",
                 ].join(" ")}
               >
-                Create Account
+                {loading ? "Creating Account..." : "Create Account"}
                 <ArrowRight
                   size={18}
                   className={
-                    canSubmit
+                    canSubmit && !loading
                       ? "transition-transform group-hover:translate-x-1"
                       : ""
                   }
@@ -433,12 +473,16 @@ function Field({ label, icon, type = "text", ...props }) {
     <div className="flex flex-col gap-2">
       <label className="text-sm font-semibold text-slate-700">{label}</label>
       <div className="relative">
-        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
-          {icon}
-        </span>
+        {icon && (
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+            {icon}
+          </span>
+        )}
         <input
           type={type}
-          className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-4 text-sm text-slate-700 outline-none transition-all placeholder:text-slate-400 focus:border-[#008080] focus:ring-2 focus:ring-[#008080]/20"
+          className={`w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pr-4 text-sm text-slate-700 outline-none transition-all placeholder:text-slate-400 focus:border-[#008080] focus:ring-2 focus:ring-[#008080]/20 ${
+            icon ? "pl-10" : "pl-4"
+          }`}
           {...props}
         />
       </div>
@@ -451,12 +495,16 @@ function SelectField({ label, icon, options, ...props }) {
     <div className="flex flex-col gap-2">
       <label className="text-sm font-semibold text-slate-700">{label}</label>
       <div className="relative">
-        <span className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-slate-400">
-          {icon}
-        </span>
+        {icon && (
+          <span className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-slate-400">
+            {icon}
+          </span>
+        )}
 
         <select
-          className="h-[48px] w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-10 text-sm text-slate-700 outline-none transition-all focus:border-[#008080] focus:ring-2 focus:ring-[#008080]/20"
+          className={`h-[48px] w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 py-3 pr-10 text-sm text-slate-700 outline-none transition-all focus:border-[#008080] focus:ring-2 focus:ring-[#008080]/20 ${
+            icon ? "pl-10" : "pl-4"
+          }`}
           {...props}
         >
           <option value="">Select</option>
