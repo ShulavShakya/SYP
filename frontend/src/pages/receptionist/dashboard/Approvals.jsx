@@ -1,299 +1,405 @@
 import React from "react";
 import {
-  Download,
-  Eye,
-  Hospital,
-  Bell,
-  Settings,
   Search,
-  ArrowRight,
+  Bell,
+  HelpCircle,
+  Filter,
+  Download,
+  ChevronLeft,
+  ChevronRight,
+  Plus,
+  TrendingUp,
+  Eye,
+  MoreVertical,
+  Clock3,
+  CheckCircle2,
+  XCircle,
+  AlertTriangle,
 } from "lucide-react";
 
-const requests = [
+const summaryCards = [
   {
-    id: "#REQ-1024",
-    name: "Alice Johnson",
-    avatar:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuChZgI7O-zw0l31_8Ah2SJCmmTECcT8nOVAzrXia7fx3OJiB1RZrgg1Q1Y6zRo_6QuwL5BPfjtGXMOAE6_wCTYpp5BgjPqaS5Abit0m6e5CNW8P85OM7UvvO54nlv3gCoois9Iix8sfLpSBLTzmyGH6VXdw2fS_vouZbl_CJXw05fruz4qcHkmeTbQ01iCcuGGlDLxrr7308j3d5L7ckCajzNuEY9bkUBYkNDPblyxL_LpgOBeKf9t0uCUzbcKZLU0EzE87fIq8G7sT",
-    type: "Insurance Verification",
-    doctor: "Dr. Smith",
-    date: "Oct 24, 2023",
-    status: "Pending",
+    label: "Pending Requests",
+    value: "18",
+    badge: "+12% vs last week",
+    badgeIcon: TrendingUp,
+    badgeClassName: "text-teal-600",
+    accentClassName: "bg-teal-100",
+    icon: Clock3,
+    iconClassName: "bg-teal-100 text-teal-700",
   },
   {
-    id: "#REQ-1025",
-    name: "Bob Wilson",
-    avatar:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuAjbqLWVTg-7-bj2_KKu_DCk5mklaseT2X4ALhk7jhs3pwZpHTxYhSj3pK3shqB8g1TLJ6TZYPn0-zYVHpq0pkJncUt7NSP494Cn55vF8mnGRnReA5t-xzYgIgePl3tc1wdOsbhDBXUAR9wIyOS4hUL-8nHexGuTWiNBqhVHEUdmVabzHI2wB1mbvaJon7QpD2-hCC6fD6IG-B26xSZS61E5-1D-30ZQIHT3T4lneWG83yRhZsK_Ilxi79S9eocxb9MvlwCH2lalu0H",
-    type: "Emergency Appointment",
-    doctor: "Dr. Adams",
-    date: "Oct 24, 2023",
-    status: "Approved",
+    label: "Approved Today",
+    value: "42",
+    accentClassName: "bg-emerald-100",
+    icon: CheckCircle2,
+    iconClassName: "bg-emerald-100 text-emerald-700",
   },
   {
-    id: "#REQ-1026",
-    name: "Charlie Brown",
-    avatar:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuAzO_tQs73I_rfuxtU6WmKXAS1G_S0qH2qbGZXBm4LNYNdZLpL4RpLim6YMHbUv3pj3oKRc_NI7Ko6tMwb8ikk9B4qfGPiyInktrMzQmEtbuxkziLD_eqOW_Srf0H-hbaT0ClxLYYPJSEK8oq1-FMoo6VPjXKYNNrKONOCewkcJcImL9x794vUYaVt5bP3cAEshNhPYpGGL6FdFmuMxqmeq8JBQ1tMBfCxcEOzqO89KD6dwKS94wza7XFpcO03Gu0j3hLUuLc0JB_R6",
-    type: "Special Consultation",
-    doctor: "Dr. Lee",
-    date: "Oct 23, 2023",
-    status: "Rejected",
+    label: "Rejected Today",
+    value: "5",
+    accentClassName: "bg-red-100",
+    icon: XCircle,
+    iconClassName: "bg-red-100 text-red-700",
   },
   {
-    id: "#REQ-1027",
-    name: "Diana Prince",
-    avatar:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuDr2uBLDYiIRH_MdjosEpwB-IgPMTCRLhl4bWeSndMjsJvEFEekV1E73V_feSJI97mPNR3ePDQjMlpLhVsYr2lW-QbwqBXrFg6T92nS53x6ix07y3eJ66nb1Pko5-_pB1FZOf--ENZFjOeTwvXe5uP2kY7hJs-ohpEp95V_syuAY1w1bmvHdC1Ry4p5g5ybYXAdGTPb9iHJjy9ChuUL94ZG2lUpQ5SKl5ZCp4ToWTxHz0UkbPibqbCKhSNkd_znhFfD_J5kGunALaZu",
-    type: "Insurance Verification",
-    doctor: "Dr. Smith",
-    date: "Oct 23, 2023",
-    status: "Pending",
+    label: "Urgent Items",
+    value: "3",
+    pill: "Urgent",
+    pillClassName: "bg-amber-100 text-amber-700",
+    accentClassName: "bg-amber-100",
+    icon: AlertTriangle,
+    iconClassName: "bg-amber-100 text-amber-700",
   },
 ];
 
-const statusStyles = {
-  Pending: "bg-amber-100 text-amber-800",
-  Approved: "bg-emerald-100 text-emerald-800",
-  Rejected: "bg-rose-100 text-rose-800",
-};
+const filters = [
+  "All",
+  "Doctor Requests",
+  "Receptionist Requests",
+  "Billing Adjustments",
+  "Prescription Reviews",
+  "Schedule Changes",
+];
 
-export default function ApprovalRequests() {
+const approvals = [
+  {
+    id: "#REQ-101",
+    type: "Leave Request",
+    submittedBy: "Dr. James Wilson",
+    department: "Cardiology",
+    date: "Oct 24, 2023",
+    priority: "High",
+    priorityClass: "bg-red-100 text-red-700",
+    status: "Pending",
+    statusClass: "bg-amber-100 text-amber-700",
+    dotClass: "bg-amber-500",
+    avatar:
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuBGZ5yzaBzG59_ymM3tJ60jK4Kmac9U_859UJKBDNPUwzAzp2u2kG9bmeuDxoZYGwuhKlLY60CDgexRBeJ1RYNI9EKf176rcZYTMQ0OmH6N3BflAGWRxHTOIeQ690OVBCHEzRcqvf0mOjTNe3MRc4cQt8X392_28WMJCtndtJ1xcsEbPdXVXXTHZhzVdWcenKKuySfQ-EON_zZbyTfBZ37KbVz1cNJVsLC2k3zUqYIUFVYhdN0574JY--SSlgThnAhMcx67vTQHS_p1",
+    avatarAlt: "Portrait of Dr. James Wilson",
+  },
+  {
+    id: "#REQ-102",
+    type: "Budget Approval",
+    submittedBy: "Elena Martinez",
+    department: "Operations",
+    date: "Oct 24, 2023",
+    priority: "Medium",
+    priorityClass: "bg-amber-100 text-amber-700",
+    status: "Approved",
+    statusClass: "bg-emerald-100 text-emerald-700",
+    dotClass: "bg-emerald-600",
+    avatar:
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuAVxhkunA1NrUI0vtiC1jS7eyLV4BNDuDgI1-B3XVD74jrif9Xl8pBgwqz8wmZSZ0ye2FPv4gu6NSNmoIW3bYmyeAS3qO1QOVOL2Yxx1nLXWL0q_RoiMVdkSrwNl-dbG4CpupISKf3Qm96ShVSHtLIifagZc0IKzrpFPeTrYDypMkIq-mv0gUR1GmKaVvcFSpT12VUgL04f7KFXnCFOnSfkXFKXmvK4FlM3plw7pgK9Rqt7rJpvgrFHWaJOVPR16yFyCcS9OquKF1pP",
+    avatarAlt: "Portrait of Elena Martinez",
+  },
+  {
+    id: "#REQ-103",
+    type: "Prescription Review",
+    submittedBy: "Dr. Robert Glass",
+    department: "Pharmacy",
+    date: "Oct 23, 2023",
+    priority: "Low",
+    priorityClass: "bg-blue-100 text-blue-700",
+    status: "Pending",
+    statusClass: "bg-amber-100 text-amber-700",
+    dotClass: "bg-amber-500",
+    avatar:
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuDNBsPAfwlmupcQuevJypEs0cuZrXPQ8CpPuugLtQ5Ml1lRFNl7DAMCGOEN5jvZII7QCmZwNsVLb-UmcjI0XEyp7riGkSXiUlNI9HtD1dIn3kiWmo6WjrR_VIM1duQFtssBNdsmOcsaxzeYFBRpApG0JJwMi-0uAXjNC0FhNjV3Hgs4huoITanKSvJNt22nmXfjlc6bABkgp1bEnSikN6i8Bj-1t7cOnY_8H4a31lLJB3IZpZARqwZgBn_T82poUvuYMMjRVQUbqc4R",
+    avatarAlt: "Portrait of Dr. Robert Glass",
+  },
+  {
+    id: "#REQ-104",
+    type: "Schedule Change",
+    submittedBy: "Sarah Miller",
+    department: "Reception",
+    date: "Oct 23, 2023",
+    priority: "Medium",
+    priorityClass: "bg-amber-100 text-amber-700",
+    status: "Rejected",
+    statusClass: "bg-red-100 text-red-700",
+    dotClass: "bg-red-600",
+    initials: "SM",
+    initialsClass: "bg-slate-200 text-slate-600",
+  },
+];
+
+function SummaryCard({
+  label,
+  value,
+  badge,
+  badgeIcon: BadgeIcon,
+  badgeClassName = "text-teal-600",
+  pill,
+  pillClassName = "bg-teal-50 text-teal-700",
+  accentClassName = "bg-teal-100",
+  icon: Icon,
+  iconClassName = "bg-teal-100 text-teal-700",
+}) {
   return (
-    <div className="min-h-screen bg-background-light font-display text-slate-900">
-      <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden">
-        <div className="layout-container flex h-full grow flex-col">
-          {/* <header className="flex items-center justify-between whitespace-nowrap border-b border-slate-200 bg-white px-10 py-3">
-            <div className="flex items-center gap-8">
-              <div className="flex items-center gap-4 text-primary">
-                <div className="flex size-6 items-center justify-center">
-                  <Hospital className="h-7 w-7" />
-                </div>
-                <h2 className="text-lg font-bold leading-tight tracking-tight text-slate-900">
-                  Modern Wellness
-                </h2>
-              </div>
+    <div className="group relative overflow-hidden rounded-2xl border border-slate-200/60 bg-white p-6 shadow-[0_4px_20px_rgba(0,101,101,0.03)] transition-all hover:shadow-md">
+      <div
+        className={`absolute right-0 top-0 h-24 w-24 rounded-bl-full opacity-60 transition-transform group-hover:scale-110 ${accentClassName}`}
+      />
 
-              <nav className="flex items-center gap-6">
-                <a
-                  className="text-sm font-medium text-slate-600 transition-colors hover:text-primary"
-                  href="#"
-                >
-                  Dashboard
-                </a>
-                <a
-                  className="text-sm font-medium text-slate-600 transition-colors hover:text-primary"
-                  href="#"
-                >
-                  Patients
-                </a>
-                <a
-                  className="text-sm font-medium text-slate-600 transition-colors hover:text-primary"
-                  href="#"
-                >
-                  Schedules
-                </a>
-                <a
-                  className="border-b-2 border-primary pb-1 text-sm font-bold text-primary"
-                  href="#"
-                >
-                  Approvals
-                </a>
-              </nav>
-            </div>
-
-            <div className="flex flex-1 items-center justify-end gap-6">
-              <label className="flex h-10 min-w-40 max-w-64 flex-col">
-                <div className="flex h-full w-full flex-1 items-stretch rounded-lg bg-slate-100">
-                  <div className="flex items-center justify-center pl-4 text-slate-500">
-                    <Search className="h-5 w-5" />
-                  </div>
-                  <input
-                    className="form-input flex w-full min-w-0 flex-1 border-none bg-transparent px-2 text-base font-normal placeholder:text-slate-500 focus:ring-0"
-                    placeholder="Search requests..."
-                    defaultValue=""
-                  />
-                </div>
-              </label>
-
-              <div className="flex gap-2">
-                <button className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 text-slate-700 transition-colors hover:bg-slate-200">
-                  <Bell className="h-5 w-5" />
-                </button>
-                <button className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 text-slate-700 transition-colors hover:bg-slate-200">
-                  <Settings className="h-5 w-5" />
-                </button>
-              </div>
-
-              <div className="size-10 rounded-full border border-slate-200 bg-cover bg-center bg-no-repeat">
-                <img
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuBZc5pNUxrRmHIGjlEqEpOUyrPnAeGsZ64Lse0ZDTOIaET3L8KSR68ekEtrAa07tCWX4EGa9gfxUww3pmXLiWVw1zaU3jgEwgJ1JQKTOeq-20BNazfjguwKBWDYMI8tjIM1Vec_Eqrdbgt9wNSNjx0qqq88i4eeCm_f7VWecr_tK0-3F2YK_eVr4NAT09iWt5ZIW7j-NZnU1QAUfkssQK4e6sZ0DWuWAgI4vN2rgU5SitXZcSbkNE_-kvR6LFVIbdcOwm821eR6izWs"
-                  alt="Receptionist avatar"
-                  className="h-full w-full rounded-full object-cover"
-                />
-              </div>
-            </div>
-          </header> */}
-
-          <main className="flex flex-1 px-10 py-8">
-            <div className="flex flex-1 flex-col gap-6">
-              {/* <div className="flex items-end justify-between">
-                <div>
-                  <h2 className="text-3xl font-black tracking-tight text-slate-900">
-                    Approval Requests
-                  </h2>
-                  <p className="mt-1 text-slate-500">
-                    Manage and review pending patient requests and insurance
-                    verifications.
-                  </p>
-                </div>
-
-                <div className="flex gap-3">
-                  <button className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm transition-colors hover:bg-slate-50">
-                    <Download className="h-4 w-4" />
-                    Export Report
-                  </button>
-                </div>
-              </div> */}
-
-              <div className="flex border-b border-slate-200">
-                <button className="border-b-2 border-primary px-6 py-3 text-sm font-bold text-primary">
-                  All Requests
-                </button>
-                <button className="px-6 py-3 text-sm font-medium text-slate-500 transition-colors hover:text-slate-700">
-                  Pending
-                </button>
-                <button className="px-6 py-3 text-sm font-medium text-slate-500 transition-colors hover:text-slate-700">
-                  Approved
-                </button>
-                <button className="px-6 py-3 text-sm font-medium text-slate-500 transition-colors hover:text-slate-700">
-                  Rejected
-                </button>
-              </div>
-
-              <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left">
-                    <thead>
-                      <tr className="border-b border-slate-200 bg-slate-50">
-                        <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">
-                          Request ID
-                        </th>
-                        <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">
-                          Patient Name
-                        </th>
-                        <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">
-                          Type
-                        </th>
-                        <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">
-                          Doctor
-                        </th>
-                        <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">
-                          Date
-                        </th>
-                        <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">
-                          Status
-                        </th>
-                        <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">
-                          Actions
-                        </th>
-                      </tr>
-                    </thead>
-
-                    <tbody className="divide-y divide-slate-200">
-                      {requests.map((request) => (
-                        <tr
-                          key={request.id}
-                          className="transition-colors hover:bg-slate-50/50"
-                        >
-                          <td className="px-6 py-4 text-sm font-medium text-slate-900">
-                            {request.id}
-                          </td>
-
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-3">
-                              <div className="h-8 w-8 rounded-full bg-slate-200">
-                                <img
-                                  src={request.avatar}
-                                  alt={request.name}
-                                  className="h-full w-full rounded-full object-cover"
-                                />
-                              </div>
-                              <span className="text-sm font-semibold text-slate-700">
-                                {request.name}
-                              </span>
-                            </div>
-                          </td>
-
-                          <td className="px-6 py-4 text-sm text-slate-600">
-                            {request.type}
-                          </td>
-                          <td className="px-6 py-4 text-sm text-slate-600">
-                            {request.doctor}
-                          </td>
-                          <td className="px-6 py-4 text-sm text-slate-600">
-                            {request.date}
-                          </td>
-
-                          <td className="px-6 py-4">
-                            <span
-                              className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold ${statusStyles[request.status]}`}
-                            >
-                              {request.status}
-                            </span>
-                          </td>
-
-                          <td className="px-6 py-4">
-                            {request.status === "Pending" ? (
-                              <div className="flex items-center gap-2">
-                                <button className="rounded bg-primary px-3 py-1 text-xs font-bold text-white transition-colors hover:bg-primary/90">
-                                  Approve
-                                </button>
-                                <button className="rounded bg-rose-100 px-3 py-1 text-xs font-bold text-rose-700 transition-colors hover:bg-rose-200">
-                                  Reject
-                                </button>
-                                <a
-                                  className="p-1 text-slate-400 transition-colors hover:text-primary"
-                                  href="#"
-                                >
-                                  <Eye className="h-5 w-5" />
-                                </a>
-                              </div>
-                            ) : (
-                              <div className="flex items-center gap-2">
-                                <a
-                                  className="flex items-center gap-1 text-xs font-bold text-primary hover:underline"
-                                  href="#"
-                                >
-                                  View Details
-                                  <ArrowRight className="h-4 w-4" />
-                                </a>
-                              </div>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50 px-6 py-4">
-                  <p className="text-xs font-medium tracking-wide text-slate-500">
-                    Showing 1 to 4 of 24 requests
-                  </p>
-                  <div className="flex gap-2">
-                    <button className="rounded border border-slate-200 bg-white px-3 py-1 text-xs font-bold text-slate-600 transition-colors hover:bg-slate-50">
-                      Previous
-                    </button>
-                    <button className="rounded border border-slate-200 bg-white px-3 py-1 text-xs font-bold text-slate-600 transition-colors hover:bg-slate-50">
-                      Next
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </main>
+      <div className="mb-4 flex items-center justify-between">
+        <div
+          className={`flex h-12 w-12 items-center justify-center rounded-xl ${iconClassName}`}
+        >
+          {Icon && <Icon size={22} />}
         </div>
+
+        {badge && BadgeIcon && (
+          <span
+            className={`flex items-center text-xs font-bold ${badgeClassName}`}
+          >
+            <BadgeIcon size={12} className="mr-1" />
+            {badge}
+          </span>
+        )}
+
+        {pill && (
+          <span
+            className={`rounded-full px-2 py-1 text-[10px] font-bold ${pillClassName}`}
+          >
+            {pill}
+          </span>
+        )}
+      </div>
+
+      <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-slate-500">
+        {label}
+      </p>
+
+      <h3 className="font-['Manrope',sans-serif] text-3xl font-extrabold text-slate-900">
+        {value}
+      </h3>
+    </div>
+  );
+}
+
+function FilterChip({ label, active = false }) {
+  return (
+    <button
+      className={
+        active
+          ? "rounded-full bg-teal-700 px-5 py-2 text-sm font-bold text-white shadow-sm"
+          : "rounded-full bg-white px-5 py-2 text-sm font-semibold text-slate-600 ring-1 ring-slate-200 transition hover:bg-slate-50"
+      }
+    >
+      {label}
+    </button>
+  );
+}
+
+function ApprovalRow({
+  id,
+  type,
+  submittedBy,
+  department,
+  date,
+  priority,
+  priorityClass,
+  status,
+  statusClass,
+  dotClass,
+  avatar,
+  avatarAlt,
+  initials,
+  initialsClass = "bg-slate-200 text-slate-600",
+}) {
+  const isPending = status === "Pending";
+
+  return (
+    <tr className="transition-colors hover:bg-slate-50/70">
+      <td className="px-6 py-5">
+        <span className="font-mono text-sm font-bold text-teal-700">{id}</span>
+      </td>
+
+      <td className="px-6 py-5">
+        <p className="text-sm font-semibold text-slate-900">{type}</p>
+      </td>
+
+      <td className="px-6 py-5">
+        <div className="flex items-center gap-3">
+          {avatar ? (
+            <img
+              src={avatar}
+              alt={avatarAlt}
+              className="h-10 w-10 rounded-xl object-cover"
+            />
+          ) : (
+            <div
+              className={`flex h-10 w-10 items-center justify-center rounded-xl text-sm font-bold ${initialsClass}`}
+            >
+              {initials}
+            </div>
+          )}
+
+          <div>
+            <p className="text-sm font-bold text-slate-900">{submittedBy}</p>
+            <p className="text-xs text-slate-400">{department}</p>
+          </div>
+        </div>
+      </td>
+
+      <td className="px-6 py-5 text-sm font-medium text-slate-600">{date}</td>
+
+      <td className="px-6 py-5">
+        <span
+          className={`inline-flex rounded-full px-3 py-1 text-xs font-bold ${priorityClass}`}
+        >
+          {priority}
+        </span>
+      </td>
+
+      <td className="px-6 py-5">
+        <span
+          className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-bold ${statusClass}`}
+        >
+          <span className={`mr-2 h-1.5 w-1.5 rounded-full ${dotClass}`} />
+          {status}
+        </span>
+      </td>
+
+      <td className="px-6 py-5 text-right">
+        <div className="flex items-center justify-end gap-2">
+          <button className="rounded-lg p-2 text-teal-700 transition-colors hover:bg-teal-50">
+            <Eye size={18} />
+          </button>
+
+          {isPending ? (
+            <>
+              <button className="rounded-xl bg-teal-700 px-3 py-2 text-xs font-bold text-white transition-colors hover:bg-teal-800">
+                Approve
+              </button>
+              <button className="rounded-xl bg-slate-100 px-3 py-2 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-200">
+                Reject
+              </button>
+            </>
+          ) : (
+            <button className="rounded-lg p-2 text-slate-600 transition-colors hover:bg-slate-100">
+              <MoreVertical size={18} />
+            </button>
+          )}
+        </div>
+      </td>
+    </tr>
+  );
+}
+
+export default function ApprovalManagement() {
+  return (
+    <div className="w-full bg-[#f7fafa] text-slate-900">
+      <TopBar />
+
+      <div className="w-full px-4 py-6 sm:px-6 lg:px-8 xl:px-10">
+        <div className="mb-8">
+          <h2 className="font-['Manrope',sans-serif] text-3xl font-extrabold tracking-tight text-slate-900">
+            Approval Management
+          </h2>
+          <p className="mt-1 font-medium text-slate-500">
+            Review and process clinical and administrative requests with
+            surgical precision.
+          </p>
+        </div>
+        <div className="w-full max-w-none">
+          <div className="mb-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {summaryCards.map((card) => (
+              <SummaryCard key={card.label} {...card} />
+            ))}
+          </div>
+
+          <div className="mb-6 flex flex-wrap items-center gap-3 rounded-2xl bg-slate-100 p-4">
+            {filters.map((filter, index) => (
+              <FilterChip key={filter} label={filter} active={index === 0} />
+            ))}
+          </div>
+
+          <div className="overflow-hidden rounded-3xl bg-white shadow-[0px_8px_32px_rgba(0,101,101,0.04)] ring-1 ring-slate-200/60">
+            <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5">
+              <h3 className="font-['Manrope',sans-serif] text-xl font-bold text-slate-900">
+                Queue Overview
+              </h3>
+
+              <div className="flex items-center gap-2">
+                <button className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-teal-700">
+                  <Filter size={18} />
+                </button>
+                <button className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-teal-700">
+                  <Download size={18} />
+                </button>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[980px] border-collapse text-left">
+                <thead>
+                  <tr className="bg-slate-100/70">
+                    <th className="px-6 py-5 text-xs font-bold uppercase tracking-widest text-slate-500">
+                      Request ID
+                    </th>
+                    <th className="px-6 py-5 text-xs font-bold uppercase tracking-widest text-slate-500">
+                      Type
+                    </th>
+                    <th className="px-6 py-5 text-xs font-bold uppercase tracking-widest text-slate-500">
+                      Submitted By
+                    </th>
+                    <th className="px-6 py-5 text-xs font-bold uppercase tracking-widest text-slate-500">
+                      Date
+                    </th>
+                    <th className="px-6 py-5 text-xs font-bold uppercase tracking-widest text-slate-500">
+                      Priority
+                    </th>
+                    <th className="px-6 py-5 text-xs font-bold uppercase tracking-widest text-slate-500">
+                      Status
+                    </th>
+                    <th className="px-6 py-5 text-right text-xs font-bold uppercase tracking-widest text-slate-500">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+
+                <tbody className="divide-y divide-slate-100">
+                  {approvals.map((item) => (
+                    <ApprovalRow key={item.id} {...item} />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="flex items-center justify-between bg-slate-50 px-6 py-5">
+              <p className="text-sm font-medium text-slate-500">
+                Showing 1-4 of 18 pending requests
+              </p>
+
+              <div className="flex items-center gap-2">
+                <button
+                  disabled
+                  className="rounded-lg p-2 text-slate-400 transition-colors disabled:opacity-50"
+                >
+                  <ChevronLeft size={18} />
+                </button>
+                <button className="h-8 w-8 rounded-lg bg-teal-700 text-sm font-bold text-white">
+                  1
+                </button>
+                <button className="h-8 w-8 rounded-lg text-sm font-bold text-slate-600 transition-colors hover:bg-slate-200">
+                  2
+                </button>
+                <button className="h-8 w-8 rounded-lg text-sm font-bold text-slate-600 transition-colors hover:bg-slate-200">
+                  3
+                </button>
+                <button className="rounded-lg p-2 text-slate-400 transition-colors hover:text-teal-700">
+                  <ChevronRight size={18} />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <button className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-teal-700 text-white shadow-2xl md:hidden">
+          <Plus size={22} />
+        </button>
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const BASE_URL = "http://192.168.254.31:8000/api";
+const BASE_URL = "http://10.113.201.239:8000/api";
 
 // Public API
 export const publicAPI = axios.create({
@@ -24,16 +24,16 @@ privateAPI.interceptors.request.use(
 
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 );
 
 // Optional: response interceptor (pass-through only)
 publicAPI.interceptors.response.use(
   (response) => response,
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 );
 
 privateAPI.interceptors.response.use(
   (response) => response,
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 );

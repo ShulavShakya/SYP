@@ -38,6 +38,7 @@ import BillingManagement from "../pages/admin/dashboard/BillingManagement.jsx";
 import ManageMessages from "../pages/admin/dashboard/ManageMessages.jsx";
 import AddDoctor from "../pages/admin/dashboard/AddDoctor.jsx";
 import AddReceptionist from "../pages/admin/dashboard/AddReceptionist.jsx";
+import ApprovalManagement from "../pages/admin/dashboard/ApprovalManagement.jsx";
 
 export default [
   { path: "/", element: <Landing /> },
@@ -121,6 +122,7 @@ export default [
       { path: "manage-messages", element: <ManageMessages /> },
       { path: "add-doctor", element: <AddDoctor /> },
       { path: "add-receptionist", element: <AddReceptionist /> },
+      { path: "approval-management", element: <ApprovalManagement /> },
     ],
   },
 ];

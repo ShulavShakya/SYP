@@ -23,18 +23,15 @@ export function AuthProvider({ children }) {
   }, []);
 
   const login = ({ access, refresh, role, username, keepSignedIn }) => {
-    const primaryStorage = keepSignedIn ? localStorage : sessionStorage;
-    const otherStorage = keepSignedIn ? sessionStorage : localStorage;
+    const storage = keepSignedIn ? localStorage : sessionStorage;
 
-    otherStorage.removeItem("access");
-    otherStorage.removeItem("refresh");
-    otherStorage.removeItem("role");
-    otherStorage.removeItem("username");
+    localStorage.clear();
+    sessionStorage.clear();
 
-    primaryStorage.setItem("access", access);
-    primaryStorage.setItem("refresh", refresh);
-    primaryStorage.setItem("role", role);
-    primaryStorage.setItem("username", username);
+    storage.setItem("access", access);
+    storage.setItem("refresh", refresh);
+    storage.setItem("role", role);
+    storage.setItem("username", username);
 
     setUser({ access, refresh, role, username });
   };

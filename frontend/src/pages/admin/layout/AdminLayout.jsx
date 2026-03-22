@@ -39,7 +39,7 @@ const navItems = [
     icon: CalendarDays,
   },
   { label: "Billing", to: "/admin/billing-management", icon: Wallet },
-  // { label: "Approvals", to: "/admin/approvals", icon: ShieldCheck },
+  { label: "Approvals", to: "/admin/approval-management", icon: ShieldCheck },
   // { label: "Messages", to: "/admin/manage-messages", icon: MessageSquare },
 ];
 
@@ -50,7 +50,7 @@ const pageTitles = {
   "/admin/receptionist-management": "Receptionists",
   "/admin/appointment-management": "Appointments",
   "/admin/billing-management": "Billing",
-  // "/admin/approvals": "Approvals",
+  "/admin/approval-management": "Approvals",
   // "/admin/manage-messages": "Messages",
 };
 
