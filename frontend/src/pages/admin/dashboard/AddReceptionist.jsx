@@ -133,16 +133,6 @@ export default function AddReceptionist() {
     }));
   };
 
-  const togglePermission = (key) => {
-    setForm((prev) => ({
-      ...prev,
-      permissions: {
-        ...prev.permissions,
-        [key]: !prev.permissions[key],
-      },
-    }));
-  };
-
   const onSubmit = (e) => {
     e.preventDefault();
     setErr("");
@@ -190,7 +180,7 @@ export default function AddReceptionist() {
   return (
     <div className="min-h-screen bg-[#f7fafa] text-slate-900 md:flex">
       <main className="flex-1">
-        <div className="mx-auto w-full max-w-7xl px-4 py-8 pb-32 md:px-8">
+        <div className="mx-auto w-full max-w-5xl px-4 py-8 pb-32 md:px-8">
           {/* <header className="sticky top-0 z-30 mb-8 flex h-16 items-center justify-between border-b border-teal-900/5 bg-white/80 px-4 backdrop-blur-xl md:px-8">
             <div className="flex items-center gap-4">
               <button type="button" className="text-slate-700 md:hidden">
@@ -259,11 +249,8 @@ export default function AddReceptionist() {
             </div>
           )}
 
-          <form
-            onSubmit={onSubmit}
-            className="grid grid-cols-1 gap-8 lg:grid-cols-3"
-          >
-            <div className="space-y-8 lg:col-span-2">
+          <form onSubmit={onSubmit} className="w-full">
+            <div className="space-y-8">
               <section className="rounded-2xl border border-slate-200/70 bg-white p-6 shadow-sm md:p-8">
                 <SectionTitle
                   icon={<User size={18} />}
@@ -424,7 +411,7 @@ export default function AddReceptionist() {
                 </div>
               </section>
 
-              <section className="rounded-2xl border border-slate-200/70 bg-white p-6 shadow-sm md:p-8">
+              {/* <section className="rounded-2xl border border-slate-200/70 bg-white p-6 shadow-sm md:p-8">
                 <SectionTitle
                   icon={<ShieldCheck size={18} />}
                   title="Responsibilities & Access"
@@ -487,7 +474,7 @@ export default function AddReceptionist() {
                     />
                   </div>
                 </div>
-              </section>
+              </section> */}
 
               <section className="rounded-2xl border border-slate-200/70 bg-white p-6 shadow-sm md:p-8">
                 <SectionTitle
@@ -535,7 +522,7 @@ export default function AddReceptionist() {
               </section>
             </div>
 
-            <aside className="space-y-6">
+            {/* <aside className="space-y-6">
               <div className="sticky top-24 overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-sm">
                 <div className="bg-[#006565] p-6 text-white">
                   <h4 className="text-lg font-bold">Onboarding Summary</h4>
@@ -610,7 +597,7 @@ export default function AddReceptionist() {
                   </p>
                 </div>
               </div>
-            </aside>
+            </aside> */}
           </form>
         </div>
 

@@ -16,7 +16,6 @@ import {
   MessageSquare,
   Heart,
   HelpCircle,
-  Activity,
   Send,
   Trash2,
 } from "lucide-react";
@@ -48,14 +47,30 @@ const pageTitles = {
   "/patient/profile": "Profile Settings",
 };
 
-function toNameFromEmail(email) {
-  if (!email) return "John Doe";
-  const head = email.split("@")[0]?.replace(/[._-]+/g, " ") || "John Doe";
-  return head
-    .split(" ")
-    .filter(Boolean)
-    .map((chunk) => chunk[0].toUpperCase() + chunk.slice(1))
-    .join(" ");
+function getDisplayName(user) {
+  if (!user) return "John Doe";
+
+  if (user.fullName?.trim()) return user.fullName.trim();
+  if (user.name?.trim()) return user.name.trim();
+
+  const firstName = user.firstName?.trim() || "";
+  const lastName = user.lastName?.trim() || "";
+  const combinedName = `${firstName} ${lastName}`.trim();
+  if (combinedName) return combinedName;
+
+  if (user.username?.trim()) return user.username.trim();
+
+  if (user.email) {
+    const head =
+      user.email.split("@")[0]?.replace(/[._-]+/g, " ") || "John Doe";
+    return head
+      .split(" ")
+      .filter(Boolean)
+      .map((chunk) => chunk[0].toUpperCase() + chunk.slice(1))
+      .join(" ");
+  }
+
+  return "John Doe";
 }
 
 export default function PatientLayout() {
@@ -105,10 +120,7 @@ export default function PatientLayout() {
   const location = useLocation();
   const { user, logout } = useAuth();
 
-  const displayName = useMemo(
-    () => toNameFromEmail(user?.email),
-    [user?.email],
-  );
+  const displayName = useMemo(() => getDisplayName(user), [user]);
 
   const firstName = useMemo(
     () => displayName.split(" ")[0] || "John",

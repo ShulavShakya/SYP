@@ -36,26 +36,26 @@ const quickActions = [
   { label: "View Reports", icon: BarChart3, path: "/admin/view-reports" },
 ];
 
-// const approvals = [
-//   {
-//     id: "REQ-892",
-//     description: "Annual Leave - Dr. Harris",
-//     status: "Pending",
-//     statusClassName: "bg-slate-100 text-slate-600",
-//   },
-//   {
-//     id: "REQ-889",
-//     description: "MRI Maintenance (Critical)",
-//     status: "Approved",
-//     statusClassName: "bg-emerald-100 text-emerald-700",
-//   },
-//   {
-//     id: "REQ-887",
-//     description: "Medical Supplies Restock",
-//     status: "Denied",
-//     statusClassName: "bg-red-100 text-red-700",
-//   },
-// ];
+const approvals = [
+  {
+    id: "REQ-892",
+    description: "Annual Leave - Dr. Harris",
+    status: "Pending",
+    statusClassName: "bg-slate-100 text-slate-600",
+  },
+  {
+    id: "REQ-889",
+    description: "MRI Maintenance (Critical)",
+    status: "Approved",
+    statusClassName: "bg-emerald-100 text-emerald-700",
+  },
+  {
+    id: "REQ-887",
+    description: "Medical Supplies Restock",
+    status: "Denied",
+    statusClassName: "bg-red-100 text-red-700",
+  },
+];
 
 const activities = [
   {

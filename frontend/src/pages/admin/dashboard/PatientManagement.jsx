@@ -1,4 +1,6 @@
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import PageLoader from "../../../component/PageLoader";
+import ErrorState from "../../../component/ErrorState";
 import {
   UserPlus,
   ArrowUp,
@@ -10,112 +12,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-
-const summaryCards = [
-  {
-    label: "Total Patients",
-    value: "12,480",
-    valueClassName: "text-primary",
-    badge: "4%",
-    badgeIcon: ArrowUp,
-    badgeClassName: "text-secondary",
-    accentClassName: "bg-primary/5",
-  },
-  {
-    label: "New Registrations",
-    value: "142",
-    valueClassName: "text-on-surface",
-    subtext: "this month",
-    accentClassName: "bg-secondary/5",
-  },
-  {
-    label: "Admitted",
-    value: "328",
-    valueClassName: "text-on-surface",
-    badgeIcon: AlertCircle,
-    badgeClassName: "text-error",
-    accentClassName: "bg-tertiary-container/5",
-  },
-  {
-    label: "Follow-up Required",
-    value: "85",
-    valueClassName: "text-[#8b4823]",
-    pill: "Action Needed",
-    pillClassName: "bg-orange-100 text-[#341100]",
-    accentClassName: "bg-[#ffb692]/10",
-  },
-];
-
-const patients = [
-  {
-    id: "#CS-4829",
-    initials: "JS",
-    avatarType: "initials",
-    avatarClassName: "bg-secondary-container text-on-secondary-container",
-    name: "Jonathan Smith",
-    nationalId: "882-991-00",
-    age: "32",
-    gender: "Male",
-    contact: "+1 202-555-0143",
-    lastVisit: "Oct 24, 2023",
-    doctor: "Dr. Aris Thorne",
-    doctorImage:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuAPguDqZTK19RWNCHEQWqX21nstifNzn7RuIch27Lqr-6tDcM_j1nFnkuO9BuVOsKAF8J-diSGHPjClRgIgj9lOTlRr8vUKSTZaEo7O5FcZow9zrcCn4eolQxxbPk3kFeAhKaj0d1m33R7o70qL0X6ChVRKuQmcqVJrmFYn7nu0HPJVqfnja3Ka1Su_5xaynk6tMmwz9KqmBsDKX51YA25hljxXJPElO90M8xQrehdf6H5TAmoUvJJJH7Hb8M_MMfbpKkF2xhw-z2Vr",
-    status: "Admitted",
-    statusClassName: "bg-secondary-container text-on-secondary-container",
-  },
-  {
-    id: "#CS-5102",
-    avatarType: "image",
-    avatarImage:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuADBCkmyDy4e-sSnzKZRDVFEKpvWQVPHlLz1A9zeC-iJzeJRxTq4Y026xTxV9yQirIfQudJhjTIrFTLYRh5At_PfAu2iRJuhnS5S4yxBjU974btrZm21io4uWu-B7F1Rm4EJD8KbTHVNneYQk3w9zjMe5wAUXEJAr2Sd1xkrFm2s_9rArbUv33r1gXYLVwy4gniU5Ncwoh3U4Dkqdqg7VrFht2BvtYpLtEgimXgI87XCn4AXn5jcPzUKBSWrGInPBpxlfREADH2MJd8",
-    name: "Sarah McAlister",
-    nationalId: "104-223-90",
-    age: "28",
-    gender: "Female",
-    contact: "+1 202-555-0199",
-    lastVisit: "Oct 22, 2023",
-    doctor: "Dr. Sarah Jenkins",
-    doctorImage:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuBpkxO7IpywrBp3H5ftcPYjJkO8oq8Wk_N7Mphg9RcpGADHCEcAW_C7nAMSlIPSZ5Jl2S-Gy0C5boz7ud2Yf8DMaM8bA6gB5qHJJc_30fQ0aF2dh57vQXQqBQBSC0Q9hQ2e4Ts7pzbCqcPRKupgUwkHPDrpwhr-OtzycsfPKIIi6fFbAWmWD4SBLQIBOemAyeK-oWXagV9x1zJfVxhognxEW25AmlmhiOHRlxap7RZ0RK1_2AU6PmbQAUGuVeDplvcH_ObprfM-cA6i",
-    status: "Follow-up",
-    statusClassName: "bg-orange-100 text-[#341100]",
-  },
-  {
-    id: "#CS-2911",
-    initials: "BW",
-    avatarType: "initials",
-    avatarClassName: "bg-primary-fixed text-on-primary-fixed",
-    name: "Bruce Wayne",
-    nationalId: "990-112-44",
-    age: "42",
-    gender: "Male",
-    contact: "+1 202-555-0155",
-    lastVisit: "Oct 21, 2023",
-    doctor: "Dr. Aris Thorne",
-    doctorImage:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuD4C18hoB08sq9-9AAodTKQZu-b3yaF1UgDCmfbYjowusydDBvlYMTEO-swdjd5Acf76VCn0-P7pHbTWnIXJuj3KY62o76YRKl-jK6BK9W6BxmLKiqt2xu32dJ_8JRCDu9ArK7I2icB0uXsqL0q4e2x-JcEQ5L12DJkTVMw2sZXfMbu-zkGFJ-7fO-t-esJTg3cb0ga--ov3BKn3BPMg_T_gNe0T59iTQKFAd7iHpjEndlU2ZvflFLEEahbcC1ejOJhZPK6uP-4CNle",
-    status: "Active",
-    statusClassName: "bg-primary/10 text-primary",
-  },
-  {
-    id: "#CS-1093",
-    avatarType: "image",
-    avatarImage:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuDCkd0WGVRbpE7fngDMZsCk4nboj___ko1WzrcaJYCIS8slcB0_lNCnS5w-jJZLAjdPf3lOycn3sxfeOZI-P0iATU0ldomXxUE27dnP9lfcJPxAuxGLf89uyb6OgVCo79IuflIoVsbU2Bzv_SeQhjjAc3Py2Gfvb2m2us35G6ynsMUyboI9IPEJeJGE0SAJ-zrgX9juva15mO2dyOBjJf_7axMys-RMzYBikQAflHIT-NxaEfldSPrsVq0WeemTJbXAVQ2YDC9AeG51",
-    name: "Emily Blunt",
-    nationalId: "554-102-11",
-    age: "36",
-    gender: "Female",
-    contact: "+1 202-555-0108",
-    lastVisit: "Oct 19, 2023",
-    doctor: "Dr. Sarah Jenkins",
-    doctorImage:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuCZ_a2mjXufXytBkLwo-mhZYbl5k1_4pkZj4eNVkCqY2hFLkpXK4REvwQCnR0moHqztsFPjZuIclg3511SfvgnT3GYNuQ8iO5zFuHdVXfLGW-SMq-aG0MDaCQdUQ6BEkINOmRqqBMfONkXn8zcE4iSuEAiBZvmd8TwQZ3UdWze6xASc632FQizd-iKgd2Q7DrZARXQ6uHJiJQhbtk0kEZqWV1ls3gnAtvFPZSviklzuG3LlH_Atl0-A1SJgiWcLAoIa4m_Riz8mq3-k",
-    status: "Discharged",
-    statusClassName: "bg-slate-200 text-slate-600",
-  },
-];
+import { privateAPI } from "../../../auth/config/api";
 
 function SummaryCard({
   label,
@@ -175,20 +72,12 @@ function SummaryCard({
 
 function PatientRow({
   id,
-  initials,
-  avatarType,
-  avatarClassName,
-  avatarImage,
   name,
-  nationalId,
   age,
   gender,
   contact,
   lastVisit,
-  doctor,
-  doctorImage,
-  status,
-  statusClassName,
+  blood_group,
 }) {
   return (
     <tr className="group transition-colors hover:bg-primary/5">
@@ -197,28 +86,9 @@ function PatientRow({
       </td>
 
       <td className="px-6 py-5">
-        <div className="flex items-center gap-3">
-          {avatarType === "image" ? (
-            <img
-              src={avatarImage}
-              alt={name}
-              className="h-10 w-10 rounded-full object-cover"
-            />
-          ) : (
-            <div
-              className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold ${avatarClassName}`}
-            >
-              {initials}
-            </div>
-          )}
-
-          <div>
-            <p className="font-headline text-sm font-bold text-on-surface">
-              {name}
-            </p>
-            <p className="text-xs text-slate-500">ID: {nationalId}</p>
-          </div>
-        </div>
+        <p className="font-headline text-sm capitalize text-on-surface">
+          {name}
+        </p>
       </td>
 
       <td className="px-6 py-5 text-center">
@@ -232,39 +102,24 @@ function PatientRow({
         <p className="text-sm font-medium text-on-surface">{contact}</p>
       </td>
 
-      <td className="px-6 py-5">
+      <td className="px-6 py-5 text-center">
         <p className="text-sm text-on-surface">{lastVisit}</p>
       </td>
 
-      <td className="px-6 py-5">
-        <div className="flex items-center gap-2">
-          <img
-            src={doctorImage}
-            alt={doctor}
-            className="h-6 w-6 rounded-full object-cover"
-          />
-          <span className="text-sm font-medium">{doctor}</span>
-        </div>
-      </td>
-
-      <td className="px-6 py-5">
-        <span
-          className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider ${statusClassName}`}
-        >
-          {status}
-        </span>
+      <td className="px-6 py-5 text-center">
+        <p className="text-sm text-on-surface">{blood_group}</p>
       </td>
 
       <td className="px-6 py-5 text-right">
         <div className="flex justify-end gap-2">
-          <button className="rounded-lg border border-transparent bg-surface p-2 text-primary transition-colors hover:border-[#bdc9c8]/20 hover:bg-white">
-            <Eye size={18} />
+          <button className="rounded-lg bg-surface p-2 text-primary hover:bg-white">
+            View
           </button>
-          <button className="rounded-lg border border-transparent bg-surface p-2 text-slate-600 transition-colors hover:border-[#bdc9c8]/20 hover:bg-white">
-            <Pencil size={18} />
+          <button className="rounded-lg bg-surface p-2 text-slate-600 hover:bg-white">
+            Edit
           </button>
-          <button className="rounded-lg bg-error-container p-2 text-error transition-colors hover:bg-error hover:text-white">
-            <LogOut size={18} />
+          <button className="rounded-lg bg-error-container p-2 text-error hover:bg-error hover:text-white">
+            Delete
           </button>
         </div>
       </td>
@@ -273,6 +128,103 @@ function PatientRow({
 }
 
 export default function PatientManagement() {
+  const [patients, setPatients] = useState([]);
+  const [totalPatients, setTotalPatients] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const fetchPatientData = async () => {
+    try {
+      setLoading(true);
+      setError("");
+
+      const [countRes, patientsRes] = await Promise.all([
+        privateAPI.get("/admin/patients/count/"),
+        // privateAPI.get("/admin/patients/today/count/"),
+        privateAPI.get("/admin/patients/"),
+      ]);
+
+      const patientList = Array.isArray(patientsRes.data)
+        ? patientsRes.data
+        : [];
+
+      const mappedPatients = patientList.map((patient) => ({
+        id: patient.patient_id || "N/A",
+        name: patient.name || "N/A",
+        age: "N/A",
+        gender: patient.gender || "N/A",
+        contact: patient.phone || "N/A",
+        blood_group: patient.blood_group || "N/A",
+        lastVisit: "N/A",
+      }));
+
+      setTotalPatients(countRes.data?.total_patients || 0);
+      //   setTodayCount(todayCountRes.data?.today_patients || 0);
+      setPatients(mappedPatients);
+    } catch (err) {
+      console.error("Failed to fetch patient data:", err);
+      setError("Unable to load the patient list right now. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPatientData();
+  }, []);
+
+  const summaryCards = useMemo(
+    () => [
+      {
+        label: "Total Patients",
+        value: loading ? "..." : totalPatients.toLocaleString(),
+        valueClassName: "text-primary",
+        badge: "Live",
+        badgeIcon: ArrowUp,
+        badgeClassName: "text-secondary",
+        accentClassName: "bg-primary/5",
+      },
+      {
+        label: "New Registrations",
+        value: "--",
+        valueClassName: "text-on-surface",
+        subtext: "not connected",
+        accentClassName: "bg-secondary/5",
+      },
+      {
+        label: "Admitted",
+        value: "--",
+        valueClassName: "text-on-surface",
+        badgeIcon: AlertCircle,
+        badgeClassName: "text-error",
+        accentClassName: "bg-tertiary-container/5",
+      },
+      {
+        label: "Follow-up Required",
+        value: "--",
+        valueClassName: "text-[#8b4823]",
+        pill: "Pending API",
+        pillClassName: "bg-orange-100 text-[#341100]",
+        accentClassName: "bg-[#ffb692]/10",
+      },
+    ],
+    [totalPatients, loading],
+  );
+
+  if (loading) {
+    return <PageLoader caption="Loading patients..." />;
+  }
+
+  if (error) {
+    return (
+      <ErrorState
+        title="Failed to load patients"
+        message={error}
+        onRetry={fetchPatientData}
+      />
+    );
+  }
+
   return (
     <div className="w-full bg-[#f7fafa] px-4 py-6 sm:px-6 lg:px-8 xl:px-10">
       <div className="w-full max-w-none space-y-8">
@@ -311,42 +263,6 @@ export default function PatientManagement() {
             </select>
           </div>
 
-          <div className="flex items-center gap-2 rounded-xl border border-[#bdc9c8]/20 bg-white px-3 py-2">
-            <span className="text-xs font-bold uppercase text-slate-400">
-              Age Group
-            </span>
-            <select className="border-none bg-transparent p-0 pr-8 text-sm font-semibold focus:ring-0">
-              <option>All Ages</option>
-              <option>0-18</option>
-              <option>19-45</option>
-              <option>46-65</option>
-              <option>65+</option>
-            </select>
-          </div>
-
-          <div className="flex items-center gap-2 rounded-xl border border-[#bdc9c8]/20 bg-white px-3 py-2">
-            <span className="text-xs font-bold uppercase text-slate-400">
-              Status
-            </span>
-            <select className="border-none bg-transparent p-0 pr-8 text-sm font-semibold focus:ring-0">
-              <option>All Status</option>
-              <option>Active</option>
-              <option>Admitted</option>
-              <option>Follow-up</option>
-              <option>Discharged</option>
-            </select>
-          </div>
-
-          <div className="flex items-center gap-2 rounded-xl border border-[#bdc9c8]/20 bg-white px-3 py-2">
-            <span className="text-xs font-bold uppercase text-slate-400">
-              Reg. Date
-            </span>
-            <input
-              type="date"
-              className="border-none bg-transparent p-0 text-sm font-semibold focus:ring-0"
-            />
-          </div>
-
           <button className="ml-auto flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold text-primary transition-colors hover:bg-white">
             <FilterX size={18} />
             Reset Filters
@@ -374,21 +290,38 @@ export default function PatientManagement() {
                     Last Visit
                   </th>
                   <th className="px-6 py-4 text-[11px] font-extrabold uppercase tracking-widest text-slate-500">
-                    Assigned Doctor
+                    Blood Group
                   </th>
-                  <th className="px-6 py-4 text-[11px] font-extrabold uppercase tracking-widest text-slate-500">
-                    Status
-                  </th>
-                  <th className="px-6 py-4 text-right text-[11px] font-extrabold uppercase tracking-widest text-slate-500">
+                  <th className="px-6 py-4 text-center text-[11px] font-extrabold uppercase tracking-widest text-slate-500">
                     Actions
                   </th>
                 </tr>
               </thead>
 
               <tbody className="divide-y divide-slate-50">
-                {patients.map((patient) => (
-                  <PatientRow key={patient.id} {...patient} />
-                ))}
+                {loading ? (
+                  <tr>
+                    <td
+                      colSpan="8"
+                      className="px-6 py-8 text-center text-slate-500"
+                    >
+                      Loading patients...
+                    </td>
+                  </tr>
+                ) : patients.length > 0 ? (
+                  patients.map((patient) => (
+                    <PatientRow key={patient.id} {...patient} />
+                  ))
+                ) : (
+                  <tr>
+                    <td
+                      colSpan="8"
+                      className="px-6 py-8 text-center text-slate-500"
+                    >
+                      No patients found.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -396,8 +329,11 @@ export default function PatientManagement() {
 
         <div className="flex flex-col gap-4 pb-12 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm font-medium text-slate-500">
-            Showing <span className="font-bold text-on-surface">1-10</span> of{" "}
-            <span className="font-bold text-on-surface">12,480</span> patients
+            Showing{" "}
+            <span className="font-bold text-on-surface">{patients.length}</span>{" "}
+            of{" "}
+            <span className="font-bold text-on-surface">{totalPatients}</span>{" "}
+            patients
           </p>
 
           <div className="flex items-center gap-2">
@@ -412,21 +348,10 @@ export default function PatientManagement() {
               1
             </button>
 
-            <button className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#bdc9c8]/20 bg-white text-sm font-bold text-slate-600 transition-colors hover:bg-primary/10">
-              2
-            </button>
-
-            <button className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#bdc9c8]/20 bg-white text-sm font-bold text-slate-600 transition-colors hover:bg-primary/10">
-              3
-            </button>
-
-            <span className="px-2 font-bold text-slate-400">...</span>
-
-            <button className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#bdc9c8]/20 bg-white text-sm font-bold text-slate-600 transition-colors hover:bg-primary/10">
-              1248
-            </button>
-
-            <button className="rounded-xl border border-[#bdc9c8]/20 bg-white p-2 text-slate-400 transition-colors hover:text-primary">
+            <button
+              disabled
+              className="rounded-xl border border-[#bdc9c8]/20 bg-white p-2 text-slate-400 transition-colors disabled:opacity-50"
+            >
               <ChevronRight size={18} />
             </button>
           </div>

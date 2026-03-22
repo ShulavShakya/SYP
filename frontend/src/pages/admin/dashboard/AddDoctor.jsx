@@ -40,6 +40,8 @@ const specialtyOptions = [
   "Neurology",
   "Pediatrics",
   "General Surgery",
+  "Dermatology",
+  "Orthopedics",
 ];
 
 const employmentTypes = ["Full-Time", "Part-Time", "Contractual"];
@@ -72,7 +74,7 @@ export default function AddDoctor() {
     availableDays: ["MON", "WED", "THU"],
     shiftTime: "Morning (08:00 - 14:00)",
     username: "",
-    temporaryPassword: "",
+    Password: "",
     confirmPassword: "",
     profileImage: null,
   });
@@ -89,29 +91,29 @@ export default function AddDoctor() {
       form.doctorId.trim() &&
       form.specialty.trim() &&
       form.username.trim() &&
-      form.temporaryPassword.trim() &&
+      form.password.trim() &&
       form.confirmPassword.trim() &&
-      form.temporaryPassword === form.confirmPassword
+      form.password === form.confirmPassword
     );
   }, [form]);
 
-  const completedSections = useMemo(() => {
-    const sections = [
-      !!(form.fullName && form.gender && form.phone && form.email),
-      !!(
-        form.doctorId &&
-        form.specialty &&
-        form.qualification &&
-        form.licenseNo
-      ),
-      !!form.shiftTime,
-      !!(form.username && form.temporaryPassword && form.confirmPassword),
-    ];
+  //   const completedSections = useMemo(() => {
+  //     const sections = [
+  //       !!(form.fullName && form.gender && form.phone && form.email),
+  //       !!(
+  //         form.doctorId &&
+  //         form.specialty &&
+  //         form.qualification &&
+  //         form.licenseNo
+  //       ),
+  //       !!form.shiftTime,
+  //       !!(form.username && form.temporaryPassword && form.confirmPassword),
+  //     ];
 
-    return Math.round(
-      (sections.filter(Boolean).length / sections.length) * 100,
-    );
-  }, [form]);
+  //     return Math.round(
+  //       (sections.filter(Boolean).length / sections.length) * 100,
+  //     );
+  //   }, [form]);
 
   const onChange = (key) => (e) => {
     const value = e.target.value;
@@ -157,7 +159,7 @@ export default function AddDoctor() {
       availableDays: ["MON", "WED", "THU"],
       shiftTime: "Morning (08:00 - 14:00)",
       username: "",
-      temporaryPassword: "",
+      password: "",
       confirmPassword: "",
       profileImage: null,
     });
@@ -181,8 +183,7 @@ export default function AddDoctor() {
   return (
     <div className="min-h-screen bg-[#f7fafa] text-slate-900 md:flex">
       {/* <aside className="hidden h-screen w-64 shrink-0 flex-col bg-slate-50 md:sticky md:top-0 md:flex">
-        <div className="flex items-center gap-3 p-6">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#008080] text-white">
+           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#008080] text-white">
             <Stethoscope size={20} />
           </div>
           <div>
@@ -549,11 +550,11 @@ export default function AddDoctor() {
                   </div>
 
                   <Field
-                    label="Temporary Password"
+                    label="Password"
                     type="password"
-                    value={form.temporaryPassword}
-                    onChange={onChange("temporaryPassword")}
-                    placeholder="Enter temporary password"
+                    value={form.password}
+                    onChange={onChange("password")}
+                    placeholder="Enter password"
                     icon={<KeyRound size={18} />}
                     required
                   />

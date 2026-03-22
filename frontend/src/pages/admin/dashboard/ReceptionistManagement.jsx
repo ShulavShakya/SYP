@@ -1,259 +1,117 @@
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { privateAPI } from "../../../auth/config/api.js";
+import PageLoader from "../../../component/PageLoader.jsx";
+import ErrorState from "../../../component/ErrorState.jsx";
+import EmptyState from "../../../component/EmptyState.jsx";
 import {
-  Download,
-  UserPlus,
+  Plus,
   Users,
-  BadgeCheck,
-  Moon,
-  ClipboardList,
-  Filter,
-  MapPin,
-  ShieldCheck,
-  RefreshCw,
+  UserCheck,
+  UserX,
   Eye,
   Pencil,
-  MoreVertical,
   ChevronLeft,
   ChevronRight,
-  Plus,
-  TrendingUp,
+  RefreshCw,
+  FileText,
 } from "lucide-react";
 
-const summaryCards = [
-  {
-    label: "Total Receptionists",
-    value: "48",
-    badge: "+12%",
-    badgeIcon: TrendingUp,
-    badgeClassName: "text-teal-600",
-    accentClassName: "bg-teal-100",
-  },
-  {
-    label: "On Duty",
-    value: "12",
-    pill: "Stable",
-    pillClassName: "bg-emerald-100 text-emerald-700",
-    accentClassName: "bg-emerald-100",
-  },
-  {
-    label: "Off Duty",
-    value: "32",
-    accentClassName: "bg-slate-200",
-  },
-  {
-    label: "Pending Onboarding",
-    value: "4",
-    valueClassName: "text-red-600",
-    pill: "New",
-    pillClassName: "bg-red-100 text-red-700",
-    accentClassName: "bg-red-100",
-  },
-];
-
-const staffRows = [
-  {
-    id: "#RP-2024-001",
-    initials: "JS",
-    initialsClass: "bg-cyan-100 text-cyan-900",
-    name: "Jane Smith",
-    role: "Front Desk Lead",
-    phone: "+1 (555) 123-4567",
-    email: "j.smith@serenity.hospital",
-    shift: "Morning",
-    branch: "Main Clinic",
-    status: "Active",
-    statusClass: "bg-emerald-100 text-emerald-700",
-    dotClass: "bg-emerald-600",
-  },
-  {
-    id: "#RP-2024-002",
-    initials: "MK",
-    initialsClass: "bg-teal-100 text-teal-900",
-    name: "Mark Kinsley",
-    role: "Receptionist",
-    phone: "+1 (555) 234-5678",
-    email: "m.kinsley@serenity.hospital",
-    shift: "Afternoon",
-    branch: "East Wing",
-    status: "On Shift",
-    statusClass: "bg-blue-100 text-blue-700",
-    dotClass: "bg-blue-600",
-  },
-  {
-    id: "#RP-2024-003",
-    initials: "AL",
-    initialsClass: "bg-orange-100 text-orange-900",
-    name: "Alice Lo",
-    role: "Night Coordinator",
-    phone: "+1 (555) 345-6789",
-    email: "a.lo@serenity.hospital",
-    shift: "Night",
-    branch: "Main Clinic",
-    status: "Off Duty",
-    statusClass: "bg-slate-200 text-slate-600",
-    dotClass: "bg-slate-500",
-  },
-  {
-    id: "#RP-2024-004",
-    initials: "DR",
-    initialsClass: "bg-red-100 text-red-800",
-    name: "David Ross",
-    role: "Receptionist",
-    phone: "+1 (555) 456-7890",
-    email: "d.ross@serenity.hospital",
-    shift: "N/A",
-    branch: "North Annex",
-    status: "Suspended",
-    statusClass: "bg-red-100 text-red-700",
-    dotClass: "bg-red-600",
-  },
-];
+const shiftFilters = ["All", "Morning", "Afternoon", "Night"];
 
 function SummaryCard({
   label,
   value,
   valueClassName = "text-slate-900",
-  badge,
-  badgeIcon: BadgeIcon,
-  badgeClassName = "text-teal-600",
   subtext,
   pill,
-  pillClassName = "bg-teal-50 text-teal-700",
-  accentClassName = "bg-teal-100",
+  pillClassName,
+  accentClassName = "bg-slate-100",
+  icon: Icon,
+  iconClassName = "text-slate-600",
 }) {
   return (
-    <div className="group relative overflow-hidden rounded-2xl border border-slate-200/60 bg-white p-6 shadow-[0_4px_20px_rgba(0,101,101,0.03)] transition-all hover:shadow-md">
+    <div className="group relative overflow-hidden rounded-2xl border border-white bg-white p-6 shadow-[0px_4px_20px_rgba(0,101,101,0.03)]">
       <div
-        className={`absolute right-0 top-0 h-24 w-24 rounded-bl-full opacity-60 transition-transform group-hover:scale-110 ${accentClassName}`}
+        className={`absolute right-0 top-0 h-24 w-24 rounded-bl-full transition-transform duration-300 group-hover:scale-110 ${accentClassName}`}
       />
 
-      <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-slate-500">
-        {label}
-      </p>
+      <div className="mb-3 flex items-center justify-between">
+        <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
+          {label}
+        </p>
+        {Icon ? <Icon size={18} className={iconClassName} /> : null}
+      </div>
 
       <div className="flex items-baseline gap-2">
-        <h3
-          className={`font-['Manrope',sans-serif] text-3xl font-extrabold ${valueClassName}`}
-        >
-          {value}
-        </h3>
+        <h3 className={`text-3xl font-extrabold ${valueClassName}`}>{value}</h3>
 
-        {badge && BadgeIcon && (
-          <span
-            className={`flex items-center text-xs font-bold ${badgeClassName}`}
-          >
-            <BadgeIcon size={12} className="mr-1" />
-            {badge}
-          </span>
-        )}
-
-        {!badge && BadgeIcon && (
-          <span
-            className={`flex items-center text-xs font-bold ${badgeClassName}`}
-          >
-            <BadgeIcon size={12} />
-          </span>
-        )}
-
-        {subtext && (
+        {subtext ? (
           <span className="text-xs font-medium text-slate-400">{subtext}</span>
-        )}
+        ) : null}
 
-        {pill && (
+        {pill ? (
           <span
             className={`ml-2 rounded-full px-2 py-0.5 text-[10px] font-bold ${pillClassName}`}
           >
             {pill}
           </span>
-        )}
+        ) : null}
       </div>
     </div>
   );
 }
 
-function FilterSelect({ icon: Icon, defaultValue, options }) {
-  return (
-    <div className="min-w-[200px] flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2">
-      <div className="flex items-center gap-2">
-        <Icon size={18} className="text-slate-400" />
-        <select className="w-full border-none bg-transparent p-0 text-sm font-semibold text-slate-600 focus:ring-0">
-          {[defaultValue, ...options].map((option) => (
-            <option key={option}>{option}</option>
-          ))}
-        </select>
-      </div>
-    </div>
-  );
-}
-
-function StaffRow({
-  id,
-  initials,
-  initialsClass,
+function ReceptionistRow({
+  receptionist_id,
   name,
-  role,
-  phone,
-  email,
+  contact,
   shift,
-  branch,
   status,
   statusClass,
-  dotClass,
 }) {
   return (
-    <tr className="transition-colors hover:bg-slate-50/70">
-      <td className="px-6 py-5">
-        <span className="font-mono text-sm font-bold text-teal-700">{id}</span>
+    <tr className="transition-colors hover:bg-slate-50/50">
+      <td className="px-6 py-4 text-sm font-medium text-slate-500">
+        {receptionist_id}
       </td>
 
-      <td className="px-6 py-5">
-        <div className="flex items-center gap-3">
-          <div
-            className={`flex h-10 w-10 items-center justify-center rounded-xl text-sm font-bold ${initialsClass}`}
-          >
-            {initials}
-          </div>
-          <div>
-            <p className="text-sm font-bold text-slate-900">{name}</p>
-            <p className="text-xs text-slate-400">{role}</p>
-          </div>
-        </div>
+      <td className="px-6 py-4">
+        <p className="text-sm font-semibold text-slate-900 capitalize">
+          {name}
+        </p>
       </td>
 
-      <td className="px-6 py-5">
-        <div className="text-sm">
-          <p className="font-medium text-slate-900">{phone}</p>
-          <p className="text-xs text-slate-400">{email}</p>
-        </div>
+      <td className="px-6 py-4">
+        <span className="text-sm text-slate-600">{contact}</span>
       </td>
 
-      <td className="px-6 py-5">
-        <div className="text-sm">
-          <p className="font-semibold text-slate-900">{shift}</p>
-          <p className="text-xs text-slate-400">{branch}</p>
-        </div>
+      <td className="px-6 py-4">
+        <span className="text-sm font-medium text-slate-600">{shift}</span>
       </td>
 
-      <td className="px-6 py-5 text-center">
+      <td className="px-6 py-4">
         <span
-          className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-bold ${statusClass}`}
+          className={`rounded-full px-3 py-1 text-[10px] font-extrabold uppercase tracking-widest ${statusClass}`}
         >
-          <span className={`mr-2 h-1.5 w-1.5 rounded-full ${dotClass}`} />
           {status}
         </span>
       </td>
 
-      <td className="px-6 py-5 text-right">
-        <div className="flex items-center justify-end gap-2">
-          <button className="rounded-lg p-2 text-teal-700 transition-colors hover:bg-teal-50">
-            <Eye size={18} />
+      <td className="px-6 py-4 text-right">
+        <div className="flex justify-end gap-2">
+          <button
+            type="button"
+            className="rounded-lg p-2 text-primary transition-colors hover:bg-primary/10"
+          >
+            <Eye size={16} />
           </button>
-          <button className="rounded-lg p-2 text-slate-600 transition-colors hover:bg-slate-100">
-            <Pencil size={18} />
-          </button>
-          <button className="rounded-lg p-2 text-slate-600 transition-colors hover:bg-slate-100">
-            <MoreVertical size={18} />
+
+          <button
+            type="button"
+            className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100"
+          >
+            <Pencil size={16} />
           </button>
         </div>
       </td>
@@ -263,81 +121,198 @@ function StaffRow({
 
 export default function ReceptionistManagement() {
   const navigate = useNavigate();
+
+  const [receptionists, setReceptionists] = useState([]);
+  const [totalReceptionists, setTotalReceptionists] = useState(0);
+  const [onDutyReceptionists, setOnDutyReceptionists] = useState(0);
+  const [offDutyReceptionists, setOffDutyReceptionists] = useState(0);
+  const [selectedShift, setSelectedShift] = useState("All");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const fetchReceptionistData = async () => {
+    try {
+      setLoading(true);
+      setError("");
+
+      const [listRes, totalRes, onDutyRes, offDutyRes] = await Promise.all([
+        privateAPI.get("/admin/receptionists/"),
+        privateAPI.get("/admin/receptionists/count/"),
+        privateAPI.get("/admin/receptionists/count/on-duty/"),
+        privateAPI.get("/admin/receptionists/count/off-duty/"),
+      ]);
+
+      setReceptionists(listRes.data || []);
+      setTotalReceptionists(totalRes.data.total_receptionists || 0);
+      setOnDutyReceptionists(onDutyRes.data.on_duty_receptionists || 0);
+      setOffDutyReceptionists(offDutyRes.data.off_duty_receptionists || 0);
+    } catch (err) {
+      console.error("Failed to fetch receptionists data:", err);
+      setError(
+        "We couldn’t load the receptionist list right now. Please try again.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchReceptionistData();
+  }, []);
+
+  const filteredReceptionists = useMemo(() => {
+    if (selectedShift === "All") return receptionists;
+    return receptionists.filter(
+      (receptionist) =>
+        receptionist.shift?.toLowerCase() === selectedShift.toLowerCase(),
+    );
+  }, [receptionists, selectedShift]);
+
+  const summaryCards = [
+    {
+      label: "Total Receptionists",
+      value: totalReceptionists,
+      valueClassName: "text-primary",
+      subtext: "registered",
+      accentClassName: "bg-primary/5",
+      icon: Users,
+      iconClassName: "text-primary",
+    },
+    {
+      label: "On Duty",
+      value: onDutyReceptionists,
+      pill: "Available",
+      pillClassName: "bg-emerald-100 text-emerald-700",
+      accentClassName: "bg-emerald-500/10",
+      icon: UserCheck,
+      iconClassName: "text-emerald-600",
+    },
+    {
+      label: "Off Duty",
+      value: offDutyReceptionists,
+      accentClassName: "bg-orange-500/10",
+      icon: UserX,
+      iconClassName: "text-orange-600",
+    },
+  ];
+
+  const getStatusClass = (status) => {
+    switch (status) {
+      case "ON_DUTY":
+        return "bg-emerald-100 text-emerald-700";
+      case "ON_LEAVE":
+        return "bg-orange-100 text-orange-700";
+      case "SUSPENDED":
+        return "bg-red-100 text-red-700";
+      default:
+        return "bg-slate-100 text-slate-700";
+    }
+  };
+
+  const formatStatus = (status) => {
+    switch (status) {
+      case "ON_DUTY":
+        return "On Duty";
+      case "ON_LEAVE":
+        return "Off Duty";
+      case "SUSPENDED":
+        return "Suspended";
+      default:
+        return status || "Unknown";
+    }
+  };
+
+  if (loading) {
+    return <PageLoader caption="Loading receptionists..." />;
+  }
+
+  if (error) {
+    return (
+      <ErrorState
+        title="Failed to load receptionists"
+        message={error}
+        onRetry={fetchReceptionistData}
+      />
+    );
+  }
+
   return (
-    <div className="w-full bg-[#f7fafa] px-4 py-6 text-slate-900 sm:px-6 lg:px-8 xl:px-10">
-      <div className="w-full max-w-none">
-        <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-end">
+    <div className="w-full bg-[#f7fafa] px-4 py-6 sm:px-6 lg:px-8 xl:px-10">
+      <div className="w-full max-w-none space-y-8">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h2 className="font-['Manrope',sans-serif] text-3xl font-extrabold tracking-tight text-slate-900">
               Receptionist Management
             </h2>
-            <p className="mt-1 font-medium text-slate-500">
-              Manage and monitor front-desk staff across hospital branches.
+            <p className="mt-1 text-slate-600">
+              Overview and management of front-desk staff.
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
-            <button className="flex items-center gap-2 rounded-xl bg-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-800 transition-colors hover:bg-slate-300">
-              <Download size={18} />
-              Export CSV
-            </button>
+          <div className="flex items-center gap-3">
             <button
-              className="flex items-center gap-2 rounded-xl bg-gradient-to-br from-teal-700 to-cyan-700 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-teal-700/20 transition-all hover:brightness-110"
-              onClick={() => {
-                navigate("/admin/add-receptionist");
-              }}
+              type="button"
+              onClick={fetchReceptionistData}
+              className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 font-semibold text-slate-700 transition-colors hover:bg-slate-50"
             >
-              <UserPlus size={18} />
-              Add Receptionist
+              <RefreshCw size={18} />
+              Refresh
+            </button>
+
+            <button
+              type="button"
+              className="flex items-center gap-2 rounded-2xl bg-gradient-to-br from-[#006565] to-[#008080] px-6 py-3 font-['Manrope',sans-serif] font-bold text-white shadow-[0px_4px_20px_rgba(0,101,101,0.05)] transition-transform hover:scale-[1.02] active:scale-95"
+              onClick={() => navigate("/admin/add-receptionist")}
+            >
+              <Plus size={18} />
+              <span>Add Receptionist</span>
             </button>
           </div>
         </div>
 
-        <div className="mb-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
           {summaryCards.map((card) => (
             <SummaryCard key={card.label} {...card} />
           ))}
         </div>
 
-        <div className="mb-6 flex flex-wrap items-center gap-4 rounded-2xl bg-slate-100 p-4">
-          <FilterSelect
-            icon={Filter}
-            defaultValue="Shift: All"
-            options={["Morning", "Afternoon", "Night"]}
-          />
-          <FilterSelect
-            icon={MapPin}
-            defaultValue="Branch: All"
-            options={["Main Clinic", "East Wing", "North Annex"]}
-          />
-          <FilterSelect
-            icon={ShieldCheck}
-            defaultValue="Status: All"
-            options={["Active", "On Shift", "Off Duty", "Suspended"]}
-          />
-          <button className="rounded-xl bg-slate-200 p-2.5 text-slate-700 transition-colors hover:bg-slate-300">
-            <RefreshCw size={18} />
-          </button>
+        <div className="flex flex-wrap items-center gap-4 rounded-2xl bg-[#f1f4f4] p-2">
+          <div className="flex flex-1 gap-2 overflow-x-auto py-1 pl-2">
+            {shiftFilters.map((filter) => (
+              <button
+                key={filter}
+                type="button"
+                onClick={() => setSelectedShift(filter)}
+                className={
+                  selectedShift === filter
+                    ? "whitespace-nowrap rounded-xl bg-white px-5 py-2 text-sm font-bold text-primary shadow-sm"
+                    : "whitespace-nowrap rounded-xl px-5 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-white/50"
+                }
+              >
+                {filter}
+              </button>
+            ))}
+          </div>
         </div>
 
-        <div className="overflow-hidden rounded-3xl bg-white shadow-[0px_8px_32px_rgba(0,101,101,0.04)] ring-1 ring-slate-200/60">
+        <div className="overflow-hidden rounded-2xl bg-white shadow-[0px_4px_20px_rgba(0,101,101,0.05)]">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[980px] border-collapse text-left">
+            <table className="w-full min-w-[800px] border-collapse text-left">
               <thead>
-                <tr className="bg-slate-100/70">
+                <tr className="bg-[#f1f4f4]/50">
                   <th className="px-6 py-5 text-xs font-bold uppercase tracking-widest text-slate-500">
-                    Staff ID
+                    Receptionist ID
                   </th>
                   <th className="px-6 py-5 text-xs font-bold uppercase tracking-widest text-slate-500">
-                    Receptionist
+                    Name
                   </th>
                   <th className="px-6 py-5 text-xs font-bold uppercase tracking-widest text-slate-500">
-                    Contact Details
+                    Contact
                   </th>
                   <th className="px-6 py-5 text-xs font-bold uppercase tracking-widest text-slate-500">
-                    Shift / Branch
+                    Shift
                   </th>
-                  <th className="px-6 py-5 text-center text-xs font-bold uppercase tracking-widest text-slate-500">
+                  <th className="px-6 py-5 text-xs font-bold uppercase tracking-widest text-slate-500">
                     Status
                   </th>
                   <th className="px-6 py-5 text-right text-xs font-bold uppercase tracking-widest text-slate-500">
@@ -346,46 +321,72 @@ export default function ReceptionistManagement() {
                 </tr>
               </thead>
 
-              <tbody className="divide-y divide-slate-100">
-                {staffRows.map((row) => (
-                  <StaffRow key={row.id} {...row} />
-                ))}
+              <tbody className="divide-y divide-slate-100/50">
+                {filteredReceptionists.length > 0 ? (
+                  filteredReceptionists.map((receptionist) => (
+                    <ReceptionistRow
+                      key={receptionist.Receptionist_id}
+                      receptionist_id={receptionist.Receptionist_id}
+                      name={receptionist.name}
+                      contact={receptionist.phone}
+                      shift={receptionist.shift}
+                      status={formatStatus(receptionist.status)}
+                      statusClass={getStatusClass(receptionist.status)}
+                    />
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-16">
+                      <EmptyState
+                        title="No receptionists found"
+                        message="No receptionist records match the selected shift."
+                        icon={FileText}
+                      />
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
 
-          <div className="flex items-center justify-between bg-slate-50 px-6 py-5">
-            <p className="text-sm font-medium text-slate-500">
-              Showing 1-10 of 48 staff members
+          <div className="flex flex-col gap-4 border-t border-slate-100/50 bg-[#f1f4f4]/30 p-6 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-slate-500">
+              Showing{" "}
+              <span className="font-bold text-slate-900">
+                {filteredReceptionists.length}
+              </span>{" "}
+              of{" "}
+              <span className="font-bold text-slate-900">
+                {totalReceptionists}
+              </span>{" "}
+              receptionists
             </p>
 
-            <div className="flex items-center gap-2">
+            <div className="flex gap-2">
               <button
-                disabled
-                className="rounded-lg p-2 text-slate-400 transition-colors disabled:opacity-50"
+                type="button"
+                className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-400 transition-colors hover:border-primary hover:text-primary"
               >
                 <ChevronLeft size={18} />
               </button>
-              <button className="h-8 w-8 rounded-lg bg-teal-700 text-sm font-bold text-white">
+
+              <button
+                type="button"
+                className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary font-['Manrope',sans-serif] font-bold text-white shadow-sm"
+              >
                 1
               </button>
-              <button className="h-8 w-8 rounded-lg text-sm font-bold text-slate-600 transition-colors hover:bg-slate-200">
-                2
-              </button>
-              <button className="h-8 w-8 rounded-lg text-sm font-bold text-slate-600 transition-colors hover:bg-slate-200">
-                3
-              </button>
-              <button className="rounded-lg p-2 text-slate-400 transition-colors hover:text-teal-700">
+
+              <button
+                type="button"
+                className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-400 transition-colors hover:border-primary hover:text-primary"
+              >
                 <ChevronRight size={18} />
               </button>
             </div>
           </div>
         </div>
       </div>
-
-      <button className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-teal-700 text-white shadow-2xl md:hidden">
-        <Plus size={22} />
-      </button>
     </div>
   );
 }
