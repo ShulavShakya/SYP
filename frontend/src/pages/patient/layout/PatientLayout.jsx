@@ -48,29 +48,42 @@ const pageTitles = {
 };
 
 function getDisplayName(user) {
-  if (!user) return "John Doe";
+  const email = user?.email?.trim();
 
-  if (user.fullName?.trim()) return user.fullName.trim();
-  if (user.name?.trim()) return user.name.trim();
+  if (!email) return "John";
 
-  const firstName = user.firstName?.trim() || "";
-  const lastName = user.lastName?.trim() || "";
-  const combinedName = `${firstName} ${lastName}`.trim();
-  if (combinedName) return combinedName;
+  const localPart = email.split("@")[0] || "";
 
-  if (user.username?.trim()) return user.username.trim();
+  const cleaned = localPart
+    .replace(/[0-9]+/g, " ")
+    .replace(/[._-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 
-  if (user.email) {
-    const head =
-      user.email.split("@")[0]?.replace(/[._-]+/g, " ") || "John Doe";
-    return head
-      .split(" ")
-      .filter(Boolean)
-      .map((chunk) => chunk[0].toUpperCase() + chunk.slice(1))
-      .join(" ");
+  const words = cleaned
+    .split(" ")
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase());
+
+  if (words.length === 0) return "John";
+
+  if (words.length === 1) {
+    return words[0];
   }
 
-  return "John Doe";
+  return `${words[0]} ${words[1]}`;
+}
+
+function getShortDisplayName(name) {
+  if (!name) return "John";
+
+  const parts = name.trim().split(" ").filter(Boolean);
+
+  if (parts.length === 1) {
+    return parts[0].slice(0, 10);
+  }
+
+  return `${parts[0]} ${parts[1][0]}.`;
 }
 
 export default function PatientLayout() {
@@ -79,6 +92,16 @@ export default function PatientLayout() {
   const [messagingOpen, setMessagingOpen] = useState(false);
   const [confirmClearChat, setConfirmClearChat] = useState(false);
   const [messageInput, setMessageInput] = useState("");
+
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { user, logout } = useAuth();
+
+  const displayName = useMemo(() => getDisplayName(user), [user]);
+  const shortDisplayName = useMemo(
+    () => getShortDisplayName(displayName),
+    [displayName],
+  );
 
   const [messages, setMessages] = useState([
     {
@@ -115,12 +138,6 @@ export default function PatientLayout() {
     ],
     [],
   );
-
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { user, logout } = useAuth();
-
-  const displayName = useMemo(() => getDisplayName(user), [user]);
 
   const firstName = useMemo(
     () => displayName.split(" ")[0] || "John",
@@ -240,7 +257,7 @@ export default function PatientLayout() {
 
                 <div className="min-w-0">
                   <p className="truncate text-sm font-bold text-[#181c1d]">
-                    {displayName}
+                    {shortDisplayName}
                   </p>
                   <p className="text-[11px] font-medium text-slate-500">
                     Patient
@@ -278,7 +295,17 @@ export default function PatientLayout() {
                     <h2 className="truncate text-lg font-bold text-teal-800">
                       {title}
                     </h2>
+
+                    <span className="hidden text-sm font-medium text-slate-400 md:block">
+                      •
+                    </span>
+
+                    <span className="hidden max-w-[120px] truncate text-sm font-medium text-slate-500 md:block">
+                      {shortDisplayName}
+                    </span>
+
                     <div className="hidden h-4 w-px bg-slate-200 md:block" />
+
                     <span className="hidden text-sm font-medium text-slate-500 md:block">
                       {today}
                     </span>

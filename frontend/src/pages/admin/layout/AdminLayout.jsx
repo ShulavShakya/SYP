@@ -54,6 +54,12 @@ const pageTitles = {
   // "/admin/manage-messages": "Messages",
 };
 
+// const systemItems = [
+//   { label: "Settings", to: "/admin/settings", icon: Settings },
+//   { label: "Reports", to: "/admin/reports", icon: FileText },
+//   { label: "User Management", to: "/admin/user-management", icon: UserCog },
+// ];
+
 function toNameFromEmail(email) {
   if (!email) return "Sarah Chen";
   const head = email.split("@")[0]?.replace(/[._-]+/g, " ") || "Admin";
@@ -174,9 +180,9 @@ export default function AdminLayout() {
               <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">
                 System
               </span>
-            </div> */}
+            </div>
 
-            {/* {systemItems.map((item) => {
+            {systemItems.map((item) => {
               const Icon = item.icon;
               return (
                 <NavLink key={item.label} to={item.to} className={navLinkClass}>

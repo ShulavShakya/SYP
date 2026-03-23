@@ -49,7 +49,12 @@ export default function Landing() {
             <a className="hover:text-[#00897B] transition" href="#">
               Locations
             </a>
-            <a className="hover:text-[#00897B] transition" href="#">
+            <a
+              className="hover:text-[#00897B] transition"
+              onClick={() => {
+                navigate("/about-us");
+              }}
+            >
               About Us
             </a>
           </div>
