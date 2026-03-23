@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-cu0gjm2g4^)efw3j%ulame(m^!gdzxsr4_dd)w^*s__7c%4g45
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['192.168.254.31', '127.0.0.1', 'localhost']
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -45,6 +45,9 @@ INSTALLED_APPS = [
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.AllowAny',
     ),
 }
 
@@ -80,7 +83,7 @@ WSGI_APPLICATION = 'curecloud.wsgi.application'
 ASGI_APPLICATION = "curecloud.asgi.application"
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOWED_ORIGINS = [
-    'http://localhost:5173','http://192.168.254.48:5173'
+    'http://localhost:5173','http://10.113.201.240:5173'
 ]
 
 # Database

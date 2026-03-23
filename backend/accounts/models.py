@@ -17,7 +17,21 @@ class Patient(models.Model):
     ]
 
     user = models.OneToOneField(User, on_delete=models.CASCADE)
+    patient_id = models.CharField(max_length=20, unique=True, blank=True, editable=False)
+    created_at = models.DateTimeField(auto_now_add=True, blank=True)
+    def save(self, *args, **kwargs):
+        if not self.patient_id:
+            last_patient = Patient.objects.all().order_by('id').last()
 
+            if last_patient and last_patient.patient_id:
+                last_number = int(last_patient.patient_id.replace("PAT", ""))
+                new_number = last_number + 1
+            else:
+                new_number = 1
+
+            self.patient_id = f"PAT{new_number:04d}"  # PAT0001, PAT0002...
+
+        super().save(*args, **kwargs)
     dob = models.DateField()
     phone = models.CharField(max_length=15)
     address = models.TextField()
@@ -58,21 +72,81 @@ class Patient(models.Model):
 # Doctor
 # -----------------------------
 class Doctor(models.Model):
+    STATUS_CHOICES = [
+        ('ACTIVE', 'Active'),
+        ('ON_LEAVE', 'On Leave'),
+        ('SUSPENDED', 'Suspended'),
+    ]
+    phone = models.CharField(max_length=15, default="n/a")
+    name = models.CharField(max_length=100, default="n/a" )
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     specialty = models.CharField(max_length=100)
-    phone = models.CharField(max_length=15)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='ACTIVE')
+    experience_years = models.PositiveIntegerField(default=0)
+    doctor_id = models.CharField(max_length=20, unique=True, blank=True, editable=False)
+    def save(self, *args, **kwargs):
+        if not self.doctor_id:
+            last_doctor = Doctor.objects.all().order_by('id').last()
+
+            if last_doctor and last_doctor.doctor_id:
+                last_number = int(last_doctor.doctor_id.replace("DOC", ""))
+                new_number = last_number + 1
+            else:
+                new_number = 1
+
+            self.doctor_id = f"DOC{new_number:04d}"  # DOC0001, DOC0002...
+
+        super().save(*args, **kwargs)
+    @property
+    def full_name(self):
+        return f"{self.user.first_name} {self.user.last_name}".strip()
 
     def __str__(self):
-        return f"Dr. {self.user.username}"
+        return f"Dr. {self.full_name or self.user.username} ({self.doctor_id})"
 
 
 # -----------------------------
 # Receptionist
 # -----------------------------
 class Receptionist(models.Model):
+    STATUS_CHOICES = [
+        ('ON_DUTY', 'On Duty'),
+        ('ON_LEAVE', 'On Leave'),
+        ('OFF_DUTY', 'Off Duty'),
+    ]
+    SHIFT_CHOICES = [
+        ('MORNING', 'Morning'),
+        ('EVENING', 'Evening'),
+        ('NIGHT', 'Night'),
+    ]
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     phone = models.CharField(max_length=15)
+    name = models.CharField(max_length=100, default="n/a" )
+    status = models.CharField(
+    max_length=10,
+    choices=STATUS_CHOICES,
+    default='ON_DUTY'
+)
+    shift = models.CharField(
+        max_length=10,
+        choices=SHIFT_CHOICES,
+        default='MORNING'
+    )
 
+    Receptionist_id = models.CharField(max_length=20, unique=True, blank=True, editable=False)
+    def save(self, *args, **kwargs):
+        if not self.Receptionist_id:
+            last_receptionist = Receptionist.objects.all().order_by('id').last()
+
+            if last_receptionist and last_receptionist.Receptionist_id:
+                last_number = int(last_receptionist.Receptionist_id.replace("REC", ""))
+                new_number = last_number + 1
+            else:
+                new_number = 1
+
+            self.Receptionist_id = f"REC{new_number:04d}"  # REC0001, REC0002...
+
+        super().save(*args, **kwargs)
     def __str__(self):
         return f"{self.user.username} (Receptionist)"
 
