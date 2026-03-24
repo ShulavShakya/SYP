@@ -44,6 +44,8 @@ import AddReceptionist from "../pages/admin/dashboard/ForReceptionist/AddRecepti
 import ApprovalManagement from "../pages/admin/dashboard/ApprovalManagement.jsx";
 import AddPatient from "../pages/admin/dashboard/ForPatient/AddPatient.jsx";
 import UpdateReceptionist from "../pages/admin/dashboard/ForReceptionist/UpdateReceptionist.jsx";
+import UpdateDoctor from "../pages/admin/dashboard/ForDoctor/UpdateDoctor.jsx";
+import UpdatePatient from "../pages/admin/dashboard/ForPatient/UpdatePatient.jsx";
 
 export default [
   { path: "/", element: <Landing /> },
@@ -133,6 +135,8 @@ export default [
       { path: "add-patient", element: <AddPatient /> },
       { path: "approval-management", element: <ApprovalManagement /> },
       { path: "update-receptionist/:id", element: <UpdateReceptionist /> },
+      { path: "update-doctor/:id", element: <UpdateDoctor /> },
+      { path: "update-patient/:id", element: <UpdatePatient /> },
     ],
   },
 ];

@@ -240,7 +240,10 @@ export default function PatientManagement() {
   const [error, setError] = useState("");
   const [deleteLoadingId, setDeleteLoadingId] = useState(null);
   const [selectedPatient, setSelectedPatient] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+
   const navigate = useNavigate();
+  const recordsPerPage = 4;
 
   const fetchPatientData = async () => {
     try {
@@ -260,9 +263,7 @@ export default function PatientManagement() {
         id: patient.id ?? null,
         rowKey: patient.id ?? `patient-row-${index}`,
         patientId: patient.patient_id || `PAT-${patient.id ?? index}`,
-        name:
-          `${patient.first_name || ""} ${patient.last_name || ""}`.trim() ||
-          "Unknown Patient",
+        name: patient.name || "Unknown Patient",
         age: calculateAge(patient.dob),
         dob: patient.dob || "",
         gender: patient.gender || "N/A",
@@ -274,11 +275,11 @@ export default function PatientManagement() {
         emergencyContactPhone: patient.emergency_contact_phone || "",
         profileImage: patient.profile_image || "",
         lastVisit: formatDate(patient.last_visit),
-        striped: index % 2 !== 0,
       }));
 
-      setTotalPatients(countRes.data?.total_patients || 0);
+      setTotalPatients(countRes.data?.total_patients || mappedPatients.length);
       setPatients(mappedPatients);
+      setCurrentPage(1);
     } catch (err) {
       console.error("Failed to fetch patient data:", err);
       setError("Unable to load the patient list right now. Please try again.");
@@ -308,7 +309,21 @@ export default function PatientManagement() {
 
       await privateAPI.delete(`/admin/delete-patient/${patient.id}/`);
 
-      setPatients((prev) => prev.filter((item) => item.id !== patient.id));
+      setPatients((prev) => {
+        const updated = prev.filter((item) => item.id !== patient.id);
+
+        const newTotalPages = Math.max(
+          1,
+          Math.ceil(updated.length / recordsPerPage),
+        );
+
+        if (currentPage > newTotalPages) {
+          setCurrentPage(newTotalPages);
+        }
+
+        return updated;
+      });
+
       setTotalPatients((prev) => Math.max(0, prev - 1));
 
       if (selectedPatient?.id === patient.id) {
@@ -327,6 +342,27 @@ export default function PatientManagement() {
       setDeleteLoadingId(null);
     }
   };
+
+  const totalPages = Math.max(1, Math.ceil(patients.length / recordsPerPage));
+
+  const paginatedPatients = useMemo(() => {
+    const startIndex = (currentPage - 1) * recordsPerPage;
+    return patients
+      .slice(startIndex, startIndex + recordsPerPage)
+      .map((patient, index) => ({
+        ...patient,
+        striped: index % 2 !== 0,
+      }));
+  }, [patients, currentPage]);
+
+  const pageNumbers = useMemo(
+    () => Array.from({ length: totalPages }, (_, index) => index + 1),
+    [totalPages],
+  );
+
+  const startRecord =
+    patients.length === 0 ? 0 : (currentPage - 1) * recordsPerPage + 1;
+  const endRecord = Math.min(currentPage * recordsPerPage, patients.length);
 
   const summaryCards = useMemo(
     () => [
@@ -457,14 +493,16 @@ export default function PatientManagement() {
               </thead>
 
               <tbody className="divide-y divide-slate-100">
-                {patients.length > 0 ? (
-                  patients.map((patient) => (
+                {paginatedPatients.length > 0 ? (
+                  paginatedPatients.map((patient) => (
                     <PatientRow
                       key={patient.rowKey}
                       {...patient}
                       deleting={deleteLoadingId === patient.id}
                       onView={() => setSelectedPatient(patient)}
-                      onEdit={() => console.log("Edit", patient)}
+                      onEdit={() =>
+                        navigate(`/admin/update-patient/${patient.id}`)
+                      }
                       onDelete={() => handleDeletePatient(patient)}
                     />
                   ))
@@ -484,23 +522,41 @@ export default function PatientManagement() {
 
           <div className="flex items-center justify-between border-t border-slate-100 px-6 py-4">
             <p className="text-sm text-slate-500">
-              Showing {patients.length} patient
+              Showing {startRecord}-{endRecord} of {patients.length} patient
               {patients.length !== 1 ? "s" : ""}
             </p>
 
             <div className="flex items-center gap-2">
-              <button className="rounded p-2 opacity-50" disabled type="button">
+              <button
+                className="rounded p-2 disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={currentPage === 1}
+                type="button"
+                onClick={() => setCurrentPage((prev) => prev - 1)}
+              >
                 <ChevronLeft size={18} />
               </button>
 
-              <button
-                className="flex h-8 w-8 items-center justify-center rounded bg-primary text-sm font-bold text-white"
-                type="button"
-              >
-                1
-              </button>
+              {pageNumbers.map((page) => (
+                <button
+                  key={page}
+                  className={`flex h-8 w-8 items-center justify-center rounded text-sm font-bold ${
+                    currentPage === page
+                      ? "bg-primary text-white"
+                      : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                  }`}
+                  type="button"
+                  onClick={() => setCurrentPage(page)}
+                >
+                  {page}
+                </button>
+              ))}
 
-              <button className="rounded p-2 opacity-50" disabled type="button">
+              <button
+                className="rounded p-2 disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={currentPage === totalPages || patients.length === 0}
+                type="button"
+                onClick={() => setCurrentPage((prev) => prev + 1)}
+              >
                 <ChevronRight size={18} />
               </button>
             </div>

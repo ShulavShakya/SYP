@@ -1,179 +1,24 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import { useOutletContext } from "react-router-dom";
+import axios from "axios";
+import { privateAPI } from "../../../auth/config/api";
 
-const tabs = ["All", "Unread", "Active"];
-
-const conversations = [
-  {
-    id: 1,
-    role: "patient",
-    name: "Sarah Jenkins",
-    lastMessage: "I've arrived at the parking lot...",
-    time: "10:45 AM",
-    active: true,
-    unread: true,
-    status: "Checked-in",
-    patientId: "CS-99201",
-    department: "Cardiology Dept",
-    avatar:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuAtqHfnisBzGx3aMWoPG5pHYP4DzlmBWcEUlMm1wOGTa8kuQDcZ8fzTuRQkpDBzv03wCGim1QBAVadUY15ugQ0EGfwoAxlCtAVFlZTvgWNWro32WrrwOwvOpR6XwCl-HpysX4rXdZAeeM1zcy2_EB_tneFuQ_OTr5pVR9Ore7FYAAIzqaGPxN1b84YxJ3KYdqgTmUmZaY1YDoDaEqUr2ORMjHDIki6PkLu54TLcbvoiGLEZJ2Kv17FSWuIbv9LQiR4JK5XRMjrNfdth",
-  },
-  {
-    id: 2,
-    role: "patient",
-    name: "Michael Chen",
-    lastMessage: "Thank you for the prescription info.",
-    time: "Yesterday",
-    active: false,
-    unread: false,
-    status: "Follow-up",
-    patientId: "CS-99202",
-    department: "Neurology Dept",
-    avatar:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuDE2akKb_tiuNheBm7n1Q9nmg1Ip5tWCoJNZtWpfCSdHxRt3VQCOAKAWQlmbrS6IwQ3ij3tXtb9wTw8ULTv_qSJmhSjJB8exFwkgHW_YmXzn-EPWVtpjjZ96Vvl8vWsq2bHGo6LVMlY4zpTd89JmRRFzguHwdzIyZv4I0kNMo26US7Tgv16CTJx0OHk0qG27qFAQD2TDIWzyCwZSGmiIXRMY_-8aoscmbMHCBCSbajDV9rYXuGcFkKptRasCkz7RniVULcRjfYEciy_",
-  },
-  {
-    id: 3,
-    role: "patient",
-    name: "Elena Rodriguez",
-    lastMessage: "Is Dr. Smith running on time today?",
-    time: "9:12 AM",
-    active: false,
-    unread: true,
-    status: "Waiting",
-    patientId: "CS-99203",
-    department: "Orthopedics Dept",
-    avatar:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuBJFh6r7lkaZ_HQ8FtzHMmJrMKjGp-e1aeeWaW0oCSC3q_vVLw39b58Srd0SsvfQiVP2YpVlw8gMGed20jF8SVw3jI6i3hKgFRV8EIH6oDzCc8AVtQdx5pikRAVctKxTOcGzjSN28nQs7Su9S_2QIOdQxQCzJFKXEgnUha6QKvggXgQPXQpnh__z_I4mtcqYf_W-JgN51UoYBO5ag6eviof1rTFA3a8Yy9x5injNOZBs189NEiozQOaAvJJFcc506syr6h98LgiKtPQ",
-  },
-  {
-    id: 4,
-    role: "patient",
-    name: "Patient #4829",
-    lastMessage: "Requesting appointment reschedule...",
-    time: "08:00 AM",
-    active: false,
-    unread: false,
-    status: "Active",
-    patientId: "CS-99204",
-    department: "Pediatrics Dept",
-    avatar: null,
-  },
-  {
-    id: 5,
-    role: "patient",
-    name: "Patient #4830",
-    lastMessage: "Can I upload my previous reports?",
-    time: "08:05 AM",
-    active: true,
-    unread: false,
-    status: "Active",
-    patientId: "CS-99205",
-    department: "General Medicine",
-    avatar: null,
-  },
-  {
-    id: 6,
-    role: "patient",
-    name: "Patient #4831",
-    lastMessage: "Please confirm my arrival time.",
-    time: "08:10 AM",
-    active: false,
-    unread: true,
-    status: "Unread",
-    patientId: "CS-99206",
-    department: "ENT",
-    avatar: null,
-  },
-  {
-    id: 7,
-    role: "patient",
-    name: "Patient #4832",
-    lastMessage: "I need directions to the lab.",
-    time: "08:15 AM",
-    active: false,
-    unread: false,
-    status: "Active",
-    patientId: "CS-99207",
-    department: "Radiology",
-    avatar: null,
-  },
-  {
-    id: 8,
-    role: "patient",
-    name: "Patient #4833",
-    lastMessage: "I'm running 10 minutes late.",
-    time: "08:20 AM",
-    active: true,
-    unread: true,
-    status: "Unread",
-    patientId: "CS-99208",
-    department: "Cardiology Dept",
-    avatar: null,
-  },
-];
-
-const messagesByConversation = {
-  1: [
-    {
-      id: 1,
-      sender: "patient",
-      text: "Good morning, I've just arrived at the clinic. I'm parked in Spot B4. Do I need to come up to the reception desk or should I wait here?",
-      time: "10:42 AM",
-    },
-    {
-      id: 2,
-      sender: "receptionist",
-      text: "Welcome, Sarah! Please stay in your vehicle for a moment. Dr. Miller is just finishing with her previous patient. I'll send you a notification when it's time to head to Suite 302.",
-      time: "10:44 AM",
-    },
-    {
-      id: 3,
-      sender: "patient",
-      text: "Perfect, thank you. I have my insurance card ready as well.",
-      time: "10:45 AM",
-    },
-  ],
-  2: [
-    {
-      id: 1,
-      sender: "patient",
-      text: "Thank you for the prescription info.",
-      time: "Yesterday",
-    },
-  ],
-  3: [
-    {
-      id: 1,
-      sender: "patient",
-      text: "Is Dr. Smith running on time today?",
-      time: "9:12 AM",
-    },
-  ],
-};
-
-const quickActions = [
-  "Send appointment reminder",
-  "Share check-in instructions",
-  "Request documents",
-];
-
+// --- Helper Components (Kept exact design) ---
 function Avatar({ name, avatar, active, size = "h-12 w-12" }) {
   return (
     <div
-      className={`relative shrink-0 overflow-hidden rounded-full bg-surface-container-highest ${size}`}
+      className={`relative shrink-0 overflow-hidden rounded-full bg-slate-200 ${size}`}
     >
       {avatar ? (
         <img src={avatar} alt={name} className="h-full w-full object-cover" />
       ) : (
-        <div className="flex h-full w-full items-center justify-center">
-          <span className="material-symbols-outlined text-outline">person</span>
+        <div className="flex h-full w-full items-center justify-center text-slate-400">
+          <span className="material-symbols-outlined">person</span>
         </div>
       )}
-
-      {active ? (
-        <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white bg-primary" />
-      ) : null}
+      {active && (
+        <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white bg-green-500" />
+      )}
     </div>
   );
 }
@@ -182,326 +27,273 @@ export default function MessagesPage() {
   const outletContext = useOutletContext();
   const setHideTopbar = outletContext?.setHideTopbar ?? (() => {});
 
-  const [activeTab, setActiveTab] = useState("All");
-  const [search, setSearch] = useState("");
+  // --- State ---
   const [activeConversationId, setActiveConversationId] = useState(null);
   const [messageInput, setMessageInput] = useState("");
+  const [conversations, setConversations] = useState([]); // Start empty, fetch from API
+  const [messages, setMessages] = useState([]);
+  const [search, setSearch] = useState("");
 
-  const filteredConversations = useMemo(() => {
-    const normalizedSearch = search.trim().toLowerCase();
+  const socketRef = useRef(null);
+  const chatContainerRef = useRef(null);
 
-    return conversations.filter((item) => {
-      const isAllowedConversation = item.role === "patient";
+  // --- 1. Load Conversation List (Sidebar) ---
+  useEffect(() => {
+    const fetchConversations = async () => {
+      try {
+        const res = await privateAPI.get("/users/api/conversations/");
+        setConversations(res.data);
+      } catch (err) {
+        console.error("Error fetching conversations:", err);
+      }
+    };
+    fetchConversations();
+  }, []);
 
-      const matchesSearch =
-        !normalizedSearch ||
-        item.name.toLowerCase().includes(normalizedSearch) ||
-        item.lastMessage.toLowerCase().includes(normalizedSearch) ||
-        item.patientId.toLowerCase().includes(normalizedSearch) ||
-        item.department.toLowerCase().includes(normalizedSearch);
+  // --- 2. WebSocket & History Logic ---
+  useEffect(() => {
+    if (!activeConversationId) {
+      setMessages([]);
+      return;
+    }
 
-      const matchesTab =
-        activeTab === "All"
-          ? true
-          : activeTab === "Unread"
-            ? item.unread
-            : item.active;
+    // A. Load Real History from API
+    const fetchHistory = async () => {
+      try {
+        const res = await privateAPI.get(
+          `users/api/conversations/${activeConversationId}/messages/`,
+        );
+        setMessages(res.data);
+      } catch (err) {
+        console.error("Error fetching history:", err);
+      }
+    };
+    fetchHistory();
 
-      return isAllowedConversation && matchesSearch && matchesTab;
-    });
-  }, [activeTab, search]);
+    // B. Initialize WebSocket with JWT Auth
+    const token = sessionStorage.getItem("access");
+    const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+    const wsUrl = `${protocol}://10.113.201.239:8000/ws/chat/${activeConversationId}/?token=${token}`;
 
-  const activeConversation =
-    filteredConversations.find((item) => item.id === activeConversationId) ||
-    conversations.find((item) => item.id === activeConversationId) ||
-    null;
+    socketRef.current = new WebSocket(wsUrl);
 
-  const activeMessages = activeConversation
-    ? messagesByConversation[activeConversation.id] || []
-    : [];
+    socketRef.current.onmessage = (event) => {
+      const data = JSON.parse(event.data);
 
-  const showChatView = Boolean(activeConversation);
+      // Add new message to list
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now(),
+          sender_type: data.sender_type,
+          sender_id: data.sender_id,
+          sender_name: data.sender_name,
+          message: data.message,
+          created_at: new Date().toISOString(), // Backend sends ISO, JS formats below
+        },
+      ]);
 
+      // Update the "Last Message" snippet in the sidebar list
+      setConversations((prevList) =>
+        prevList.map((c) =>
+          c.id === activeConversationId
+            ? {
+                ...c,
+                last_message: data.message,
+                updated_at: new Date().toISOString(),
+              }
+            : c,
+        ),
+      );
+    };
+
+    return () => {
+      socketRef.current?.close();
+    };
+  }, [activeConversationId]);
+
+  // --- 3. Auto-scroll ---
+  useEffect(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop =
+        chatContainerRef.current.scrollHeight;
+    }
+  }, [messages]);
+
+  // --- 4. Actions ---
   const handleSend = () => {
-    if (!messageInput.trim()) return;
+    if (!messageInput.trim() || !socketRef.current) return;
+
+    // We only need to send the message; backend identifies us via JWT
+    const payload = {
+      message: messageInput,
+    };
+
+    socketRef.current.send(JSON.stringify(payload));
     setMessageInput("");
   };
 
-  useEffect(() => {
-    setHideTopbar(false);
-    return () => {
-      setHideTopbar(false);
-    };
-  }, [setHideTopbar]);
+  const activeConversation = useMemo(
+    () => conversations.find((c) => c.id === activeConversationId),
+    [activeConversationId, conversations],
+  );
+
+  const filteredConversations = useMemo(() => {
+    return conversations.filter((c) =>
+      c.patient_name.toLowerCase().includes(search.toLowerCase()),
+    );
+  }, [conversations, search]);
+
+  const showChatView = Boolean(activeConversationId);
 
   return (
-    <div className="h-[calc(100vh-64px)] overflow-hidden bg-[#f7fafa] font-body text-on-surface selection:bg-secondary-container selection:text-on-secondary-container">
-      <div className="flex h-full min-h-0 overflow-hidden">
+    <div className="h-[calc(100vh-64px)] overflow-hidden bg-[#f7fafa] font-body text-on-surface">
+      <div className="flex h-full min-h-0">
+        {/* --- Sidebar: Conversation List --- */}
         <section
-          className={[
-            "flex h-full min-h-0 shrink-0 flex-col bg-[#f7fafa] md:w-[380px] md:border-r md:border-slate-100 xl:w-[400px]",
-            showChatView ? "hidden md:flex" : "flex w-full",
-          ].join(" ")}
+          className={`flex h-full shrink-0 flex-col bg-[#f7fafa] md:w-[380px] md:border-r border-slate-100 ${showChatView ? "hidden md:flex" : "flex w-full"}`}
         >
-          <div className="shrink-0 border-b border-slate-100 bg-white/60 px-4 py-5 backdrop-blur-sm">
-            <div className="mb-4">
-              <h1 className="text-2xl font-black tracking-tight text-[#006565]">
-                Messages
-              </h1>
-              <p className="mt-1 text-sm font-medium text-slate-500">
-                Manage patient conversations and check-ins
-              </p>
-            </div>
-
-            <div className="relative mb-4 flex items-center rounded-full bg-[#f1f4f4] px-4 py-2 ring-[#006565]/20 transition-all focus-within:ring-2">
-              <span className="material-symbols-outlined text-xl text-slate-400">
-                search
-              </span>
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search patients, IDs, or departments..."
-                className="w-full border-none bg-transparent pl-2 text-sm font-medium outline-none focus:ring-0"
-              />
-            </div>
-
-            <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              {tabs.map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={
-                    activeTab === tab
-                      ? "whitespace-nowrap rounded-full bg-[#006565] px-4 py-1.5 text-xs font-bold text-white"
-                      : "whitespace-nowrap rounded-full border border-slate-100 bg-white px-4 py-1.5 text-xs font-semibold text-slate-600 shadow-sm transition-all hover:bg-[#ebeeee]"
-                  }
-                >
-                  {tab}
-                </button>
-              ))}
-            </div>
+          <div className="p-4 bg-white/60 backdrop-blur-sm border-b border-slate-100">
+            <h1 className="text-2xl font-black text-[#006565]">Messages</h1>
+            <input
+              type="text"
+              placeholder="Search patients..."
+              className="mt-4 w-full rounded-full bg-[#f1f4f4] px-4 py-2 text-sm outline-none"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
-            <div className="space-y-2">
-              {filteredConversations.length === 0 ? (
-                <div className="rounded-2xl bg-white p-6 text-center shadow-sm">
-                  <p className="text-sm font-semibold text-slate-600">
-                    No conversations found.
+          <div className="flex-1 overflow-y-auto p-4 space-y-2">
+            {filteredConversations.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => setActiveConversationId(item.id)}
+                className={`flex w-full gap-4 rounded-2xl p-4 transition-all ${activeConversationId === item.id ? "bg-white shadow-sm border-l-4 border-[#006565]" : "hover:bg-white/50"}`}
+              >
+                <Avatar name={item.patient_name} active={true} />
+                <div className="min-w-0 flex-1 text-left">
+                  <div className="flex justify-between items-start">
+                    <h4 className="truncate text-sm font-bold">
+                      {item.patient_name}
+                    </h4>
+                    <span className="text-[10px] text-slate-400">
+                      {item.updated_at
+                        ? new Date(item.updated_at).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })
+                        : ""}
+                    </span>
+                  </div>
+                  <p className="truncate text-xs text-slate-500">
+                    {item.last_message || "No messages yet"}
                   </p>
                 </div>
-              ) : (
-                filteredConversations.map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => setActiveConversationId(item.id)}
-                    className={[
-                      "flex w-full gap-4 rounded-2xl p-4 text-left transition-colors",
-                      activeConversation?.id === item.id
-                        ? "border-l-4 border-[#006565] bg-white shadow-sm"
-                        : "hover:bg-white/70",
-                    ].join(" ")}
-                  >
-                    <Avatar
-                      name={item.name}
-                      avatar={item.avatar}
-                      active={item.active}
-                    />
-
-                    <div className="min-w-0 flex-1">
-                      <div className="mb-0.5 flex items-start justify-between gap-3">
-                        <h4 className="truncate text-sm font-bold text-[#181c1d]">
-                          {item.name}
-                        </h4>
-                        <span className="shrink-0 text-[10px] font-medium text-slate-400">
-                          {item.time}
-                        </span>
-                      </div>
-
-                      <p className="mb-1 text-[11px] font-bold uppercase tracking-wider text-[#006565]">
-                        {item.patientId} • {item.department}
-                      </p>
-
-                      <div className="flex items-center justify-between gap-3">
-                        <p className="truncate text-xs font-medium text-slate-500">
-                          {item.lastMessage}
-                        </p>
-
-                        {item.unread ? (
-                          <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-[#006565] px-1.5 text-[10px] font-black text-white">
-                            •
-                          </span>
-                        ) : null}
-                      </div>
-                    </div>
-                  </button>
-                ))
-              )}
-            </div>
+              </button>
+            ))}
           </div>
         </section>
 
+        {/* --- Main Chat Area --- */}
         <section
-          className={[
-            "flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-white",
-            showChatView ? "flex" : "hidden md:flex",
-          ].join(" ")}
+          className={`flex-1 flex-col bg-white ${showChatView ? "flex" : "hidden md:flex"}`}
         >
           {activeConversation ? (
             <>
-              <header className="shrink-0 border-b border-slate-50 bg-white/80 px-6 py-4 backdrop-blur-sm">
-                <div className="flex items-center justify-between gap-4">
-                  <div className="flex min-w-0 items-center gap-4">
-                    <button
-                      onClick={() => setActiveConversationId(null)}
-                      className="material-symbols-outlined rounded-xl p-2 text-slate-400 transition-all hover:bg-[#f1f4f4] hover:text-[#006565] md:hidden"
-                    >
-                      arrow_back
-                    </button>
-
-                    <Avatar
-                      name={activeConversation.name}
-                      avatar={activeConversation.avatar}
-                      active={activeConversation.active}
-                      size="h-11 w-11"
-                    />
-
-                    <div className="min-w-0">
-                      <h3 className="truncate font-bold text-[#181c1d]">
-                        {activeConversation.name}
-                      </h3>
-                      <div className="flex min-w-0 items-center gap-2">
-                        <span className="shrink-0 rounded-full bg-[#93f2f2] px-2 py-0.5 text-[10px] font-bold uppercase tracking-tight text-[#002020]">
-                          {activeConversation.status}
-                        </span>
-                        <span className="truncate text-[11px] font-medium text-slate-400">
-                          {activeConversation.patientId} •{" "}
-                          {activeConversation.department}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex shrink-0 gap-2">
-                    <button className="rounded-xl p-2.5 text-slate-400 transition-all hover:bg-[#f1f4f4] hover:text-[#006565]">
-                      <span className="material-symbols-outlined">phone</span>
-                    </button>
-                    <button className="rounded-xl p-2.5 text-slate-400 transition-all hover:bg-[#f1f4f4] hover:text-[#006565]">
-                      <span className="material-symbols-outlined">
-                        more_vert
-                      </span>
-                    </button>
+              {/* Header */}
+              <header className="flex items-center justify-between px-6 py-4 border-b border-slate-50">
+                <div className="flex items-center gap-4">
+                  <button
+                    onClick={() => setActiveConversationId(null)}
+                    className="md:hidden material-symbols-outlined"
+                  >
+                    arrow_back
+                  </button>
+                  <Avatar
+                    name={activeConversation.patient_name}
+                    size="h-10 w-10"
+                  />
+                  <div>
+                    <h3 className="font-bold">
+                      {activeConversation.patient_name}
+                    </h3>
+                    <p className="text-[11px] text-slate-400">
+                      {activeConversation.patient_id_str}
+                    </p>
                   </div>
                 </div>
               </header>
 
-              <div className="min-h-0 flex-1 overflow-y-auto bg-[#fcfdfd] p-6">
-                <div className="space-y-6">
-                  <div className="flex justify-center">
-                    <span className="rounded-full bg-slate-100 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                      Today
-                    </span>
-                  </div>
-
-                  {activeMessages.map((message) =>
-                    message.sender === "patient" ? (
-                      <div
-                        key={message.id}
-                        className="flex max-w-[80%] items-end gap-3"
-                      >
-                        <div className="min-w-0">
-                          <div className="rounded-r-2xl rounded-t-2xl bg-[#f1f4f4] p-4 text-sm leading-relaxed text-[#181c1d] shadow-sm">
-                            {message.text}
-                          </div>
-                          <span className="ml-1 mt-1 block text-[10px] text-slate-400">
-                            {message.time}
-                          </span>
-                        </div>
-                      </div>
-                    ) : (
-                      <div
-                        key={message.id}
-                        className="ml-auto flex max-w-[80%] flex-col items-end gap-1"
-                      >
-                        <div className="rounded-l-2xl rounded-t-2xl bg-gradient-to-br from-[#006565] to-[#008080] p-4 text-sm leading-relaxed text-white shadow-md">
-                          {message.text}
-                        </div>
-                        <div className="mr-1 mt-1 flex items-center gap-1">
-                          <span className="text-[10px] text-slate-400">
-                            {message.time}
-                          </span>
-                          <span className="material-symbols-outlined text-[14px] text-[#006565]">
-                            done_all
-                          </span>
-                        </div>
-                      </div>
-                    ),
-                  )}
-                </div>
-              </div>
-
-              <div className="shrink-0 border-t border-slate-100 bg-white px-6 py-3">
-                <div className="flex gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                  {quickActions.map((action) => (
-                    <button
-                      key={action}
-                      className="shrink-0 rounded-full border border-[#006565]/15 bg-[#f7fafa] px-4 py-2 text-xs font-semibold text-[#006565] transition-all hover:bg-[#006565] hover:text-white"
+              {/* Messages List */}
+              <div
+                ref={chatContainerRef}
+                className="flex-1 overflow-y-auto p-6 space-y-4 bg-[#fcfdfd]"
+              >
+                {messages.map((msg, idx) => {
+                  const isPatient = msg.sender_type === "PATIENT";
+                  return (
+                    <div
+                      key={idx}
+                      className={`flex ${isPatient ? "justify-start" : "justify-end"}`}
                     >
-                      {action}
-                    </button>
-                  ))}
-                </div>
+                      <div
+                        className={`max-w-[70%] rounded-2xl p-4 text-sm shadow-sm ${
+                          isPatient
+                            ? "bg-[#f1f4f4] text-slate-800 rounded-tl-none"
+                            : "bg-[#006565] text-white rounded-tr-none"
+                        }`}
+                      >
+                        {/* Show which staff member sent the message to colleagues */}
+                        {!isPatient && (
+                          <div className="text-[10px] font-bold mb-1 opacity-70">
+                            Staff: {msg.sender_name}
+                          </div>
+                        )}
+
+                        {msg.message}
+
+                        <div
+                          className={`text-[10px] mt-1 opacity-70 ${isPatient ? "text-slate-500" : "text-teal-100"}`}
+                        >
+                          {new Date(msg.created_at).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
 
-              <div className="shrink-0 border-t border-slate-50 bg-white p-6">
-                <div className="group flex items-center gap-4 rounded-2xl bg-[#ebeeee] px-4 py-3 shadow-inner">
-                  <button className="p-1 text-slate-400 transition-colors hover:text-[#006565]">
-                    <span className="material-symbols-outlined">
-                      attach_file
-                    </span>
-                  </button>
-
+              {/* Input Area */}
+              <div className="p-6 border-t border-slate-100">
+                <div className="flex items-center gap-4 bg-[#f1f4f4] rounded-2xl px-4 py-2">
                   <input
                     type="text"
+                    placeholder="Type a message..."
+                    className="flex-1 bg-transparent border-none focus:ring-0 text-sm"
                     value={messageInput}
                     onChange={(e) => setMessageInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") handleSend();
-                    }}
-                    placeholder="Type your message..."
-                    className="flex-1 border-none bg-transparent text-sm font-medium text-[#181c1d] outline-none focus:ring-0"
+                    onKeyDown={(e) => e.key === "Enter" && handleSend()}
                   />
-
                   <button
                     onClick={handleSend}
-                    className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#006565] text-white shadow-lg shadow-[#006565]/20 transition-all hover:scale-105 active:scale-95"
+                    className="h-10 w-10 bg-[#006565] text-white rounded-xl flex items-center justify-center hover:scale-105 transition-transform"
                   >
-                    <span
-                      className="material-symbols-outlined text-lg"
-                      style={{ fontVariationSettings: "'FILL' 1" }}
-                    >
-                      send
-                    </span>
+                    <span className="material-symbols-outlined">send</span>
                   </button>
                 </div>
               </div>
             </>
           ) : (
-            <div className="hidden flex-1 items-center justify-center bg-[#fcfdfd] md:flex">
-              <div className="rounded-3xl bg-white p-10 text-center shadow-sm">
-                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#ebf7f7]">
-                  <span className="material-symbols-outlined text-[#006565]">
-                    chat
-                  </span>
-                </div>
-                <h3 className="text-lg font-bold text-slate-800">
-                  Select a conversation
-                </h3>
-                <p className="mt-2 max-w-sm text-sm font-medium text-slate-500">
-                  Choose a patient conversation from the left panel to start
-                  managing messages.
-                </p>
+            <div className="flex-1 flex items-center justify-center text-slate-400">
+              <div className="text-center">
+                <span className="material-symbols-outlined text-6xl block mb-2">
+                  chat_bubble
+                </span>
+                <p>Select a patient to view shared chat history</p>
               </div>
             </div>
           )}

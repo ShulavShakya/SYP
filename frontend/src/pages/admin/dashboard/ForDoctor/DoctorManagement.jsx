@@ -425,7 +425,9 @@ export default function DoctorManagement() {
                         statusClass={getStatusClass(doctor.status)}
                         deleting={deleteLoadingId === doctor.id}
                         onView={() => openViewModal(doctor)}
-                        onEdit={() => console.log("Edit", doctor)}
+                        onEdit={() =>
+                          navigate(`/admin/update-doctor/${doctor.id}`)
+                        }
                         onDelete={() => handleDeleteDoctor(doctor)}
                       />
                     ))

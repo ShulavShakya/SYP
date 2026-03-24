@@ -24,7 +24,7 @@ export default function RegisterPatient() {
     dob: "",
     gender: "",
     phone: "",
-    username: "", // email goes here for backend
+    username: "", 
     password: "",
     address: "",
     blood_group: "",
