@@ -242,9 +242,13 @@ export default function UpdatePatient() {
         formData.append("profile_image", editForm.profileImage);
       }
 
-      await privateAPI.patch(`/admin/update-patient/${editForm.id}`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      await privateAPI.patch(
+        `/admin/update-patient/${editForm.id}/`,
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        },
+      );
 
       toast.success("Patient record updated successfully");
       navigate("/admin/patient-management");
