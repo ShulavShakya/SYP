@@ -112,3 +112,57 @@ class LoginSerializer(serializers.Serializer):
     username = serializers.CharField(required=True)
     password = serializers.CharField(required=True, write_only=True)
 
+from rest_framework import serializers
+from .models import Conversation, Message, Patient, Receptionist
+
+class MessageSerializer(serializers.ModelSerializer):
+    sender_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Message
+        fields = ['id', 'sender_type', 'sender_id', 'message', 'created_at', 'sender_name']
+
+    def get_sender_name(self, obj):
+        if obj.sender_type == "PATIENT":
+            return obj.conversation.patient.full_name
+        # Fetch the specific receptionist name from the ID
+        rec = Receptionist.objects.filter(id=obj.sender_id).first()
+        return rec.name if rec else "System"
+
+from rest_framework import serializers
+from .models import Conversation, Message, Patient, Receptionist
+
+class MessageSerializer(serializers.ModelSerializer):
+    sender_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Message
+        fields = ['id', 'sender_type', 'sender_id', 'message', 'created_at', 'sender_name']
+
+    def get_sender_name(self, obj):
+        if obj.sender_type == "PATIENT":
+            return obj.conversation.patient.full_name
+        
+        # Look up the specific receptionist name from their ID
+        try:
+            rec = Receptionist.objects.get(id=obj.sender_id)
+            return rec.name
+        except Receptionist.DoesNotExist:
+            return "Staff"
+
+class ConversationSerializer(serializers.ModelSerializer):
+    patient_name = serializers.CharField(source='patient.full_name', read_only=True)
+    patient_id_str = serializers.CharField(source='patient.patient_id', read_only=True)
+    last_message = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Conversation
+        fields = ['id', 'patient_name', 'patient_id_str', 'last_message', 'updated_at']
+
+    def get_last_message(self, obj):
+        last = obj.messages.order_by('-created_at').first()
+        return last.message if last else "No messages yet"
+
+
+
+

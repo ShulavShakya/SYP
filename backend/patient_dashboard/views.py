@@ -1,230 +1,307 @@
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from accounts.models import Patient
+from .serializer import ChangePasswordSerializer, DoctorBasicSerializer, PatientProfileSerializer
 
 
+
+#sdfghjgfdsghjgfdsfghj
+
+from rest_framework.decorators import api_view, permission_classes, authentication_classes
+from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
+from accounts.models import Doctor
+from .serializer import DoctorBasicSerializer
+@api_view(['GET'])
+@authentication_classes([])  # no auth required
+@permission_classes([AllowAny])
+def get_doctors_basic(request):
+    doctors = Doctor.objects.all()
+    serializer = DoctorBasicSerializer(doctors, many=True, context={'request': request})
+    return Response(serializer.data)
+
+import base64
+import hashlib
+import hmac
+import json
+import uuid
+from decimal import Decimal
+
+import requests
+from django.shortcuts import redirect
+from django.conf import settings
+from rest_framework.decorators import api_view, permission_classes, authentication_classes
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.response import Response
+from rest_framework import status
+
+from .serializer import AppointmentPaymentSerializer
+from accounts.models import Appointment, Payment, Patient
+
+ESEWA_FORM_URL = "https://rc-epay.esewa.com.np/api/epay/main/v2/form"
+ESEWA_STATUS_URL = "https://rc.esewa.com.np/api/epay/transaction/status/"
+ESEWA_PRODUCT_CODE = "EPAYTEST"
+ESEWA_SECRET_KEY = "8gBm/:&EnhH.1/q"
+
+FRONTEND_BASE_URL = "http://localhost:5173"
+
+
+def generate_esewa_signature(total_amount: str, transaction_uuid: str, product_code: str) -> str:
+    message = f"total_amount={total_amount},transaction_uuid={transaction_uuid},product_code={product_code}"
+    digest = hmac.new(
+        ESEWA_SECRET_KEY.encode("utf-8"),
+        message.encode("utf-8"),
+        hashlib.sha256,
+    ).digest()
+    return base64.b64encode(digest).decode("utf-8")
+
+
+def verify_esewa_signature(signed_field_names: str, payload: dict, signature: str) -> bool:
+    message = ",".join(
+        f"{field}={payload[field]}"
+        for field in signed_field_names.split(",")
+    )
+    digest = hmac.new(
+        ESEWA_SECRET_KEY.encode("utf-8"),
+        message.encode("utf-8"),
+        hashlib.sha256,
+    ).digest()
+    expected = base64.b64encode(digest).decode("utf-8")
+    return hmac.compare_digest(expected, signature)
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def initiate_payment(request):
+    serializer = AppointmentPaymentSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+
+    data = serializer.validated_data
+    transaction_uuid = str(uuid.uuid4())
+
+    amount = str(data["amount"])
+    tax_amount = "0"
+    product_service_charge = "0"
+    product_delivery_charge = "0"
+    total_amount = amount
+
+    success_url = request.build_absolute_uri("/api/patient/payment/success/")
+    failure_url = request.build_absolute_uri("/api/patient/payment/failure/")
+
+    request.session[transaction_uuid] = {
+        "user_id": request.user.id,
+        "department_name": data["department_name"],
+        "doctor_name": data["doctor_name"],
+        "date": str(data["date"]),
+        "time": str(data["time"]),
+        "reason": data.get("reason", ""),
+        "amount": amount,
+    }
+    request.session.modified = True
+
+    signature = generate_esewa_signature(
+        total_amount=total_amount,
+        transaction_uuid=transaction_uuid,
+        product_code=ESEWA_PRODUCT_CODE,
+    )
+
+    return Response(
+        {
+            "gateway_url": ESEWA_FORM_URL,
+            "fields": {
+                "amount": amount,
+                "tax_amount": tax_amount,
+                "total_amount": total_amount,
+                "transaction_uuid": transaction_uuid,
+                "product_code": ESEWA_PRODUCT_CODE,
+                "product_service_charge": product_service_charge,
+                "product_delivery_charge": product_delivery_charge,
+                "success_url": success_url,
+                "failure_url": failure_url,
+                "signed_field_names": "total_amount,transaction_uuid,product_code",
+                "signature": signature,
+            },
+            "transaction_uuid": transaction_uuid,
+        },
+        status=status.HTTP_200_OK,
+    )
+
+
+@api_view(["GET"])
+@authentication_classes([])
+@permission_classes([AllowAny])
+def payment_success(request):
+    data_b64 = request.GET.get("data")
+    if not data_b64:
+        return Response({"message": "Missing payment response."}, status=400)
+
+    try:
+        decoded = base64.b64decode(data_b64).decode("utf-8")
+        payload = json.loads(decoded)
+    except Exception:
+        return Response({"message": "Invalid payment response."}, status=400)
+
+    required = [
+        "status",
+        "transaction_uuid",
+        "total_amount",
+        "product_code",
+        "signed_field_names",
+        "signature",
+    ]
+    if not all(k in payload for k in required):
+        return Response({"message": "Incomplete payment response."}, status=400)
+
+    if not verify_esewa_signature(
+        payload["signed_field_names"],
+        payload,
+        payload["signature"],
+    ):
+        return Response({"message": "Invalid payment signature."}, status=400)
+
+    if payload["status"] != "COMPLETE":
+        return redirect(f"{FRONTEND_BASE_URL}/patient/payment/failure")
+
+    transaction_uuid = payload["transaction_uuid"]
+    session_data = request.session.get(transaction_uuid)
+    if not session_data:
+        return Response({"message": "No pending appointment found."}, status=404)
+
+    # Server-to-server verification
+    verify_resp = requests.get(
+        ESEWA_STATUS_URL,
+        params={
+            "product_code": ESEWA_PRODUCT_CODE,
+            "total_amount": payload["total_amount"],
+            "transaction_uuid": transaction_uuid,
+        },
+        timeout=10,
+    )
+    verify_resp.raise_for_status()
+    verify_data = verify_resp.json()
+
+    if verify_data.get("status") != "COMPLETE":
+        return Response({"message": "Payment verification failed."}, status=400)
+
+    completed_key = f"{transaction_uuid}_completed"
+    if request.session.get(completed_key):
+        return redirect(
+            f"{FRONTEND_BASE_URL}/patient/payment/success"
+            f"?transaction_uuid={transaction_uuid}"
+            f"&refId={verify_data.get('ref_id', '')}"
+        )
+
+    patient = Patient.objects.get(user_id=session_data["user_id"])
+
+    appointment = Appointment.objects.create(
+        patient=patient,
+        department_name=session_data["department_name"],
+        doctor_name=session_data["doctor_name"],
+        date=session_data["date"],
+        time=session_data["time"],
+        reason=session_data.get("reason", ""),
+        status="SCHEDULED",
+    )
+
+    payment = Payment.objects.create(
+        user_id=session_data["user_id"],
+        appointment=appointment,
+        transaction_uuid=transaction_uuid,
+        amount=Decimal(session_data["amount"]),
+        total_amount=Decimal(session_data["amount"]),
+        status="SUCCESS",
+    )
+
+    del request.session[transaction_uuid]
+    request.session[completed_key] = True
+    request.session.modified = True
+
+    return redirect(
+        f"{FRONTEND_BASE_URL}/patient/payment/success"
+        f"?appointment_id={appointment.id}"
+        f"&payment_id={payment.id}"
+        f"&transaction_uuid={transaction_uuid}"
+        f"&refId={verify_data.get('ref_id', '')}"
+    )
+
+
+@api_view(["GET"])
+@authentication_classes([])
+@permission_classes([AllowAny])
+def payment_failure(request):
+    return redirect(f"{FRONTEND_BASE_URL}/patient/payment/failure")
+
+from .serializer import PatientProfileSerializer
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
-def get_patient_info(request): 
+def get_patient_basic_info(request):
     try:
-
-
-        patient = Patient.objects.get(user=request.user)
-
-        data = {
-            'name': f"{request.user.first_name} {request.user.last_name}",
-            'email': request.user.email,
-            'phone': patient.phone
-        }
-
-        return Response(data)
-
+        patient = Patient.objects.get(user=request.user)  
     except Patient.DoesNotExist:
-        return Response({'error': 'Patient profile not found.'}, status=404)
+        return Response({"error": "Patient not found"}, status=404)
+
+    serializer = PatientProfileSerializer(patient)
+    return Response(serializer.data)
+
+
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework import status
+from accounts.models import Patient
+from .serializer import  PatientUpdateSerializer
+
+@api_view(['PUT', 'PATCH'])
+@permission_classes([IsAuthenticated])
+def update_patient_profile(request):
+    try:
+        patient = Patient.objects.get(user=request.user)
+    except Patient.DoesNotExist:
+        return Response({"error": "Patient not found"}, status=404)
+
+    serializer = PatientUpdateSerializer(
+        patient,
+        data=request.data,
+        partial=True   # 🔥 allows partial updates
+    )
+
+    if serializer.is_valid():
+        serializer.save()
+        return Response({
+            "message": "Profile updated successfully",
+            "data": serializer.data
+        })
+
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework import status
 
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
-def update_patient_info(request):
+def change_password(request):
+    serializer = ChangePasswordSerializer(data=request.data)
+
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
     user = request.user
 
-    try:
-        patient = Patient.objects.get(user=user)
-    except Patient.DoesNotExist:
-        return Response({'error': 'Patient profile not found.'}, status=404)
+    old_password = serializer.validated_data['old_password']
+    new_password = serializer.validated_data['new_password']
 
-    data = request.data
-
-    # Update user fields
-    user.first_name = data.get('first_name', user.first_name)
-    user.last_name = data.get('last_name', user.last_name)
-    user.email = data.get('email', user.email)
-    user.save()
-
-    # Update patient fields
-    patient.phone = data.get('phone', patient.phone)
-    patient.address = data.get('address', patient.address)
-    patient.save()
-
-    return Response({'message': 'Patient information updated successfully.'})
-
-
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
-from rest_framework import status
-from django.contrib.auth.hashers import check_password
-
-@api_view(['POST'])
-def change_patient_password(request):
-    user = request.user
-
-    # Check if user is a patient
-    if not hasattr(user, 'patient'):
+    # 🔹 Check old password
+    if not user.check_password(old_password):
         return Response(
-            {"error": "Only patients can change password"},
-            status=status.HTTP_403_FORBIDDEN
-        )
-
-    current_password = request.data.get('current_password')
-    new_password = request.data.get('new_password')
-    confirm_password = request.data.get('confirm_new_password')
-
-    # Check if current password is correct
-    if not user.check_password(current_password):
-        return Response(
-            {"error": "Current password is incorrect"},
+            {"error": "Old password is incorrect"},
             status=status.HTTP_400_BAD_REQUEST
         )
 
-    # Check if new passwords match
-    if new_password != confirm_password:
-        return Response(
-            {"error": "New passwords do not match"},
-            status=status.HTTP_400_BAD_REQUEST
-        )
-
-    # Update password
+    # 🔹 Update password (IMPORTANT)
     user.set_password(new_password)
     user.save()
 
-    return Response(
-        {"message": "Password updated successfully"},
-        status=status.HTTP_200_OK
-    )
-
-import uuid
-from django.shortcuts import redirect
-from accounts.models import Appointment, Payment
-
-
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
-from django.conf import settings
-from django.http import HttpResponse
-
-import uuid
-import base64
-import hashlib
-import requests
-
-from accounts.models import Payment
-from accounts.serializers import AppointmentSerializer
-
-
-#  1. CREATE APPOINTMENT + PAYMENT (API)
-@api_view(['POST'])
-def create_appointment_and_pay(request):
-    serializer = AppointmentSerializer(data=request.data)
-
-    if serializer.is_valid():
-        #  get logged-in patient
-        patient = request.user.patient
-
-        #  1. Create appointment
-        appointment = serializer.save(patient=patient)
-
-        #  2. Create payment
-        transaction_uuid = str(uuid.uuid4())
-
-        payment = Payment.objects.create(
-            user=request.user,
-            appointment=appointment,
-            transaction_uuid=transaction_uuid,
-            amount=1000,        
-            total_amount=1000,
-            status="PENDING"
-        )
-
-        #  3. Generate eSewa signature
-        message = f"total_amount={payment.total_amount},transaction_uuid={payment.transaction_uuid},product_code={settings.ESEWA_PRODUCT_CODE}"
-
-        signature = base64.b64encode(
-            hashlib.sha256(message.encode()).digest()
-        ).decode()
-
-        #  4. Send response (frontend will redirect)
-        return Response({
-            "message": "Appointment created. Proceed to payment.",
-            "payment_url": settings.ESEWA_BASE_URL,
-            "data": {
-                "amount": payment.amount,
-                "tax_amount": 0,
-                "total_amount": payment.total_amount,
-                "transaction_uuid": payment.transaction_uuid,
-                "product_code": settings.ESEWA_PRODUCT_CODE,
-                "product_service_charge": 0,
-                "product_delivery_charge": 0,
-                "success_url": "http://127.0.0.1:8000/api/appointments/payment-success/",
-                "failure_url": "http://127.0.0.1:8000/api/appointments/payment-failed/",
-                "signed_field_names": "total_amount,transaction_uuid,product_code",
-                "signature": signature
-            }
-        })
-
-    return Response(serializer.errors, status=400)
-
-
-#  2. PAYMENT SUCCESS (called by eSewa)
-def payment_success(request):
-    transaction_uuid = request.GET.get("transaction_uuid")
-
-    if not transaction_uuid:
-        return HttpResponse("Missing transaction UUID ")
-
-    try:
-        payment = Payment.objects.get(transaction_uuid=transaction_uuid)
-    except Payment.DoesNotExist:
-        return HttpResponse("Payment not found ")
-
-    #  Verify with eSewa
-    url = "https://rc-epay.esewa.com.np/api/epay/transaction/status/"
-
-    res = requests.get(url, params={
-        "product_code": settings.ESEWA_PRODUCT_CODE,
-        "transaction_uuid": transaction_uuid
-    })
-
-    result = res.json()
-
-    if result.get("status") == "COMPLETE":
-        #  Update payment
-        payment.status = "SUCCESS"
-        payment.save()
-
-        #  Confirm appointment
-        appointment = payment.appointment
-        appointment.status = "CONFIRMED"
-        appointment.save()
-
-        return HttpResponse(" Payment Successful. Appointment Confirmed 🎉")
-
-    #  Failed case
-    payment.status = "FAILED"
-    payment.save()
-
-    return HttpResponse(" Payment Verification Failed")
-
-
-#  3. PAYMENT FAILED (called by eSewa)
-def payment_failed(request):
-    transaction_uuid = request.GET.get("transaction_uuid")
-
-    if transaction_uuid:
-        Payment.objects.filter(transaction_uuid=transaction_uuid).update(
-            status="FAILED"
-        )
-
-    return HttpResponse(" Payment Failed")
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
-from accounts.models import Appointment
-@api_view(['GET'])
-def appointment_summary(request):
-    appointments = Appointment.objects.values(
-        'date',
-        'doctor_name',
-        'department_name',
-        'time',
-        'status'
-    )
-    return Response(appointments)
+    return Response({"message": "Password updated successfully"})

@@ -157,3 +157,55 @@ class AdminDashboardView(APIView):
             'username': request.user.username,
             'message': 'Welcome to admin dashboard'
         })
+
+
+
+
+
+
+
+
+
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework import status
+from .models import Conversation, Message, Patient
+from .serializers import ConversationSerializer, MessageSerializer
+
+# --- FOR PATIENTS ---
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_my_conversation(request):
+    """Returns the single unique conversation ID for the logged-in patient."""
+    try:
+        patient = request.user.patient
+        conversation, _ = Conversation.objects.get_or_create(patient=patient)
+        return Response({
+            "conversation_id": conversation.id,
+            "clinic_name": "Clinic Reception",
+            "patient_id": patient.patient_id
+        })
+    except Patient.DoesNotExist:
+        return Response({"error": "Not a patient profile"}, status=403)
+
+# --- FOR RECEPTIONISTS ---
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def list_conversations(request):
+    """Returns all patient conversations for the receptionist sidebar."""
+    conversations = Conversation.objects.all().order_by('-updated_at')
+    serializer = ConversationSerializer(conversations, many=True)
+    return Response(serializer.data)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_message_history(request, conversation_id):
+    """Returns the message history for a specific conversation."""
+    messages = Message.objects.filter(conversation_id=conversation_id).order_by('created_at')
+    serializer = MessageSerializer(messages, many=True)
+    return Response(serializer.data)
+
+
+
+

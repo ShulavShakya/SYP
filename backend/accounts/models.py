@@ -8,6 +8,7 @@ from django.db import models
 # -----------------------------
 from django.db import models
 from django.contrib.auth.models import User
+from multiselectfield import MultiSelectField
 class Patient(models.Model):
     BLOOD_GROUP_CHOICES = [
         ('A+', 'A+'), ('A-', 'A-'),
@@ -77,8 +78,57 @@ class Doctor(models.Model):
         ('ON_LEAVE', 'On Leave'),
         ('SUSPENDED', 'Suspended'),
     ]
+    SHIFT_CHOICES = [
+        ('MORNING', 'Morning'),
+        ('EVENING', 'Evening'),
+        ('NIGHT', 'Night'),
+    ]
+    profile_image = models.ImageField(
+    upload_to='profile_images/doctor/',
+    blank=True,
+    null=True
+    )
+    gender = models.CharField(
+    max_length=10,
+    choices=[
+        ('Male', 'Male'),
+        ('Female', 'Female'),
+        ('Other', 'Other'),
+    ],
+    blank=True,
+    null=True
+)
+    from multiselectfield import MultiSelectField
+
+    DAY_CHOICES = [
+    ('MON','Mon'),
+    ('TUE', 'Tue'), 
+    ('WED', 'Wed'),
+    ('THU', 'Thu'),
+    ('FRI', 'Fri'),
+    ('SAT', 'Sat'),
+    ('SUN', 'Sun'),
+]
+
+    availability_days = MultiSelectField(
+    choices=DAY_CHOICES,
+    max_length=20,
+    blank=True,
+)
+
+    dob = models.DateField()
     phone = models.CharField(max_length=15, default="n/a")
     name = models.CharField(max_length=100, default="n/a" )
+    email = models.EmailField(default="n/a")
+    address = models.TextField(default="n/a")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    qualifications = models.TextField(default="n/a")
+    shift = models.CharField(
+        max_length=10,
+        choices=SHIFT_CHOICES,
+        default='MORNING'
+    )
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     specialty = models.CharField(max_length=100)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='ACTIVE')
@@ -119,9 +169,29 @@ class Receptionist(models.Model):
         ('EVENING', 'Evening'),
         ('NIGHT', 'Night'),
     ]
+    profile_image = models.ImageField(
+        upload_to='profile_images/receptionist/',
+        blank=True,
+        null=True
+    )
+    email = models.EmailField(default="n/a")
+    dob = models.DateField()
+    address = models.TextField(default="n/a")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     phone = models.CharField(max_length=15)
     name = models.CharField(max_length=100, default="n/a" )
+    gender = models.CharField(
+    max_length=10,
+    choices=[
+        ('Male', 'Male'),
+        ('Female', 'Female'),
+        ('Other', 'Other'),
+    ],
+    blank=True,
+    null=True
+)
     status = models.CharField(
     max_length=10,
     choices=STATUS_CHOICES,
@@ -165,35 +235,43 @@ class Admin(models.Model):
 # Conversation
 # -----------------------------
 class Conversation(models.Model):
-    patient = models.OneToOneField(
-        Patient,
-        on_delete=models.CASCADE,
-        related_name="conversation"
-    )
+    patient = models.ForeignKey("Patient", on_delete=models.CASCADE)
+
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"Chat: {self.patient.user.username}"
+        return f"Chat with {self.patient}"
 # -----------------------------
 # Message
 # -----------------------------
 
 class Message(models.Model):
+
+    SENDER_TYPE_CHOICES = [
+        ("PATIENT", "Patient"),
+        ("RECEPTIONIST", "Receptionist"),
+    ]
+
     conversation = models.ForeignKey(
         Conversation,
         on_delete=models.CASCADE,
         related_name="messages"
     )
-    sender = models.ForeignKey(User, on_delete=models.CASCADE)
-    content = models.TextField()
-    timestamp = models.DateTimeField(auto_now_add=True)
+
+    sender_type = models.CharField(max_length=20, choices=SENDER_TYPE_CHOICES)
+
+    # store who sent it (important for tracking)
+    sender_id = models.IntegerField()
+
+    message = models.TextField()
+
     is_read = models.BooleanField(default=False)
 
-    class Meta:
-        ordering = ['timestamp']
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.sender.username}: {self.content[:20]}"
+        return f"{self.sender_type}: {self.message[:20]}"
     
 from django.db import models
 from django.contrib.auth.models import User
