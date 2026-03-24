@@ -30,3 +30,19 @@ export default function EmptyState({
     </div>
   );
 }
+
+// function EmptyState({ title, message }) {
+//   return (
+//     <tr>
+//       <td colSpan={6} className="px-6 py-16 text-center">
+//         <div className="flex flex-col items-center justify-center">
+//           <div className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-100">
+//             <FileText className="text-slate-400" size={24} />
+//           </div>
+//           <h3 className="mt-4 text-lg font-bold text-slate-900">{title}</h3>
+//           <p className="mt-2 text-sm text-slate-500">{message}</p>
+//         </div>
+//       </td>
+//     </tr>
+//   );
+// }

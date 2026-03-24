@@ -1,5 +1,6 @@
 import React from "react";
 import Landing from "../pages/shared/Landing.jsx";
+import AboutUsPage from "../pages/shared/AboutUsPage.jsx";
 import Login from "../pages/shared/Login.jsx";
 import Signup from "../pages/patient/auth/Signup.jsx";
 import ProtectedRoute from "../auth/ProtectedRoute.jsx";
@@ -12,6 +13,8 @@ import Approvals from "../pages/receptionist/dashboard/Approvals.jsx";
 import AssignDoctor from "../pages/receptionist/dashboard/AssignDoctor.jsx";
 import Billing from "../pages/receptionist/dashboard/Billing.jsx";
 import AppointmentHistory from "../pages/patient/dashboard/AppointmentHistory.jsx";
+import PaymentSuccess from "../pages/patient/dashboard/PaymentSuccess.jsx";
+import PaymentFailure from "../pages/patient/dashboard/PaymentFailure.jsx";
 import PatientBilling from "../pages/patient/dashboard/PatientBilling.jsx";
 import MedicalRecords from "../pages/patient/dashboard/MedicalRecords.jsx";
 import Prescriptions from "../pages/patient/dashboard/Prescriptions.jsx";
@@ -30,18 +33,23 @@ import PrescriptionCreation from "../pages/doctor/dashboard/PrescriptionCreation
 import DoctorProfile from "../pages/doctor/dashboard/DoctorProfile.jsx";
 import AdminLayout from "../pages/admin/layout/AdminLayout.jsx";
 import AdminHome from "../pages/admin/dashboard/AdminHome.jsx";
-import DoctorManagement from "../pages/admin/dashboard/DoctorManagement.jsx";
-import PatientManagement from "../pages/admin/dashboard/PatientManagement.jsx";
-import ReceptionistManagement from "../pages/admin/dashboard/ReceptionistManagement.jsx";
+import DoctorManagement from "../pages/admin/dashboard/ForDoctor/DoctorManagement.jsx";
+import PatientManagement from "../pages/admin/dashboard/ForPatient/PatientManagement.jsx";
+import ReceptionistManagement from "../pages/admin/dashboard/ForReceptionist/ReceptionistManagement.jsx";
 import AdminAppointmentManagement from "../pages/admin/dashboard/AdminAppointmentManagement.jsx";
 import BillingManagement from "../pages/admin/dashboard/BillingManagement.jsx";
 import ManageMessages from "../pages/admin/dashboard/ManageMessages.jsx";
-import AddDoctor from "../pages/admin/dashboard/AddDoctor.jsx";
-import AddReceptionist from "../pages/admin/dashboard/AddReceptionist.jsx";
+import AddDoctor from "../pages/admin/dashboard/ForDoctor/AddDoctor.jsx";
+import AddReceptionist from "../pages/admin/dashboard/ForReceptionist/AddReceptionist.jsx";
 import ApprovalManagement from "../pages/admin/dashboard/ApprovalManagement.jsx";
+import AddPatient from "../pages/admin/dashboard/ForPatient/AddPatient.jsx";
+import UpdateReceptionist from "../pages/admin/dashboard/ForReceptionist/UpdateReceptionist.jsx";
+import UpdateDoctor from "../pages/admin/dashboard/ForDoctor/UpdateDoctor.jsx";
+import UpdatePatient from "../pages/admin/dashboard/ForPatient/UpdatePatient.jsx";
 
 export default [
   { path: "/", element: <Landing /> },
+  { path: "/about-us", element: <AboutUsPage /> },
   { path: "/login", element: <Login /> },
   { path: "/patient/signup", element: <Signup /> },
   {
@@ -56,6 +64,8 @@ export default [
       { path: "profile", element: <Profile /> },
       { path: "appointments", element: <Appointments /> },
       { path: "appointment-history", element: <AppointmentHistory /> },
+      { path: "payment-success", element: <PaymentSuccess /> },
+      { path: "payment-failure", element: <PaymentFailure /> },
       { path: "billing", element: <PatientBilling /> },
       { path: "medical-records", element: <MedicalRecords /> },
       { path: "prescriptions", element: <Prescriptions /> },
@@ -122,7 +132,11 @@ export default [
       { path: "manage-messages", element: <ManageMessages /> },
       { path: "add-doctor", element: <AddDoctor /> },
       { path: "add-receptionist", element: <AddReceptionist /> },
+      { path: "add-patient", element: <AddPatient /> },
       { path: "approval-management", element: <ApprovalManagement /> },
+      { path: "update-receptionist/:id", element: <UpdateReceptionist /> },
+      { path: "update-doctor/:id", element: <UpdateDoctor /> },
+      { path: "update-patient/:id", element: <UpdatePatient /> },
     ],
   },
 ];

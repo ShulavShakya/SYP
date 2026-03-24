@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { privateAPI } from "../../../auth/config/api";
 import {
   User,
   Mail,
@@ -8,40 +9,42 @@ import {
   MapPin,
   Shield,
   ArrowLeft,
-  HeartPulse,
   Image as ImageIcon,
   Save,
   Users,
-  CreditCard,
+  Lock,
 } from "lucide-react";
 
 export default function RegisterPatient() {
   const navigate = useNavigate();
 
   const [form, setForm] = useState({
-    fullName: "",
-    age: "",
+    first_name: "",
+    last_name: "",
     dob: "",
     gender: "",
     phone: "",
-    email: "",
+    username: "", 
+    password: "",
     address: "",
-    emergencyContactName: "",
-    emergencyContactPhone: "",
-    insuranceProvider: "",
-    insuranceNumber: "",
-    profileImage: null,
+    blood_group: "",
+    emergency_contact_name: "",
+    emergency_contact_phone: "",
+    profile_image: null,
   });
 
   const [imagePreview, setImagePreview] = useState("");
   const [err, setErr] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const canSubmit = useMemo(() => {
     return (
-      form.fullName.trim() &&
-      form.age.toString().trim() &&
+      form.first_name.trim() &&
+      form.last_name.trim() &&
       form.gender.trim() &&
-      form.phone.trim()
+      form.phone.trim() &&
+      form.username.trim() &&
+      form.password.trim()
     );
   }, [form]);
 
@@ -52,7 +55,7 @@ export default function RegisterPatient() {
 
   const onImageChange = (e) => {
     const file = e.target.files?.[0] || null;
-    setForm((prev) => ({ ...prev, profileImage: file }));
+    setForm((prev) => ({ ...prev, profile_image: file }));
 
     if (file) {
       setImagePreview(URL.createObjectURL(file));
@@ -61,34 +64,85 @@ export default function RegisterPatient() {
     }
   };
 
-  const onSubmit = (e) => {
+  const onSubmit = async (e) => {
     e.preventDefault();
     setErr("");
 
-    if (!form.fullName || !form.age || !form.gender || !form.phone) {
+    if (!canSubmit) {
       setErr("Please fill all required fields.");
       return;
     }
 
-    console.log("Registered patient:", form);
+    try {
+      setLoading(true);
 
-    navigate("/reception/records");
+      const formData = new FormData();
+      formData.append("first_name", form.first_name);
+      formData.append("last_name", form.last_name);
+      formData.append("username", form.username);
+      formData.append("password", form.password);
+      formData.append("dob", form.dob);
+      formData.append("gender", form.gender);
+      formData.append("phone", form.phone);
+      formData.append("address", form.address);
+      formData.append("blood_group", form.blood_group);
+      formData.append("emergency_contact_name", form.emergency_contact_name);
+      formData.append("emergency_contact_phone", form.emergency_contact_phone);
+
+      if (form.profile_image) {
+        formData.append("profile_image", form.profile_image);
+      }
+
+      const response = await privateAPI.post(
+        "/receptionist/patient/create/",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        },
+      );
+
+      console.log("Patient created:", response.data);
+      navigate("/reception/records");
+    } catch (error) {
+      console.error(error);
+
+      if (error.response?.data) {
+        const backendErrors = error.response.data;
+        const firstError =
+          typeof backendErrors === "string"
+            ? backendErrors
+            : Object.entries(backendErrors)
+                .map(
+                  ([key, value]) =>
+                    `${key}: ${Array.isArray(value) ? value.join(", ") : value}`,
+                )
+                .join(" | ");
+
+        setErr(firstError || "Failed to create patient.");
+      } else {
+        setErr("Something went wrong while creating the patient.");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const onReset = () => {
     setForm({
-      fullName: "",
-      age: "",
+      first_name: "",
+      last_name: "",
       dob: "",
       gender: "",
       phone: "",
-      email: "",
+      username: "",
+      password: "",
       address: "",
-      emergencyContactName: "",
-      emergencyContactPhone: "",
-      insuranceProvider: "",
-      insuranceNumber: "",
-      profileImage: null,
+      blood_group: "",
+      emergency_contact_name: "",
+      emergency_contact_phone: "",
+      profile_image: null,
     });
     setImagePreview("");
     setErr("");
@@ -98,16 +152,6 @@ export default function RegisterPatient() {
     <div className="min-h-screen text-slate-900">
       <main className="bg-gradient-to-b px-4 py-8 md:py-12">
         <div className="mx-auto max-w-5xl">
-          {/* <div className="mb-8 text-center">
-            <h1 className="mb-3 text-4xl font-extrabold tracking-tight lg:text-5xl">
-              Patient Registration
-            </h1>
-            <p className="mx-auto max-w-2xl text-lg text-slate-500">
-              Register a new patient into the MedFlow clinical network and save
-              their personal, contact, and insurance details.
-            </p>
-          </div> */}
-
           <div className="rounded-2xl border border-[#008080]/5 bg-white p-6 shadow-xl md:p-10">
             <div className="mb-6">
               <button
@@ -135,23 +179,22 @@ export default function RegisterPatient() {
                 title="Personal Information"
               />
 
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <Field
-                  label="Full Name"
-                  value={form.fullName}
-                  onChange={onChange("fullName")}
-                  placeholder="Johnathan Doe"
+                  label="First Name"
+                  value={form.first_name}
+                  onChange={onChange("first_name")}
+                  placeholder="John"
                   icon={<User size={18} />}
                   required
                 />
 
                 <Field
-                  label="Age"
-                  type="number"
-                  value={form.age}
-                  onChange={onChange("age")}
-                  placeholder="25"
-                  icon={<Calendar size={18} />}
+                  label="Last Name"
+                  value={form.last_name}
+                  onChange={onChange("last_name")}
+                  placeholder="Doe"
+                  icon={<User size={18} />}
                   required
                 />
 
@@ -164,15 +207,31 @@ export default function RegisterPatient() {
                   required
                 />
 
-                <div className="md:col-span-3">
-                  <Field
-                    label="Date of Birth"
-                    type="date"
-                    value={form.dob}
-                    onChange={onChange("dob")}
-                    icon={<Calendar size={18} />}
-                  />
-                </div>
+                <Field
+                  label="Date of Birth"
+                  type="date"
+                  value={form.dob}
+                  onChange={onChange("dob")}
+                  icon={<Calendar size={18} />}
+                />
+
+                <Field
+                  label="Blood Group"
+                  value={form.blood_group}
+                  onChange={onChange("blood_group")}
+                  placeholder="A+"
+                  icon={<Shield size={18} />}
+                />
+
+                <Field
+                  label="Password"
+                  type="password"
+                  value={form.password}
+                  onChange={onChange("password")}
+                  placeholder="Enter password"
+                  icon={<Lock size={18} />}
+                  required
+                />
               </div>
 
               <div className="flex flex-col gap-2">
@@ -206,9 +265,9 @@ export default function RegisterPatient() {
                       <p className="mt-2 text-xs text-slate-500">
                         Optional, for easier patient identification.
                       </p>
-                      {form.profileImage && (
+                      {form.profile_image && (
                         <p className="mt-1 text-xs font-medium text-slate-700">
-                          {form.profileImage.name}
+                          {form.profile_image.name}
                         </p>
                       )}
                     </div>
@@ -235,10 +294,11 @@ export default function RegisterPatient() {
                 <Field
                   label="Email Address"
                   type="email"
-                  value={form.email}
-                  onChange={onChange("email")}
+                  value={form.username}
+                  onChange={onChange("username")}
                   placeholder="john.doe@example.com"
                   icon={<Mail size={18} />}
+                  required
                 />
 
                 <div className="md:col-span-2">
@@ -260,8 +320,8 @@ export default function RegisterPatient() {
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <Field
                   label="Emergency Contact Name"
-                  value={form.emergencyContactName}
-                  onChange={onChange("emergencyContactName")}
+                  value={form.emergency_contact_name}
+                  onChange={onChange("emergency_contact_name")}
                   placeholder="Jane Doe"
                   icon={<User size={18} />}
                 />
@@ -269,8 +329,8 @@ export default function RegisterPatient() {
                 <Field
                   label="Emergency Contact Phone"
                   type="tel"
-                  value={form.emergencyContactPhone}
-                  onChange={onChange("emergencyContactPhone")}
+                  value={form.emergency_contact_phone}
+                  onChange={onChange("emergency_contact_phone")}
                   placeholder="+1 (555) 111-2222"
                   icon={<Phone size={18} />}
                 />
@@ -296,16 +356,16 @@ export default function RegisterPatient() {
 
                 <button
                   type="submit"
-                  disabled={!canSubmit}
+                  disabled={!canSubmit || loading}
                   className={[
                     "flex w-full items-center justify-center gap-2 rounded-xl px-8 py-3 text-sm font-bold text-white transition-all md:w-auto",
-                    canSubmit
+                    canSubmit && !loading
                       ? "bg-[#008080] hover:bg-[#007070]"
                       : "cursor-not-allowed bg-slate-300",
                   ].join(" ")}
                 >
                   <Save size={16} />
-                  Save Patient
+                  {loading ? "Saving..." : "Save Patient"}
                 </button>
               </div>
             </form>
