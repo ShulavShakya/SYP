@@ -161,3 +161,8 @@ ESEWA_BASE_URL = "https://rc-epay.esewa.com.np/api/epay/main/v2/form"
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
 ]
+
+# settings.py
+KHALTI_SECRET_KEY = "your_sandbox_live_secret_key_here"
+KHALTI_INITIATE_URL = "https://dev.khalti.com/api/v2/epayment/initiate/"
+KHALTI_LOOKUP_URL = "https://dev.khalti.com/api/v2/epayment/lookup/"

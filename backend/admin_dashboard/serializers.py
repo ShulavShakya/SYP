@@ -246,3 +246,26 @@ class PatientCreateSerializer(serializers.ModelSerializer):
         patient = Patient.objects.create(user=user, **validated_data)
 
         return patient
+
+from rest_framework import serializers
+from accounts.models import Appointment
+
+class AppointmentListSerializer(serializers.ModelSerializer):
+    patient_id = serializers.CharField(source='patient.patient_id', read_only=True)
+    patient_name = serializers.CharField(source='patient.full_name', read_only=True)
+
+    class Meta:
+        model = Appointment
+        fields = [
+            'id',
+            'patient_id',
+            'patient_name',
+            'department_name',
+            'doctor_name',
+            'doctor_id',
+            'date',
+            'time',
+            'reason',
+            'status',
+            'created_at'
+        ]

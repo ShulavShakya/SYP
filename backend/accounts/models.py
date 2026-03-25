@@ -147,12 +147,12 @@ class Doctor(models.Model):
             self.doctor_id = f"DOC{new_number:04d}"  # DOC0001, DOC0002...
 
         super().save(*args, **kwargs)
-    @property
-    def full_name(self):
-        return f"{self.user.first_name} {self.user.last_name}".strip()
+    #@property
+    #def full_name(self):
+    #    return f"{self.user.first_name} {self.user.last_name}".strip()
 
     def __str__(self):
-        return f"Dr. {self.full_name or self.user.username} ({self.doctor_id})"
+        return f"Dr. { self.user.username} ({self.doctor_id})"
 
 
 # -----------------------------
@@ -307,21 +307,56 @@ class Appointment(models.Model):
         related_name='appointments'
     )
 
-    department_name = models.CharField(max_length=100)
-    doctor_name = models.CharField(max_length=100)
+    department_name = models.CharField(max_length=100,default="n/a")
+    doctor_name = models.CharField(max_length=100,default="n/a")
+    doctor_id = models.CharField(max_length=20,default="n/a")
 
     date = models.DateField()
     time = models.TimeField()
     reason = models.CharField(max_length=255, blank=True)
 
     STATUS_CHOICES = [
+        ('PENDING', 'Pending'),
         ('SCHEDULED', 'Scheduled'),
         ('COMPLETED', 'Completed'),
     ]
-
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='SCHEDULED')
+    SSTATUS_CHOICES = [('YES', 'Yes'), ('NO', 'No'),('X','x')] #tick option
+    sstatus = models.CharField(max_length=3, choices=SSTATUS_CHOICES, default='No')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"{self.patient.user.username} - Dr. {self.doctor_name} ({self.department_name}) on {self.date} at {self.time}"
+
+
+from django.db import models
+from django.contrib.auth.models import User
+
+
+class Consultation(models.Model):
+    # Link to the patient (VERY IMPORTANT)
+    patient = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='consultations'
+    )
+    # Data coming from booking
+    patient_name = models.CharField(max_length=100)
+    symptoms = models.TextField()
+
+    # Doctor fills these
+    clinic_diagnosis = models.CharField(max_length=255)
+    detailed_notes = models.TextField(blank=True)
+
+    medicine_name = models.CharField(max_length=255)
+    dosage = models.CharField(max_length=100)
+    frequency = models.CharField(max_length=100)
+    duration = models.CharField(max_length=100)
+
+    notes = models.TextField(blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.patient_name} Consultation"
