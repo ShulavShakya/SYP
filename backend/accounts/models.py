@@ -275,7 +275,7 @@ class Message(models.Model):
     
 from django.db import models
 from django.contrib.auth.models import User
-
+""""
 class Payment(models.Model):
     STATUS_CHOICES = (
         ("PENDING", "Pending"),
@@ -297,7 +297,8 @@ class Payment(models.Model):
 
     def __str__(self):
         return self.transaction_uuid
-# -----------------------------
+"""
+# ----------------------------
 # Appointment
 # -----------------------------
 class Appointment(models.Model):
@@ -319,9 +320,9 @@ class Appointment(models.Model):
         ('PENDING', 'Pending'),
         ('SCHEDULED', 'Scheduled'),
         ('COMPLETED', 'Completed'),
+        ('CANCELLED','Cancelled')
     ]
-    SSTATUS_CHOICES = [('YES', 'Yes'), ('NO', 'No'),('X','x')] #tick option
-    sstatus = models.CharField(max_length=3, choices=SSTATUS_CHOICES, default='No')
+    r_status = models.BooleanField(default=False)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -333,30 +334,100 @@ class Appointment(models.Model):
 from django.db import models
 from django.contrib.auth.models import User
 
-
 class Consultation(models.Model):
-    # Link to the patient (VERY IMPORTANT)
-    patient = models.ForeignKey(
-        User,
+    appointment = models.ForeignKey(
+        Appointment,
         on_delete=models.CASCADE,
         related_name='consultations'
     )
-    # Data coming from booking
-    patient_name = models.CharField(max_length=100)
-    symptoms = models.TextField()
-
-    # Doctor fills these
+    doctor_id = models.CharField(max_length=20, default="n/a")
     clinic_diagnosis = models.CharField(max_length=255)
     detailed_notes = models.TextField(blank=True)
-
     medicine_name = models.CharField(max_length=255)
     dosage = models.CharField(max_length=100)
     frequency = models.CharField(max_length=100)
     duration = models.CharField(max_length=100)
-
     notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+class Payment(models.Model):
+    STATUS_CHOICES = [
+        ('PENDING', 'Pending'),
+        ('COMPLETED', 'Completed'),
+        ('FAILED', 'Failed'),
+    ]
+
+    patient = models.ForeignKey(
+        Patient,
+        on_delete=models.CASCADE,
+        related_name='payments',
+        null=True
+    )
+
+    appointment = models.ForeignKey(
+        Appointment,
+        on_delete=models.CASCADE,
+        related_name='payments'
+    )
+
+    amount = models.PositiveIntegerField()  # in paisa
+    pidx = models.CharField(max_length=100, unique=True)
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='COMPLETED'
+    )
+
+    payment_method = models.CharField(max_length=50, default="Khalti")
 
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.patient_name} Consultation"
+        return f"{self.patient.full_name} - {self.amount} - {self.status}"
+
+class Rating(models.Model):
+    STAR_CHOICES = [(i, str(i)) for i in range(1, 6)]  # 1-5 stars
+
+    consultation = models.OneToOneField(
+        Appointment,  # or your consultation model
+        on_delete=models.CASCADE,
+        related_name='rating',
+        null=True
+    )
+    doctor_id = models.CharField(max_length=20)
+    patient_id = models.CharField(max_length=20)
+    star = models.IntegerField(choices=STAR_CHOICES)
+    comment = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    status = models.BooleanField(default=False)  # to track if the rating has been processed or not
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.star} stars by {self.patient_id} for {self.doctor_id}"
+
+
+from django.db import models
+from accounts.models import Patient, Receptionist, Doctor  # adjust imports if your app names differ
+from django.contrib.auth.models import User  # for admin
+
+class Notification(models.Model):
+    patient = models.ForeignKey(Patient, on_delete=models.CASCADE, null=True, blank=True, related_name='notifications')
+    doctor = models.ForeignKey(Doctor, on_delete=models.CASCADE, null=True, blank=True, related_name='notifications')
+    receptionist = models.ForeignKey(Receptionist, on_delete=models.CASCADE, null=True, blank=True, related_name='notifications')
+    admin = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='notifications')  # admin user
+    title = models.CharField(max_length=255)
+    body = models.TextField()
+    appointment_id = models.IntegerField(null=True, blank=True)  # optional link to appointment
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        targets = []
+        if self.patient: targets.append(f"Patient:{self.patient.full_name}")
+        if self.doctor: targets.append(f"Doctor:{self.doctor.full_name}")
+        if self.receptionist: targets.append(f"Receptionist:{self.receptionist.name}")
+        if self.admin: targets.append(f"Admin:{self.admin.username}")
+        return f"Notification to {', '.join(targets)}: {self.title}"

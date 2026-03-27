@@ -37,6 +37,8 @@ INSTALLED_APPS = [
     'accounts',
     'patient_dashboard',
     'receptionist_dashboard',
+    'doctor_dashboard',
+    'admin_dashboard',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -163,6 +165,7 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 # settings.py
-KHALTI_SECRET_KEY = "your_sandbox_live_secret_key_here"
+KHALTI_SECRET_KEY = "72360eed065c4ca4a686f1c23b34ffc5"
+KHALTI_PUBLIC_KEY = "9a4947955eed475c984be670d44e63b1"
 KHALTI_INITIATE_URL = "https://dev.khalti.com/api/v2/epayment/initiate/"
 KHALTI_LOOKUP_URL = "https://dev.khalti.com/api/v2/epayment/lookup/"

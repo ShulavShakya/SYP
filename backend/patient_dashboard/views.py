@@ -1,8 +1,9 @@
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from accounts.models import Patient
-from .serializer import ChangePasswordSerializer, DoctorBasicSerializer, PatientProfileSerializer
+from accounts.models import Consultation, Patient
+from curecloud.settings import KHALTI_SECRET_KEY
+from .serializer import AmountSerializer, ChangePasswordSerializer, ConsultationSerializer, DoctorBasicSerializer, PatientProfileSerializer, RatingSerializer
 
 
 
@@ -36,201 +37,16 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework import status
 
-from .serializer import AppointmentPaymentSerializer
+
 from accounts.models import Appointment, Payment, Patient
 
-ESEWA_FORM_URL = "https://rc-epay.esewa.com.np/api/epay/main/v2/form"
-ESEWA_STATUS_URL = "https://rc.esewa.com.np/api/epay/transaction/status/"
-ESEWA_PRODUCT_CODE = "EPAYTEST"
-ESEWA_SECRET_KEY = "8gBm/:&EnhH.1/q"
-
-FRONTEND_BASE_URL = "http://localhost:5173"
 
 
-def generate_esewa_signature(total_amount: str, transaction_uuid: str, product_code: str) -> str:
-    message = f"total_amount={total_amount},transaction_uuid={transaction_uuid},product_code={product_code}"
-    digest = hmac.new(
-        ESEWA_SECRET_KEY.encode("utf-8"),
-        message.encode("utf-8"),
-        hashlib.sha256,
-    ).digest()
-    return base64.b64encode(digest).decode("utf-8")
 
 
-def verify_esewa_signature(signed_field_names: str, payload: dict, signature: str) -> bool:
-    message = ",".join(
-        f"{field}={payload[field]}"
-        for field in signed_field_names.split(",")
-    )
-    digest = hmac.new(
-        ESEWA_SECRET_KEY.encode("utf-8"),
-        message.encode("utf-8"),
-        hashlib.sha256,
-    ).digest()
-    expected = base64.b64encode(digest).decode("utf-8")
-    return hmac.compare_digest(expected, signature)
 
 
-@api_view(["POST"])
-@permission_classes([IsAuthenticated])
-def initiate_payment(request):
-    serializer = AppointmentPaymentSerializer(data=request.data)
-    serializer.is_valid(raise_exception=True)
 
-    data = serializer.validated_data
-    transaction_uuid = str(uuid.uuid4())
-
-    amount = str(data["amount"])
-    tax_amount = "0"
-    product_service_charge = "0"
-    product_delivery_charge = "0"
-    total_amount = amount
-
-    success_url = request.build_absolute_uri("/api/patient/payment/success/")
-    failure_url = request.build_absolute_uri("/api/patient/payment/failure/")
-
-    request.session[transaction_uuid] = {
-        "user_id": request.user.id,
-        "department_name": data["department_name"],
-        "doctor_name": data["doctor_name"],
-        "date": str(data["date"]),
-        "time": str(data["time"]),
-        "reason": data.get("reason", ""),
-        "amount": amount,
-    }
-    request.session.modified = True
-
-    signature = generate_esewa_signature(
-        total_amount=total_amount,
-        transaction_uuid=transaction_uuid,
-        product_code=ESEWA_PRODUCT_CODE,
-    )
-
-    return Response(
-        {
-            "gateway_url": ESEWA_FORM_URL,
-            "fields": {
-                "amount": amount,
-                "tax_amount": tax_amount,
-                "total_amount": total_amount,
-                "transaction_uuid": transaction_uuid,
-                "product_code": ESEWA_PRODUCT_CODE,
-                "product_service_charge": product_service_charge,
-                "product_delivery_charge": product_delivery_charge,
-                "success_url": success_url,
-                "failure_url": failure_url,
-                "signed_field_names": "total_amount,transaction_uuid,product_code",
-                "signature": signature,
-            },
-            "transaction_uuid": transaction_uuid,
-        },
-        status=status.HTTP_200_OK,
-    )
-
-
-@api_view(["GET"])
-@authentication_classes([])
-@permission_classes([AllowAny])
-def payment_success(request):
-    data_b64 = request.GET.get("data")
-    if not data_b64:
-        return Response({"message": "Missing payment response."}, status=400)
-
-    try:
-        decoded = base64.b64decode(data_b64).decode("utf-8")
-        payload = json.loads(decoded)
-    except Exception:
-        return Response({"message": "Invalid payment response."}, status=400)
-
-    required = [
-        "status",
-        "transaction_uuid",
-        "total_amount",
-        "product_code",
-        "signed_field_names",
-        "signature",
-    ]
-    if not all(k in payload for k in required):
-        return Response({"message": "Incomplete payment response."}, status=400)
-
-    if not verify_esewa_signature(
-        payload["signed_field_names"],
-        payload,
-        payload["signature"],
-    ):
-        return Response({"message": "Invalid payment signature."}, status=400)
-
-    if payload["status"] != "COMPLETE":
-        return redirect(f"{FRONTEND_BASE_URL}/patient/payment/failure")
-
-    transaction_uuid = payload["transaction_uuid"]
-    session_data = request.session.get(transaction_uuid)
-    if not session_data:
-        return Response({"message": "No pending appointment found."}, status=404)
-
-    # Server-to-server verification
-    verify_resp = requests.get(
-        ESEWA_STATUS_URL,
-        params={
-            "product_code": ESEWA_PRODUCT_CODE,
-            "total_amount": payload["total_amount"],
-            "transaction_uuid": transaction_uuid,
-        },
-        timeout=10,
-    )
-    verify_resp.raise_for_status()
-    verify_data = verify_resp.json()
-
-    if verify_data.get("status") != "COMPLETE":
-        return Response({"message": "Payment verification failed."}, status=400)
-
-    completed_key = f"{transaction_uuid}_completed"
-    if request.session.get(completed_key):
-        return redirect(
-            f"{FRONTEND_BASE_URL}/patient/payment/success"
-            f"?transaction_uuid={transaction_uuid}"
-            f"&refId={verify_data.get('ref_id', '')}"
-        )
-
-    patient = Patient.objects.get(user_id=session_data["user_id"])
-
-    appointment = Appointment.objects.create(
-        patient=patient,
-        department_name=session_data["department_name"],
-        doctor_name=session_data["doctor_name"],
-        date=session_data["date"],
-        time=session_data["time"],
-        reason=session_data.get("reason", ""),
-        status="SCHEDULED",
-    )
-
-    payment = Payment.objects.create(
-        user_id=session_data["user_id"],
-        appointment=appointment,
-        transaction_uuid=transaction_uuid,
-        amount=Decimal(session_data["amount"]),
-        total_amount=Decimal(session_data["amount"]),
-        status="SUCCESS",
-    )
-
-    del request.session[transaction_uuid]
-    request.session[completed_key] = True
-    request.session.modified = True
-
-    return redirect(
-        f"{FRONTEND_BASE_URL}/patient/payment/success"
-        f"?appointment_id={appointment.id}"
-        f"&payment_id={payment.id}"
-        f"&transaction_uuid={transaction_uuid}"
-        f"&refId={verify_data.get('ref_id', '')}"
-    )
-
-
-@api_view(["GET"])
-@authentication_classes([])
-@permission_classes([AllowAny])
-def payment_failure(request):
-    return redirect(f"{FRONTEND_BASE_URL}/patient/payment/failure")
 
 from .serializer import PatientProfileSerializer
 @api_view(['GET'])
@@ -339,7 +155,43 @@ from accounts.models import Appointment
 from .serializer import AppointmentCreateSerializer
 from accounts.models import Patient  # adjust if needed
 
+# views.py
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework import status
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
+
+from accounts.models import Appointment, Patient
+from .serializer import AppointmentCreateSerializer
+from accounts.models import Receptionist, User
+
+from accounts.service import create_notification
+
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from accounts.models import Patient, Appointment, Notification
+from .serializer import AppointmentCreateSerializer
+from accounts.service import create_notification  # assuming you have this function
+from django.db.models import Q
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def mark_notifications_read(request):
+    # Mark all unread notifications for this user as read
+    Notification.objects.filter(
+        Q(patient__user=request.user) |
+        Q(doctor__user=request.user) |
+        Q(receptionist__user=request.user) |
+        Q(admin=request.user),
+        is_read=False
+    ).update(is_read=True)
+    
+    return Response({"status": "success"})
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def create_appointment(request):
     try:
         patient = Patient.objects.get(user=request.user)
@@ -347,18 +199,19 @@ def create_appointment(request):
         return Response({"error": "Patient not found"}, status=400)
 
     serializer = AppointmentCreateSerializer(data=request.data)
-
     if serializer.is_valid():
-        serializer.save(patient=patient)  # ✅ link via FK
-        return Response(
-            {
-                "message": "Appointment created successfully",
-                "data": serializer.data
-            },
-            status=status.HTTP_201_CREATED
+        appointment = serializer.save(patient=patient)  # save appointment with patient
+
+        # Send notification to admin and receptionist
+        create_notification(
+            title="New Appointment",
+            body=f"Appointment requested by {patient.full_name}",  # use patient name
+            roles=["admin", "receptionist"]
         )
 
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"status": "success"}, status=201)
+    else:
+        return Response(serializer.errors, status=400)
 
 
 
@@ -386,7 +239,8 @@ def get_patient_appointments(request):
             "time",
             "reason",
             "status",
-            "sstatus",
+            "r_status",
+
             "created_at",
             "updated_at"
         ).order_by('-created_at')
@@ -405,3 +259,220 @@ def get_patient_appointments(request):
         return Response({
             "error": str(e)
         }, status=500)
+
+import requests
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from accounts.models import Appointment, Payment
+from .serializer import PaymentSerializer
+# Khalti Sandbox Integration - Django
+import requests
+from django.conf import settings
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework import status
+from accounts.models import Appointment, Payment
+from .serializer import PaymentSerializer, AmountSerializer
+
+# -------------------------------
+# Khalti Sandbox Config
+# -------------------------------
+KHALTI_SECRET_KEY = "72360eed065c4ca4a686f1c23b34ffc5"  # TEST key
+KHALTI_INITIATE_URL = "https://dev.khalti.com/api/v2/epayment/initiate/"
+KHALTI_LOOKUP_URL = "https://dev.khalti.com/api/v2/epayment/lookup/"
+
+# -------------------------------
+# Initiate Khalti Payment
+# -------------------------------
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def initiate_payment(request):
+    appointment_id = request.data.get("appointment_id")
+    if not appointment_id:
+        return Response({"error": "Missing appointment_id"}, status=400)
+
+    # Ensure patient owns this appointment
+    try:
+        appointment = Appointment.objects.get(id=appointment_id, patient__user=request.user)
+    except Appointment.DoesNotExist:
+        return Response({"error": "Appointment not found"}, status=404)
+
+    # Amount in paisa (e.g., Rs. 250 = 25000 paisa)
+    amount_paisa = 25000
+
+    payload = {
+        "return_url": "http://localhost:5173/patient/payment/verify",
+        "website_url": "http://localhost:5173",
+        "amount": amount_paisa,
+        "purchase_order_id": str(appointment.id),
+        "purchase_order_name": f"Appointment #{appointment.id}",
+        "customer_info": {
+            "name": request.user.get_full_name() or request.user.username,
+            "email": request.user.username or "test@example.com",
+            "phone": getattr(request.user.patient, "phone", "9800000000")
+        }
+    }
+
+    headers = {
+        "Authorization": f"Key {KHALTI_SECRET_KEY}",
+        "Content-Type": "application/json",
+    }
+
+    try:
+        response = requests.post(KHALTI_INITIATE_URL, json=payload, headers=headers, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+    except requests.exceptions.RequestException as e:
+        return Response({"error": "Khalti initiation failed", "details": str(e)}, status=400)
+    except ValueError:
+        return Response({"error": "Invalid response from Khalti"}, status=500)
+
+    return Response(data)
+
+# -------------------------------
+# Verify Khalti Payment
+# -------------------------------
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def verify_payment(request):
+    if request.method == "GET":
+        pidx = request.GET.get("pidx")
+        appointment_id = request.GET.get("purchase_order_id")
+    else:
+        pidx = request.data.get("pidx")
+        appointment_id = request.data.get("appointment_id")
+
+    if not pidx or not appointment_id:
+        return Response({"error": "Missing data"}, status=400)
+
+    # Ensure patient owns this appointment
+    try:
+        appointment = Appointment.objects.get(id=appointment_id, patient=request.user.patient)
+    except Appointment.DoesNotExist:
+        return Response({"error": "Appointment not found"}, status=404)
+
+    payload = {"pidx": pidx}
+    headers = {"Authorization": f"Key {KHALTI_SECRET_KEY}"}
+
+    try:
+        response = requests.post(KHALTI_LOOKUP_URL, json=payload, headers=headers, timeout=10)
+        response.raise_for_status()
+        result = response.json()
+    except requests.exceptions.RequestException as e:
+        return Response({"error": "Khalti verification failed", "details": str(e)}, status=400)
+    except ValueError:
+        return Response({"error": "Invalid Khalti response"}, status=500)
+
+    if result.get("status") == "Completed":
+        # Record payment
+        payment, created = Payment.objects.get_or_create(
+            pidx=pidx,
+            defaults={
+                "appointment": appointment,
+                "patient": request.user.patient,
+                "amount": result.get("total_amount", 0) / 100,  # convert paisa to Rs.
+                "status": "completed"
+            }
+        )
+        # Update appointment status
+        appointment.status = "SCHEDULED"
+        appointment.sstatus = "YES"
+        appointment.save()
+
+        return Response({"success": True, "payment_id": payment.id})
+
+    return Response({"success": False, "data": result})
+
+# -------------------------------
+# Get All Payments for Patient
+# -------------------------------
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_my_payments(request):
+    try:
+        patient = request.user.patient
+    except AttributeError:
+        return Response({"error": "Patient not found"}, status=404)
+
+    payments = Payment.objects.filter(patient=patient).order_by('-created_at')
+    serializer = AmountSerializer(payments, many=True)
+    return Response(serializer.data)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_my_consultations(request):
+    """
+    Returns all consultations for the logged-in patient.
+    """
+    try:
+        # Get the Patient instance linked to the logged-in user
+        patient = Patient.objects.get(user=request.user)
+    except Patient.DoesNotExist:
+        return Response({"error": "Patient profile not found"}, status=404)
+
+    # Filter consultations via appointment -> patient
+    consultations = Consultation.objects.filter(appointment__patient=patient).order_by('-created_at')
+
+    serializer = ConsultationSerializer(consultations, many=True)
+    return Response(serializer.data)
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def rate_doctor(request):
+    """
+    Allow a logged-in patient to rate a doctor for a consultation.
+    """
+    try:
+        patient = Patient.objects.get(user=request.user)
+    except Patient.DoesNotExist:
+        return Response({"error": "Patient profile not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    consultation_id = request.data.get('consultation')
+    if not consultation_id:
+        return Response({"error": "Consultation ID is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        consultation = Appointment.objects.get(id=consultation_id)
+    except Appointment.DoesNotExist:
+        return Response({"error": "Consultation not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    # Check if this consultation has already been rated
+    if hasattr(consultation, 'rating'):
+        return Response({"error": "This consultation has already been rated."}, status=status.HTTP_400_BAD_REQUEST)
+
+    serializer = RatingSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save(
+            patient_id=patient.patient_id,
+            doctor_id=consultation.doctor_id,
+            consultation=consultation,
+            status=True  # ✅ Add status here
+        )
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework import status
+from accounts.models import Rating
+from .serializer import RatingSerializer  # Make sure you have a serializer for Rating
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_my_ratings(request):
+    """
+    Get all ratings submitted by the logged-in patient.
+    """
+    try:
+        patient = request.user.patient  # Assuming OneToOneField from User to Patient
+    except AttributeError:
+        return Response({"error": "Patient profile not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    # Filter only ratings for this patient
+    ratings = Rating.objects.filter(patient_id=patient.patient_id)
+    serializer = RatingSerializer(ratings, many=True)
+
+    return Response(serializer.data, status=status.HTTP_200_OK)

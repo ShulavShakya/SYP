@@ -267,5 +267,42 @@ class AppointmentListSerializer(serializers.ModelSerializer):
             'time',
             'reason',
             'status',
-            'created_at'
+            'created_at',
+            'r_status'
+            
         ]
+
+# patient_dashboard/serializer.py
+
+from rest_framework import serializers
+from accounts.models import Payment
+from rest_framework import serializers
+from accounts.models import Payment
+
+class PaymentDetailSerializer(serializers.ModelSerializer):
+    # Custom field for patient's full name
+    patient_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Payment
+        # Include all model fields plus patient_name
+        fields = [
+            'id',
+            'patient',
+            'patient_name',
+            'appointment',
+            'amount',
+            'pidx',
+            'status',
+            'payment_method',
+            'created_at',
+        ]
+        read_only_fields = ['created_at', 'patient_name']
+
+    def get_patient_name(self, obj):
+        # Safely get patient's first and last name
+        if obj.patient and obj.patient.user:
+            first_name = getattr(obj.patient.user, 'first_name', '')
+            last_name = getattr(obj.patient.user, 'last_name', '')
+            return f"{first_name} {last_name}".strip()
+        return None

@@ -87,7 +87,7 @@ from accounts.models import Appointment
 class AppointmentFilteredSerializer(serializers.ModelSerializer):
     class Meta:
         model = Appointment
-        fields = ['doctor_id', 'doctor_name', 'date', 'time']
+        fields = ['doctor_id', 'doctor_name', 'date', 'time','r_status']
 
 from rest_framework import serializers
 from accounts.models import Appointment
@@ -102,5 +102,64 @@ class AppointmentCreateSerializer(serializers.ModelSerializer):
             'date',
             'time',
             'reason',
-            'status'
+            'status',
+            'r_status'
         ]
+from rest_framework import serializers
+from accounts.models import Payment
+
+class PaymentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Payment
+        fields = ['id', 'appointment', 'patient', 'amount', 'status', 'khalti_token', 'created_at']
+        read_only_fields = ['id', 'status', 'created_at', 'patient']
+
+from rest_framework import serializers
+from accounts.models import Payment
+
+class AmountSerializer(serializers.ModelSerializer):
+    appointment_id = serializers.IntegerField(source='appointment.id', read_only=True)
+
+    class Meta:
+        model = Payment
+        fields = [
+            'id',
+            'appointment_id',
+            'amount',
+            'status',
+            'payment_method',
+            'pidx',
+            'created_at'
+        ]
+from rest_framework import serializers
+from accounts.models import Consultation
+class ConsultationSerializer(serializers.ModelSerializer):
+    doctor_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Consultation
+        fields = [
+            'id', 'appointment', 'doctor_id', 'doctor_name', # Add doctor_name here
+            'clinic_diagnosis', 'detailed_notes', 'medicine_name', 
+            'dosage', 'frequency', 'duration', 'notes', 'created_at'
+        ]
+
+    def get_doctor_name(self, obj):
+        # Access the name via the appointment relationship
+        if obj.appointment and obj.appointment.doctor_name:
+            return obj.appointment.doctor_name
+        return "Unknown Doctor"
+
+
+
+# serializers.py
+from rest_framework import serializers
+from accounts.models import Rating
+\
+from rest_framework import serializers
+from accounts.models import Rating
+
+class RatingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Rating
+        fields = ['consultation', 'doctor_id', 'star', 'comment']

@@ -23,5 +23,6 @@ urlpatterns = [
     path('api/patient/', include('patient_dashboard.urls')),
     path('api/admin/',include('admin_dashboard.urls')),
     path('api/receptionist/', include('receptionist_dashboard.urls')),
+    path('api/doctor/', include('doctor_dashboard.urls')),
     
 ]

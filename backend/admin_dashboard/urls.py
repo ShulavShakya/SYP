@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import count_active_doctors, count_on_leave_doctors, count_patients, create_doctor,delete_doctor, create_patient, create_receptionist, delete_patient,delete_receptionist, get_all_appointments,  get_all_doctors, count_doctors, get_all_patients, get_receptionists, off_duty_receptionists, on_duty_receptionists, total_receptionists, update_doctor, update_patient, update_receptionist
+from .views import count_active_doctors, count_on_leave_doctors, count_patients, create_doctor,delete_doctor, create_patient, create_receptionist, delete_patient,delete_receptionist, get_all_appointments,  get_all_doctors, count_doctors, get_all_patients, get_receptionists, off_duty_receptionists, on_duty_receptionists, total_receptionists, update_appointment_sstatus, update_doctor, update_patient, update_receptionist,get_all_payments
 urlpatterns = [
     #doctor related endpoints
     path('doctors/', get_all_doctors, name='get_all_doctors'),
@@ -26,4 +26,7 @@ urlpatterns = [
     path('update-patient/<int:patient_id>/', update_patient, name='update_patient'),
     #appointments
        path('appointments/', get_all_appointments, name='get_all_appointments'),
+       path('appointments/<int:appointment_id>/yes/', update_appointment_sstatus, name='update_appointment_sstatus'),
+       #billing
+       path('billing/get_all_payments/', get_all_payments, name='get_all_payments')
       ]

@@ -111,7 +111,8 @@ class AppointmentCreateSerializer(serializers.ModelSerializer):
             'date',
             'time',
             'reason',
-            'status'
+            'status',
+            'r_status'
         ]
 
     def create(self, validated_data):
@@ -130,8 +131,8 @@ from accounts.models import Appointment
 
 class AppointmentListSerializer(serializers.ModelSerializer):
     patient_id = serializers.CharField(source='patient.patient_id', read_only=True)
-    patient_name = serializers.CharField(source='patient.full_name', read_only=True)
-
+    patient_name = serializers.CharField(source='patient.full_name', read_only=True) 
+   
     class Meta:
         model = Appointment
         fields = [
@@ -145,5 +146,77 @@ class AppointmentListSerializer(serializers.ModelSerializer):
             'time',
             'reason',
             'status',
-            'created_at'
+            'created_at',
+            'r_status'
         ]
+
+
+# patient_dashboard/serializer.py
+
+from rest_framework import serializers
+from accounts.models import Payment
+
+class PaymentDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Payment
+        fields = '__all__'  # all attributes of Payment
+        depth = 1  # optional: include patient and appointment details
+
+# serializers.py
+from rest_framework import serializers
+from accounts.models import Receptionist
+
+class ReceptionistDetailSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source='user.username', read_only=True)
+
+    class Meta:
+        model = Receptionist
+        fields = [
+            'Receptionist_id',
+            'profile_image',
+            'username',
+            'name',
+            'gender',
+            'dob',
+            'phone',
+            'email',
+            'address',
+            'status',
+            'shift',
+            'created_at',
+            'updated_at',
+        ]
+
+class ReceptionistUpdateSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source='user.username', required=False)
+    password = serializers.CharField(source='user.password', write_only=True, required=False)
+
+    class Meta:
+        model = Receptionist
+        fields = [
+            'profile_image',
+            'email',
+            'dob',
+            'address',
+            'phone',
+            'name',
+            'gender',
+            'status',
+            'username',
+            'password',
+        ]
+
+    def update(self, instance, validated_data):
+        # Handle User fields
+        user_data = validated_data.pop('user', {})
+        if 'username' in user_data:
+            instance.user.username = user_data['username']
+        if 'password' in user_data:
+            instance.user.set_password(user_data['password'])  # Hash password
+        instance.user.save()
+
+        # Handle Receptionist fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        return instance

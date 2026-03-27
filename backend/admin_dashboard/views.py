@@ -429,3 +429,48 @@ def get_all_appointments(request):
     serializer = AppointmentListSerializer(appointments, many=True)
 
     return Response(serializer.data)
+
+
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from accounts.models import Payment
+from .serializers import PaymentDetailSerializer
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_all_payments(request):
+    """
+    Fetch all Payment objects from the database.
+    """
+    payments = Payment.objects.all().order_by('-created_at')
+    serializer = PaymentDetailSerializer(payments, many=True)
+    return Response({"message": "All payments fetched successfully", "data": serializer.data})
+
+
+@api_view(['PATCH'])
+@permission_classes([AllowAny])
+def update_appointment_sstatus(request, appointment_id):
+    """
+    Updates the sstatus of a specific appointment to True.
+    """
+    try:
+        appointment = Appointment.objects.get(id=appointment_id)
+    except Appointment.DoesNotExist:
+        return Response(
+            {"error": "Appointment not found."},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    # Update r_status to True
+    appointment.r_status = True
+    appointment.save()
+
+    return Response(
+        {
+            "message": "r_status updated successfully.",
+            "appointment_id": appointment.id,
+            "r_status": appointment.r_status  # will return True/False
+        },
+        status=status.HTTP_200_OK
+    )
