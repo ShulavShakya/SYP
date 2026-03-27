@@ -438,13 +438,7 @@ export default function PatientManagement() {
           </button>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
-          {summaryCards.map((card) => (
-            <SummaryCard key={card.label} {...card} />
-          ))}
-        </div>
-
-        <div className="flex flex-wrap items-center gap-4 rounded-2xl bg-surface-container-low/50 p-2 backdrop-blur-sm">
+        {/* <div className="flex flex-wrap items-center gap-4 rounded-2xl bg-surface-container-low/50 p-2 backdrop-blur-sm">
           <div className="flex items-center gap-2 rounded-xl border border-[#bdc9c8]/20 bg-white px-3 py-2">
             <span className="text-xs font-bold uppercase text-slate-400">
               Gender
@@ -461,7 +455,7 @@ export default function PatientManagement() {
             <FilterX size={18} />
             Reset Filters
           </button>
-        </div>
+        </div> */}
 
         <div className="overflow-hidden rounded-xl border border-primary/5 bg-white shadow-sm">
           <div className="overflow-x-auto">
@@ -522,7 +516,11 @@ export default function PatientManagement() {
 
           <div className="flex items-center justify-between border-t border-slate-100 px-6 py-4">
             <p className="text-sm text-slate-500">
-              Showing {startRecord}-{endRecord} of {patients.length} patient
+              Showing{" "}
+              <span className="font-bold text-slate-900">
+                {startRecord}-{endRecord}
+              </span>{" "}
+              of <span>of {patients.length} patient</span>
               {patients.length !== 1 ? "s" : ""}
             </p>
 

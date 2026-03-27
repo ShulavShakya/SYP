@@ -17,6 +17,7 @@ import {
   RefreshCw,
   FileText,
   X,
+  UserPlus,
 } from "lucide-react";
 
 const shiftFilters = ["All", "Morning", "Evening", "Night"];
@@ -439,21 +440,11 @@ export default function ReceptionistManagement() {
 
             <div className="flex items-center gap-3">
               <button
-                type="button"
-                onClick={fetchReceptionistData}
-                className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 font-semibold text-slate-700 transition-colors hover:bg-slate-50"
-              >
-                <RefreshCw size={18} />
-                Refresh
-              </button>
-
-              <button
-                type="button"
-                className="flex items-center gap-2 rounded-2xl bg-gradient-to-br from-[#006565] to-[#008080] px-6 py-3 font-['Manrope',sans-serif] font-bold text-white shadow-[0px_4px_20px_rgba(0,101,101,0.05)] transition-transform hover:scale-[1.02] active:scale-95"
+                className="flex items-center gap-2 self-start rounded-xl bg-gradient-to-br from-[#006565] to-[#008080] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-[#006565]/20 transition-transform active:scale-95 sm:self-auto"
                 onClick={() => navigate("/admin/add-receptionist")}
               >
-                <Plus size={18} />
-                <span>Add Receptionist</span>
+                <UserPlus size={18} />
+                Add Receptionist
               </button>
             </div>
           </div>

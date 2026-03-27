@@ -111,7 +111,7 @@ export default function Login() {
           <div className="flex w-full max-w-5xl flex-col items-center gap-10 py-6">
             <div className="text-center">
               <h1 className="text-4xl font-extrabold tracking-tight text-[#2C3E50] lg:text-5xl">
-                Welcome to MedFlow
+                Welcome to Upachaar
               </h1>
               <p className="mx-auto mt-4 max-w-2xl text-base text-[#7F8C8D] lg:text-lg">
                 Sign in to access the secure hospital management portal.
@@ -216,7 +216,7 @@ export default function Login() {
                     }`}
                   >
                     <span>
-                      {loading ? "Signing In..." : "Sign In to MedFlow"}
+                      {loading ? "Signing In..." : "Sign In to Upachaar"}
                     </span>
                     <LogIn size={18} />
                   </button>

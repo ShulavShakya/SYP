@@ -16,25 +16,23 @@ import { privateAPI } from "../../../auth/config/api.js";
 const DEPARTMENTS = [
   "Choose a medical department",
   "Cardiology",
-  "Pediatrics",
   "Neurology",
+  "Pediatrics",
+  "General Surgery",
   "Dermatology",
   "Orthopedics",
 ];
 
 const times = [
   "09:00 AM",
-  "09:30 AM",
   "10:00 AM",
-  "10:30 AM",
   "11:00 AM",
-  "11:30 AM",
   "12:00 PM",
-  "12:30 PM",
   "02:00 PM",
-  "02:30 PM",
   "03:00 PM",
-  "03:30 PM",
+  "04:00 PM",
+  "05:00 PM",
+  "06:00 PM",
 ];
 
 const BOOKING_FEE = 250;
@@ -45,13 +43,50 @@ export default function Appointments() {
   const [department, setDepartment] = useState(DEPARTMENTS[0]);
   const [doctors, setDoctors] = useState([]);
   const [selectedDoctorId, setSelectedDoctorId] = useState(null);
-  const [selectedTime, setSelectedTime] = useState("10:00 AM");
+  const [selectedTime, setSelectedTime] = useState();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [reason, setReason] = useState("");
   const [loadingDoctors, setLoadingDoctors] = useState(false);
   const [doctorError, setDoctorError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
+  const [bookedSlots, setBookedSlots] = useState([]);
+  const [ratings, setRatings] = useState([]);
+  const [doctorAvgRatings, setDoctorAvgRatings] = useState({}); // { doctor_id: avgRating }
+
+  useEffect(() => {
+    const fetchRatings = async () => {
+      try {
+        const response = await privateAPI.get("/patient/ratings/");
+        const data = Array.isArray(response.data) ? response.data : [];
+        setRatings(data);
+
+        // Calculate average rating per doctor
+        const avgRatings = data.reduce((acc, rating) => {
+          if (!acc[rating.doctor_id])
+            acc[rating.doctor_id] = { total: 0, count: 0 };
+          acc[rating.doctor_id].total += rating.star;
+          acc[rating.doctor_id].count += 1;
+          return acc;
+        }, {});
+
+        const finalAvgRatings = {};
+        for (const doctorId in avgRatings) {
+          finalAvgRatings[doctorId] = (
+            avgRatings[doctorId].total / avgRatings[doctorId].count
+          ).toFixed(1);
+        }
+
+        setDoctorAvgRatings(finalAvgRatings);
+      } catch (error) {
+        console.error("Error fetching ratings:", error);
+        setRatings([]);
+        setDoctorAvgRatings({});
+      }
+    };
+
+    fetchRatings();
+  }, []);
 
   useEffect(() => {
     const fetchDoctors = async () => {
@@ -91,9 +126,21 @@ export default function Appointments() {
     fetchDoctors();
   }, []);
 
+  useEffect(() => {
+    const fetchBookedSlots = async () => {
+      try {
+        const response = await privateAPI.get("/patient/date-time/");
+        setBookedSlots(Array.isArray(response.data) ? response.data : []);
+      } catch (error) {
+        console.error("Error fetching booked slots", error);
+        setBookedSlots([]);
+      }
+    };
+    fetchBookedSlots();
+  }, []);
+
   const filteredDoctors = useMemo(() => {
     if (department === "Choose a medical department") return doctors;
-
     return doctors.filter(
       (doc) => doc.department?.toLowerCase() === department.toLowerCase(),
     );
@@ -104,11 +151,9 @@ export default function Appointments() {
       setSelectedDoctorId(null);
       return;
     }
-
     const stillExists = filteredDoctors.some(
       (doc) => doc.id === selectedDoctorId,
     );
-
     if (!stillExists) {
       setSelectedDoctorId(filteredDoctors[0].id);
     }
@@ -125,40 +170,50 @@ export default function Appointments() {
 
   const formatDateForBackend = (date) => {
     if (!(date instanceof Date) || Number.isNaN(date.getTime())) return "";
-    return date.toISOString().split("T")[0];
+
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`; // Always "2023-10-25" in Nepal time
   };
 
   const formatTimeForBackend = (time12h) => {
     if (!time12h) return "";
-
     const [time, modifier] = time12h.split(" ");
     let [hours, minutes] = time.split(":").map(Number);
-
-    if (modifier === "AM" && hours === 12) {
-      hours = 0;
-    } else if (modifier === "PM" && hours !== 12) {
-      hours += 12;
-    }
-
+    if (modifier === "PM" && hours !== 12) hours += 12;
+    if (modifier === "AM" && hours === 12) hours = 0;
     return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:00`;
   };
 
-  const submitEsewaForm = (gatewayUrl, fields) => {
-    const form = document.createElement("form");
-    form.method = "POST";
-    form.action = gatewayUrl;
+  const isSlotBooked = (time12h) => {
+    if (!selectedDoctorId || !selectedDate || !Array.isArray(bookedSlots))
+      return false;
 
-    Object.entries(fields).forEach(([key, value]) => {
-      const input = document.createElement("input");
-      input.type = "hidden";
-      input.name = key;
-      input.value = value;
-      form.appendChild(input);
+    const dateString = formatDateForBackend(selectedDate);
+    const timeString = formatTimeForBackend(time12h);
+
+    return bookedSlots.some((slot) => {
+      const idMatches = String(slot.doctor_id) === String(selectedDoctorId);
+      const dateMatches = slot.date === dateString;
+      const timeMatches = slot.time?.slice(0, 5) === timeString?.slice(0, 5);
+      return idMatches && dateMatches && timeMatches;
     });
-
-    document.body.appendChild(form);
-    form.submit();
   };
+
+  // Add this inside your component to prevent selecting a slot that becomes booked
+  useEffect(() => {
+    if (selectedTime && isSlotBooked(selectedTime)) {
+      setSelectedTime(null); // Clear selection if it's now busy on the new date/doctor
+    }
+  }, [selectedDate, selectedDoctorId, bookedSlots]);
+
+  // Also reset everything when department changes
+  useEffect(() => {
+    setSelectedDoctorId(null);
+    setSelectedTime(null);
+  }, [department]);
 
   const handleRequestAppointment = async () => {
     if (submitting) return;
@@ -170,56 +225,46 @@ export default function Appointments() {
         setSubmitError("Please select a department.");
         return;
       }
-
       if (!selectedDoctor) {
         setSubmitError("Please select a doctor.");
         return;
       }
-
       if (!selectedDate) {
         setSubmitError("Please select an appointment date.");
         return;
       }
-
       if (!selectedTime) {
         setSubmitError("Please select a time slot.");
         return;
       }
 
+      // MATCHES YOUR AppointmentCreateSerializer
       const payload = {
         department_name: department,
         doctor_name: selectedDoctor.name,
+        doctor_id: selectedDoctor.id,
         date: formatDateForBackend(selectedDate),
         time: formatTimeForBackend(selectedTime),
-        reason: reason.trim(),
-        amount: BOOKING_FEE,
+        reason: reason.trim() || "Regular Checkup",
+        status: "PENDING",
+        // Note: 'patient' usually handled by backend request.user,
+        // but if your serializer requires it explicitly, you'd add patient ID here.
       };
 
       setSubmitting(true);
 
-      const response = await privateAPI.post(
-        "/patient/payment/initiate/",
-        payload,
-      );
+      // POST TO YOUR NEW BACKEND ENDPOINT
+      await privateAPI.post("/patient/create-appointment/", payload);
 
-      const gatewayUrl = response?.data?.gateway_url;
-      const fields = response?.data?.fields;
-
-      if (!gatewayUrl || !fields || typeof fields !== "object") {
-        throw new Error("Payment form data not returned by server.");
-      }
-
-      submitEsewaForm(gatewayUrl, fields);
+      alert("Appointment requested successfully!");
+      navigate(-1); // Or wherever you want to go
     } catch (error) {
-      console.error(
-        "Payment initiation error:",
-        error?.response?.data || error.message,
-      );
-
+      console.error("Booking error:", error?.response?.data || error.message);
       setSubmitError(
         error?.response?.data?.message ||
-          "Could not initiate payment. Please try again.",
+          "Could not create appointment. Please try again.",
       );
+    } finally {
       setSubmitting(false);
     }
   };
@@ -266,27 +311,14 @@ export default function Appointments() {
             </section>
 
             <section>
-              <div className="mb-3 flex items-center justify-between">
-                <label className="block text-sm font-bold text-slate-700">
-                  Select Doctor
-                </label>
-                <button
-                  type="button"
-                  className="text-sm font-semibold text-primary hover:underline"
-                >
-                  View All Doctors
-                </button>
-              </div>
-
-              {loadingDoctors && (
+              <label className="block text-sm font-bold text-slate-700 mb-3">
+                Select Doctor
+              </label>
+              {loadingDoctors ? (
                 <p className="text-sm text-slate-500">Loading doctors...</p>
-              )}
-
-              {doctorError && (
+              ) : doctorError ? (
                 <p className="text-sm text-red-500">{doctorError}</p>
-              )}
-
-              {!loadingDoctors && !doctorError && (
+              ) : (
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                   {filteredDoctors.length > 0 ? (
                     filteredDoctors.map((doc) => (
@@ -305,7 +337,6 @@ export default function Appointments() {
                           className="h-16 w-16 rounded-lg object-cover"
                           src={doc.image}
                         />
-
                         <div className="min-w-0 flex-1">
                           <h3 className="truncate font-bold text-slate-800">
                             {doc.name}
@@ -319,18 +350,13 @@ export default function Appointments() {
                               size={14}
                             />
                             <span className="text-xs font-bold">
-                              {doc.rating}
-                            </span>
-                            <span className="text-xs text-slate-400">
-                              {doc.reviews}
+                              {doctorAvgRatings[doc.id] || doc.rating}{" "}
+                              {/* Use calculated average if exists */}
                             </span>
                           </div>
                         </div>
-
                         {doc.id === selectedDoctorId && (
-                          <div className="flex items-center">
-                            <CircleCheck className="text-primary" size={20} />
-                          </div>
+                          <CircleCheck className="text-primary" size={20} />
                         )}
                       </article>
                     ))
@@ -348,39 +374,12 @@ export default function Appointments() {
                 <label className="block text-sm font-bold text-slate-700">
                   Appointment Date
                 </label>
-
                 <div className="rounded-lg border-2 border-slate-100 bg-slate-50 p-4">
                   <DayPicker
                     mode="single"
                     selected={selectedDate}
-                    onSelect={(date) => {
-                      if (date) setSelectedDate(date);
-                    }}
+                    onSelect={(date) => date && setSelectedDate(date)}
                     disabled={{ before: today }}
-                    className="text-slate-900"
-                    classNames={{
-                      months: "flex justify-center",
-                      month: "space-y-4",
-                      caption:
-                        "relative flex justify-center items-center h-10 px-10",
-                      caption_label: "text-sm font-bold text-slate-800",
-                      nav: "flex items-center",
-                      nav_button:
-                        "h-8 w-8 bg-transparent hover:bg-slate-200 rounded-full flex items-center justify-center text-slate-500 transition absolute top-1",
-                      nav_button_previous: "absolute left-2",
-                      nav_button_next: "absolute right-2",
-                      table: "w-full border-collapse",
-                      head_row: "flex",
-                      head_cell: "w-10 text-[11px] font-bold text-slate-400",
-                      row: "flex w-full mt-1",
-                      cell: "h-8 w-10 text-center text-sm",
-                      day: "h-8 w-8 rounded hover:bg-primary/10",
-                      day_selected: "bg-primary text-white font-bold",
-                      day_today:
-                        "border border-primary text-primary font-semibold",
-                      day_disabled:
-                        "text-slate-300 opacity-50 cursor-not-allowed",
-                    }}
                   />
                 </div>
               </div>
@@ -389,18 +388,16 @@ export default function Appointments() {
                 <label className="block text-sm font-bold text-slate-700">
                   Select Time Slot
                 </label>
-
                 <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
                   {times.map((time) => {
                     const isSelected = time === selectedTime;
-                    const isDisabled = time === "11:00 AM";
-
+                    const isDisabled = isSlotBooked(time);
                     return (
                       <button
                         key={time}
                         type="button"
                         disabled={isDisabled}
-                        onClick={() => !isDisabled && setSelectedTime(time)}
+                        onClick={() => setSelectedTime(time)}
                         className={[
                           "rounded-lg border-2 px-2 py-3 text-sm font-semibold transition-all",
                           isSelected
@@ -426,8 +423,8 @@ export default function Appointments() {
                 rows={4}
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
-                className="w-full resize-none rounded-lg border-2 border-slate-100 bg-slate-50 p-4 text-base transition-all focus:border-primary focus:ring-0"
-                placeholder="Briefly describe the symptoms or reason for the appointment..."
+                className="w-full resize-none rounded-lg border-2 border-slate-100 bg-slate-50 p-4 text-base focus:border-primary focus:ring-0"
+                placeholder="Briefly describe the symptoms..."
               />
             </section>
 
@@ -437,38 +434,20 @@ export default function Appointments() {
               </div>
             )}
 
-            <div className="rounded-lg border border-primary/10 bg-primary/5 p-4">
-              <div className="flex items-start gap-3">
-                <Info className="mt-0.5 shrink-0 text-primary" size={18} />
-                <p className="text-sm leading-relaxed text-slate-600">
-                  Booking fee of{" "}
-                  <span className="font-bold text-primary">
-                    Rs. {BOOKING_FEE.toFixed(2)}
-                  </span>{" "}
-                  will be charged upon confirmation. You can reschedule up to 24
-                  hours before the appointment.
-                </p>
-              </div>
-            </div>
-
             <div className="flex flex-col gap-4 pt-4 sm:flex-row">
               <button
                 type="button"
                 onClick={handleRequestAppointment}
                 disabled={submitting}
-                className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary py-4 font-bold text-white shadow-lg shadow-primary/20 transition-all hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-70"
+                className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary py-4 font-bold text-white shadow-lg transition-all hover:bg-primary/90 disabled:opacity-70"
               >
                 <CalendarDays size={18} />
-                {submitting
-                  ? "Redirecting to Payment..."
-                  : "Request Appointment"}
+                {submitting ? "Booking..." : "Request Appointment"}
               </button>
-
               <button
                 type="button"
                 onClick={() => navigate(-1)}
-                disabled={submitting}
-                className="flex flex-1 items-center justify-center gap-2 rounded-lg border-2 border-slate-200 py-4 font-bold text-slate-600 transition-all hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-70"
+                className="flex flex-1 items-center justify-center gap-2 rounded-lg border-2 border-slate-200 py-4 font-bold text-slate-600 hover:bg-slate-50"
               >
                 <ArrowLeft size={18} />
                 Cancel

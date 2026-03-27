@@ -21,38 +21,20 @@ const summaryCards = [
   {
     title: "Today's Appointments",
     value: "24",
-    badge: "+4 from yesterday",
     icon: CalendarDays,
-    iconWrap: "bg-blue-50",
     iconColor: "text-blue-600",
-    badgeClass: "text-blue-600 bg-blue-50",
   },
   {
     title: "Patients Waiting",
     value: "8",
-    badge: "High Priority",
     icon: Users,
-    iconWrap: "bg-amber-50",
     iconColor: "text-amber-600",
-    badgeClass: "text-amber-600 bg-amber-50",
   },
   {
     title: "Completed",
     value: "12",
-    badge: "50% Goal",
     icon: CheckCircle2,
-    iconWrap: "bg-emerald-50",
     iconColor: "text-emerald-600",
-    badgeClass: "text-emerald-600 bg-emerald-50",
-  },
-  {
-    title: "Pending Lab Results",
-    value: "5",
-    badge: "2 Critical",
-    icon: FlaskConical,
-    iconWrap: "bg-purple-50",
-    iconColor: "text-purple-600",
-    badgeClass: "text-purple-600 bg-purple-50",
   },
 ];
 
@@ -167,7 +149,7 @@ export default function DoctorHome() {
     <div className="min-h-screen bg-[#F7FAFA] text-[#2C3E50]">
       <div className="relative flex flex-col w-full">
         <main className="mx-auto w-full max-w-[1440px] px-4 py-8 md:px-10">
-          <section className="mb-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <section className="mb-8 grid grid-cols-1 gap-6 sm:grid-cols-3 lg:grid-cols-3">
             {summaryCards.map((card) => {
               const Icon = card.icon;
               return (
@@ -317,89 +299,6 @@ export default function DoctorHome() {
                 </div>
               </div>
             </div>
-
-            {/* <aside className="flex w-full flex-col gap-6 lg:w-1/3">
-            <div className="overflow-hidden rounded-xl border border-[#70C1B3]/10 bg-white shadow-sm">
-              <div className="flex items-center justify-between border-b border-[#70C1B3]/10 px-6 py-5">
-                <h2 className="text-lg font-bold">Patient Queue</h2>
-                <span className="rounded-lg bg-amber-100 px-2 py-1 text-xs font-extrabold text-amber-700">
-                  8 Active
-                </span>
-              </div>
-
-              <div className="flex flex-col gap-4 p-4">
-                {queueItems.map((item) => {
-                  const PriorityIcon = item.priorityIcon;
-
-                  return (
-                    <article
-                      key={item.name}
-                      className={`flex cursor-pointer items-center justify-between rounded-xl border border-[#70C1B3]/5 p-3 transition-shadow hover:shadow-md ${item.cardClass}`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <img
-                          src={item.image}
-                          alt={item.name}
-                          className="size-10 rounded-full border border-[#70C1B3]/20 object-cover"
-                        />
-                        <div>
-                          <p className="text-sm font-bold">{item.name}</p>
-                          <p className="text-xs font-medium text-[#70C1B3]">
-                            Wait Time: {item.waitTime}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex flex-col items-end">
-                        <PriorityIcon
-                          size={18}
-                          className={item.priorityIconClass}
-                        />
-                        <span
-                          className={`text-[10px] font-bold uppercase ${item.priorityTextClass}`}
-                        >
-                          {item.priority}
-                        </span>
-                      </div>
-                    </article>
-                  );
-                })}
-              </div>
-
-              <div className="border-t border-[#70C1B3]/10 bg-[#F7FAFA]/20 px-6 py-4">
-                <button
-                  type="button"
-                  className="w-full text-center text-sm font-bold text-[#008080] transition-colors hover:text-[#008080]/80"
-                >
-                  Manage Full Queue
-                </button>
-              </div>
-            </div>
-            {/* 
-              <div className="relative overflow-hidden rounded-xl bg-[#008080] p-6 text-white shadow-lg">
-                <div className="relative z-10">
-                  <div className="mb-4 flex items-center gap-3">
-                    <FileSpreadsheet size={18} className="text-[#70C1B3]" />
-                    <h3 className="font-bold">Pending Lab Alerts</h3>
-                  </div>
-
-                  <p className="mb-4 text-sm leading-relaxed text-white/80">
-                    You have 2 critical lab results that require immediate
-                    review for Patient #8841 and #9213.
-                  </p>
-
-                  <button
-                    type="button"
-                    className="w-full rounded-lg bg-white py-2 text-sm font-bold text-[#008080] shadow-sm transition-colors hover:bg-slate-50"
-                  >
-                    Review Results
-                  </button>
-                </div>
-
-                <div className="absolute -bottom-4 -right-4 size-32 rounded-full bg-[#70C1B3] opacity-20" />
-                <div className="absolute right-12 top-[-16px] size-16 rounded-full bg-white opacity-10" />
-              </div> */}
-            {/* </aside> */}
           </section>
         </main>
       </div>

@@ -46,6 +46,8 @@ import AddPatient from "../pages/admin/dashboard/ForPatient/AddPatient.jsx";
 import UpdateReceptionist from "../pages/admin/dashboard/ForReceptionist/UpdateReceptionist.jsx";
 import UpdateDoctor from "../pages/admin/dashboard/ForDoctor/UpdateDoctor.jsx";
 import UpdatePatient from "../pages/admin/dashboard/ForPatient/UpdatePatient.jsx";
+import PaymentVerify from "../pages/patient/dashboard/PaymentVerify.jsx";
+import ReceptionistProfile from "../pages/receptionist/dashboard/ReceptionistProfile.jsx";
 
 export default [
   { path: "/", element: <Landing /> },
@@ -70,6 +72,7 @@ export default [
       { path: "medical-records", element: <MedicalRecords /> },
       { path: "prescriptions", element: <Prescriptions /> },
       { path: "lab-reports", element: <LabReports /> },
+      { path: "payment/verify", element: <PaymentVerify /> },
     ],
   },
   {
@@ -89,6 +92,7 @@ export default [
       { path: "appointments", element: <ReceptionsitAppointment /> },
       { path: "add-appointment", element: <ScheduleAppointment /> },
       { path: "messages", element: <MessagesPage /> },
+      { path: "profile", element: <ReceptionistProfile /> },
     ],
   },
   {

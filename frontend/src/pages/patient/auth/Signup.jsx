@@ -205,7 +205,7 @@ export default function PatientSignup() {
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#008080]/10">
               <HeartPulse className="text-[#008080]" size={22} />
             </div>
-            <h2 className="text-xl font-bold tracking-tight">MedFlow</h2>
+            <h2 className="text-xl font-bold tracking-tight">Upachaar</h2>
           </div>
 
           <div className="flex items-center gap-4">
@@ -299,20 +299,20 @@ export default function PatientSignup() {
                 />
 
                 <SelectField
-                 label="Blood Group"
-                 value={form.bloodGroup}
-                 onChange={onChange("bloodGroup")}
-                 options={["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"]}
+                  label="Blood Group"
+                  value={form.bloodGroup}
+                  onChange={onChange("bloodGroup")}
+                  options={["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"]}
                 />
 
                 <div className="md:col-span-2">
                   <Field
-                  label="Residential Address"
-                  value={form.address}
-                  onChange={onChange("address")}
-                  placeholder="123 Medical Way, Health City"
-                  icon={<MapPin size={18} />}
-                />
+                    label="Residential Address"
+                    value={form.address}
+                    onChange={onChange("address")}
+                    placeholder="123 Medical Way, Health City"
+                    icon={<MapPin size={18} />}
+                  />
                 </div>
               </div>
 
@@ -452,7 +452,7 @@ export default function PatientSignup() {
 
       <footer className="border-t border-[#008080]/5 bg-white py-6 text-center">
         <p className="text-xs text-slate-400">
-          © 2024 MedFlow Health Systems. All rights reserved.
+          © 2024 Upachaar Health Systems. All rights reserved.
         </p>
       </footer>
     </div>

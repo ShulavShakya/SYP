@@ -456,7 +456,7 @@ export default function PatientProfile() {
         </section>
 
         <p className="mt-14 text-center text-sm text-slate-400">
-          © 2024 MedFlow Health Systems. All rights reserved. Professional Use
+          © 2024 Upachaar Health Systems. All rights reserved. Professional Use
           Only.
         </p>
       </div>

@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useEffect, useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   CalendarDays,
   CheckCircle2,
@@ -13,186 +14,182 @@ import {
   ChevronLeft,
   ChevronRight,
   Plus,
-  Lightbulb,
+  Activity,
+  Check,
+  X,
+  User,
+  Stethoscope,
+  ClipboardList,
+  Loader2,
 } from "lucide-react";
+import { privateAPI } from "../../../auth/config/api.js";
+import PageLoader from "../../../component/PageLoader.jsx";
 
-const summaryCards = [
-  {
-    label: "Appointments Today",
-    value: "328",
-    valueClassName: "text-slate-900",
-    badge: "+12%",
-    badgeClassName: "text-teal-600",
-    accentClassName: "bg-teal-100",
-    icon: CalendarDays,
-    iconClassName: "bg-teal-50 text-teal-700",
-  },
-  {
-    label: "Completed",
-    value: "142",
-    valueClassName: "text-slate-900",
-    accentClassName: "bg-emerald-100",
-    icon: CheckCircle2,
-    iconClassName: "bg-emerald-50 text-emerald-700",
-  },
-  {
-    label: "Pending",
-    value: "158",
-    valueClassName: "text-slate-900",
-    accentClassName: "bg-orange-100",
-    icon: Clock3,
-    iconClassName: "bg-orange-50 text-orange-700",
-  },
-  {
-    label: "Cancelled",
-    value: "28",
-    valueClassName: "text-slate-900",
-    accentClassName: "bg-red-100",
-    icon: XCircle,
-    iconClassName: "bg-red-50 text-red-700",
-  },
-];
+// --- Helpers ---
+const isAwaiting = (app) => app.r_status === false;
+const isAccepted = (app) => app.r_status === true;
 
-const appointments = [
-  {
-    id: "#APT-2941",
-    patient: "Robert Jenkins",
-    patientInitials: "RJ",
-    patientClassName: "bg-primary/10 text-primary",
-    doctor: "Dr. Emily Stone",
-    department: "Cardiology",
-    date: "Oct 24, 2023",
-    time: "10:30 AM",
-    status: "Confirmed",
-    statusClassName: "bg-emerald-100 text-emerald-700",
-  },
-  {
-    id: "#APT-2942",
-    patient: "Sarah Miller",
-    patientInitials: "SM",
-    patientClassName: "bg-slate-100 text-slate-500",
-    doctor: "Dr. Alan Vance",
-    department: "Neurology",
-    date: "Oct 24, 2023",
-    time: "11:15 AM",
-    status: "Completed",
-    statusClassName: "bg-slate-200 text-slate-600",
-  },
-  {
-    id: "#APT-2943",
-    patient: "Michael Knight",
-    patientInitials: "MK",
-    patientClassName: "bg-orange-100 text-orange-700",
-    doctor: "Dr. Sarah West",
-    department: "General Medicine",
-    date: "Oct 24, 2023",
-    time: "12:00 PM",
-    status: "Pending",
-    statusClassName: "bg-orange-100 text-orange-700",
-  },
-  {
-    id: "#APT-2944",
-    patient: "Laura Brown",
-    patientInitials: "LB",
-    patientClassName: "bg-red-100 text-red-700",
-    doctor: "Dr. Emily Stone",
-    department: "Cardiology",
-    date: "Oct 24, 2023",
-    time: "01:30 PM",
-    status: "Cancelled",
-    statusClassName: "bg-red-100 text-red-700",
-  },
-];
+const getStatusMeta = (app) => {
+  if (isAccepted(app)) {
+    return {
+      label: "Accepted",
+      className: "bg-emerald-100 text-emerald-700",
+    };
+  }
 
-const todaySchedule = [
-  {
-    hourBadge: "09",
-    hourBadgeClassName: "bg-emerald-100 text-emerald-700",
-    time: "09:30 AM",
-    patient: "James Wilson",
-    type: "Dental Checkup",
-  },
-  {
-    hourBadge: "10",
-    hourBadgeClassName: "bg-teal-600 text-white",
-    time: "10:15 AM",
-    patient: "Linda Parker",
-    type: "Orthopedic Follow-up",
-  },
-  {
-    hourBadge: "11",
-    hourBadgeClassName: "bg-orange-100 text-orange-800",
-    time: "11:45 AM",
-    patient: "Mark Anthony",
-    type: "Physiotherapy Session",
-  },
-  {
-    hourBadge: "02",
-    hourBadgeClassName: "bg-slate-200 text-slate-600",
-    time: "02:30 PM",
-    patient: "Anna Peterson",
-    type: "Blood Test Results",
-  },
-  {
-    hourBadge: "04",
-    hourBadgeClassName: "bg-slate-200 text-slate-600",
-    time: "04:00 PM",
-    patient: "Robert Fox",
-    type: "Skin Consultation",
-  },
-];
+  switch (app.status?.toUpperCase()) {
+    case "PENDING":
+      return { label: "Pending", className: "bg-orange-100 text-orange-700" };
+    case "SCHEDULED":
+      return { label: "Scheduled", className: "bg-blue-100 text-blue-700" };
+    case "COMPLETED":
+      return { label: "Completed", className: "bg-slate-200 text-slate-600" };
+    case "CANCELLED":
+      return { label: "Cancelled", className: "bg-red-100 text-red-700" };
+    default:
+      return { label: "Unknown", className: "bg-slate-100 text-slate-500" };
+  }
+};
 
+// --- Modal ---
+function AppointmentDetailsModal({ app, onClose }) {
+  if (!app) return null;
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="w-full max-w-lg overflow-hidden rounded-3xl bg-white shadow-2xl animate-in zoom-in-95 duration-200">
+        <div className="bg-primary p-6 text-white flex justify-between items-center">
+          <div>
+            <h3 className="text-xl font-bold">Appointment Details</h3>
+            <p className="text-sm opacity-80">ID: #{app.id}</p>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-white/10 rounded-full transition-colors"
+          >
+            <X size={24} />
+          </button>
+        </div>
+
+        <div className="p-6 space-y-6">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex items-start gap-3">
+              <div className="p-2 bg-slate-100 rounded-lg text-slate-500">
+                <User size={18} />
+              </div>
+              <div>
+                <p className="text-[10px] uppercase font-bold text-slate-400">
+                  Patient
+                </p>
+                <p className="text-sm font-bold text-slate-800">
+                  {app.patient_name}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <div className="p-2 bg-slate-100 rounded-lg text-slate-500">
+                <Stethoscope size={18} />
+              </div>
+              <div>
+                <p className="text-[10px] uppercase font-bold text-slate-400">
+                  Doctor
+                </p>
+                <p className="text-sm font-bold text-slate-800">
+                  {app.doctor_name}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+            <div className="flex items-center gap-2 mb-2 text-slate-500">
+              <ClipboardList size={16} />
+              <p className="text-[10px] uppercase font-bold">
+                Reason for Visit
+              </p>
+            </div>
+            <p className="text-sm text-slate-700 italic leading-relaxed">
+              "{app.reason || "No specific reason provided."}"
+            </p>
+          </div>
+
+          <div className="flex justify-between items-center pt-2">
+            <div className="flex flex-col">
+              <p className="text-[10px] uppercase font-bold text-slate-400 mb-1">
+                Clinic Arrival
+              </p>
+              <span
+                className={`text-[10px] font-black px-3 py-1 rounded-full uppercase border ${
+                  isAwaiting(app)
+                    ? "bg-slate-100 text-slate-400 border-slate-200"
+                    : "bg-emerald-50 text-emerald-600 border-emerald-100"
+                }`}
+              >
+                {isAwaiting(app) ? "Awaiting" : "Accepted"}
+              </span>
+            </div>
+
+            <button
+              onClick={onClose}
+              className="px-6 py-2.5 bg-primary text-white font-bold rounded-xl shadow-lg shadow-primary/20 hover:opacity-90 transition-all"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// --- Sub-Components ---
 function SummaryCard({
   label,
   value,
-  valueClassName = "text-slate-900",
   badge,
-  badgeClassName = "text-teal-600",
-  accentClassName = "bg-teal-100",
+  badgeClassName,
+  accentClassName,
   icon: Icon,
-  iconClassName = "bg-teal-50 text-teal-700",
+  iconClassName,
 }) {
   return (
-    <div className="group relative overflow-hidden rounded-2xl border border-slate-200/60 bg-white p-6 shadow-[0_4px_20px_rgba(0,101,101,0.03)] transition-all hover:shadow-md">
+    <div className="group relative overflow-hidden rounded-2xl border border-slate-200/60 bg-white p-6 shadow-sm transition-all hover:shadow-md">
       <div
         className={`absolute right-0 top-0 h-24 w-24 rounded-bl-full opacity-60 transition-transform group-hover:scale-110 ${accentClassName}`}
       />
-
       <div className="mb-4 flex items-start justify-between">
-        {Icon ? (
-          <div className={`rounded-xl p-2.5 ${iconClassName}`}>
-            <Icon size={18} />
-          </div>
-        ) : (
-          <div />
-        )}
-
-        {badge ? (
+        <div className={`rounded-xl p-2.5 ${iconClassName}`}>
+          <Icon size={18} />
+        </div>
+        {badge && (
           <span className={`text-xs font-bold ${badgeClassName}`}>{badge}</span>
-        ) : null}
+        )}
       </div>
-
       <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-slate-500">
         {label}
       </p>
-
-      <h3
-        className={`font-['Manrope',sans-serif] text-3xl font-extrabold ${valueClassName}`}
-      >
+      <h3 className="font-['Manrope',sans-serif] text-3xl font-extrabold text-slate-900">
         {value}
       </h3>
     </div>
   );
 }
 
-function FilterSelect({ icon: Icon, options }) {
+function FilterSelect({ icon: Icon, options, value, onChange }) {
   return (
-    <div className="min-w-[150px] flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 focus-within:border-primary/20">
+    <div className="min-w-[160px] flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 focus-within:border-primary/20">
       <div className="flex items-center gap-2">
         <Icon size={16} className="text-slate-400" />
-        <select className="w-full cursor-pointer border-none bg-transparent p-0 text-sm font-medium text-slate-700 focus:ring-0">
+        <select
+          className="w-full cursor-pointer border-none bg-transparent p-0 text-sm font-medium text-slate-700 focus:ring-0"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+        >
           {options.map((option) => (
-            <option key={option}>{option}</option>
+            <option key={option} value={option}>
+              {option}
+            </option>
           ))}
         </select>
       </div>
@@ -200,105 +197,111 @@ function FilterSelect({ icon: Icon, options }) {
   );
 }
 
-function AppointmentRow({
-  id,
-  patient,
-  patientInitials,
-  patientClassName,
-  doctor,
-  department,
-  date,
-  time,
-  status,
-  statusClassName,
-}) {
-  return (
-    <tr className="group transition-colors hover:bg-slate-50/70">
-      <td className="px-6 py-4 text-sm font-bold text-teal-700">{id}</td>
-
-      <td className="px-6 py-4">
-        <div className="flex items-center gap-3">
-          <div
-            className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold ${patientClassName}`}
-          >
-            {patientInitials}
-          </div>
-          <span className="text-sm font-semibold text-slate-900">
-            {patient}
-          </span>
-        </div>
-      </td>
-
-      <td className="px-6 py-4 text-sm font-medium text-slate-900">{doctor}</td>
-
-      <td className="px-6 py-4 text-sm text-slate-700">{department}</td>
-
-      <td className="px-6 py-4">
-        <div className="text-sm font-semibold text-slate-900">{date}</div>
-        <div className="text-[11px] text-slate-500">{time}</div>
-      </td>
-
-      <td className="px-6 py-4">
-        <span
-          className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider ${statusClassName}`}
-        >
-          {status}
-        </span>
-      </td>
-
-      <td className="px-6 py-4">
-        <div className="flex items-center gap-2">
-          <button
-            className="rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-slate-100 hover:text-primary"
-            title="View"
-          >
-            <Eye size={16} />
-          </button>
-          {status !== "Completed" && (
-            <button
-              className="rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-slate-100 hover:text-primary"
-              title="Reschedule"
-            >
-              <CalendarDays size={16} />
-            </button>
-          )}
-          {status === "Confirmed" && (
-            <button
-              className="rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-slate-100 hover:text-red-600"
-              title="Cancel"
-            >
-              <XCircle size={16} />
-            </button>
-          )}
-        </div>
-      </td>
-    </tr>
-  );
-}
-
-function ScheduleItem({ hourBadge, hourBadgeClassName, time, patient, type }) {
-  return (
-    <div className="relative flex gap-4">
-      <div
-        className={`z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-4 border-white text-[10px] font-bold ${hourBadgeClassName}`}
-      >
-        {hourBadge}
-      </div>
-      <div className="flex-1">
-        <p className="text-xs font-bold text-primary">{time}</p>
-        <p className="mt-0.5 text-sm font-semibold text-slate-900">{patient}</p>
-        <p className="text-[10px] uppercase tracking-tight text-slate-500">
-          {type}
-        </p>
-      </div>
-    </div>
-  );
-}
-
 export default function AdminAppointmentManagement() {
+  const navigate = useNavigate();
+  const [appointments, setAppointments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedApp, setSelectedApp] = useState(null);
+  const [actionLoading, setActionLoading] = useState(null);
+
+  // Filter States
+  const [filterDate, setFilterDate] = useState("All Dates");
+  const [filterDept, setFilterDept] = useState("All Departments");
+  const [filterStatus, setFilterStatus] = useState("All Status");
+
+  const fetchAppointments = async () => {
+    try {
+      setLoading(true);
+      const response = await privateAPI.get("/admin/appointments/");
+      setAppointments(
+        Array.isArray(response.data) ? response.data : response.data.data || [],
+      );
+    } catch (error) {
+      console.error("Error fetching appointments:", error);
+    } finally {
+      setTimeout(() => setLoading(false), 600);
+    }
+  };
+
+  useEffect(() => {
+    fetchAppointments();
+  }, []);
+
+  // Accept/Reject status update (PENDING → SCHEDULED or CANCELLED)
+  const handleStatusUpdate = async (id, newStatus) => {
+    try {
+      setActionLoading(id);
+      await privateAPI.patch(`/admin/appointments/${id}/update-status/`, {
+        status: newStatus,
+      });
+      await fetchAppointments();
+    } catch (error) {
+      alert("Failed to update status.");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  // Accept checked-in patient (r_status awaiting → accepted)
+  const handleAcceptCheckedIn = async (id) => {
+    try {
+      setActionLoading(id);
+      await privateAPI.patch(`/admin/appointments/${id}/yes/`);
+      await fetchAppointments();
+    } catch {
+      alert("Failed to accept request.");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  // Summary Calculations
+  const stats = useMemo(() => {
+    const todayStr = new Date().toLocaleDateString("en-CA");
+    return {
+      today: appointments.filter((a) => a.date === todayStr).length,
+      completed: appointments.filter((a) => a.status === "COMPLETED").length,
+      pending: appointments.filter((a) => a.status === "PENDING").length,
+      cancelled: appointments.filter((a) => a.status === "CANCELLED").length,
+    };
+  }, [appointments]);
+
+  // Filtering — uses getStatusMeta so "Accepted" (r_status-based) filter works
+  const filteredAppointments = useMemo(() => {
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+
+    return appointments.filter((app) => {
+      const statusMeta = getStatusMeta(app);
+
+      const dateMatch =
+        filterDate === "All Dates" ||
+        (filterDate === "Today" && app.date === todayStr);
+
+      const deptMatch =
+        filterDept === "All Departments" || app.department_name === filterDept;
+
+      const statusMatch =
+        filterStatus === "All Status" ||
+        statusMeta.label.toUpperCase() === filterStatus.toUpperCase();
+
+      return dateMatch && deptMatch && statusMatch;
+    });
+  }, [appointments, filterDate, filterDept, filterStatus]);
+
+  if (loading) {
+    return <PageLoader caption="Loading Appointments..." />;
+  }
+
   return (
-    <div className="w-full bg-[#f7fafa] px-4 py-6 text-slate-900 sm:px-6 lg:px-8 xl:px-10">
+    <div className="w-full bg-[#f7fafa] px-4 py-6 text-slate-900 sm:px-6 lg:px-8 xl:px-10 font-sans antialiased">
+      <AppointmentDetailsModal
+        app={selectedApp}
+        onClose={() => setSelectedApp(null)}
+      />
+
       <div className="w-full max-w-none">
+        {/* Header */}
         <div className="mb-8">
           <h2 className="font-['Manrope',sans-serif] text-3xl font-extrabold tracking-tight text-slate-900">
             Appointment Management
@@ -308,133 +311,249 @@ export default function AdminAppointmentManagement() {
           </p>
         </div>
 
+        {/* Summary Cards */}
         <div className="mb-10 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-          {summaryCards.map((card) => (
-            <SummaryCard key={card.label} {...card} />
-          ))}
+          <SummaryCard
+            label="Appointments Today"
+            value={stats.today}
+            accentClassName="bg-teal-100"
+            icon={CalendarDays}
+            iconClassName="bg-teal-50 text-teal-700"
+          />
+          <SummaryCard
+            label="Completed"
+            value={stats.completed}
+            accentClassName="bg-emerald-100"
+            icon={CheckCircle2}
+            iconClassName="bg-emerald-50 text-emerald-700"
+          />
+          <SummaryCard
+            label="Pending"
+            value={stats.pending}
+            accentClassName="bg-orange-100"
+            icon={Clock3}
+            iconClassName="bg-orange-50 text-orange-700"
+          />
+          <SummaryCard
+            label="Cancelled"
+            value={stats.cancelled}
+            accentClassName="bg-red-100"
+            icon={XCircle}
+            iconClassName="bg-red-50 text-red-700"
+          />
         </div>
 
-        <div className="flex flex-col gap-8 lg:flex-row">
-          <div className="flex-1 space-y-6 min-w-0">
-            <div className="flex flex-wrap items-center gap-4 rounded-2xl bg-slate-100 p-4">
-              <FilterSelect
-                icon={CalendarRange}
-                options={["Filter by Date", "Today", "Tomorrow", "This Week"]}
-              />
-              <FilterSelect
-                icon={UserRound}
-                options={["Doctor", "Dr. Aris", "Dr. Grey"]}
-              />
-              <FilterSelect
-                icon={Building2}
-                options={["Department", "Cardiology", "Neurology"]}
-              />
-              <FilterSelect
-                icon={Flag}
-                options={["Status", "Confirmed", "Pending"]}
-              />
-
-              <button className="flex items-center gap-2 rounded-xl bg-primary px-6 py-2 text-sm font-bold text-white shadow-lg shadow-primary/20 transition-all hover:bg-primary-container">
-                <Filter size={16} />
-                Apply Filters
-              </button>
-            </div>
-
-            <div className="overflow-hidden rounded-2xl bg-white shadow-[0_4px_20px_rgba(0,101,101,0.03)] ring-1 ring-slate-200/50">
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[980px] border-collapse text-left">
-                  <thead>
-                    <tr className="bg-slate-100/70">
-                      <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-slate-500">
-                        ID
-                      </th>
-                      <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-slate-500">
-                        Patient
-                      </th>
-                      <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-slate-500">
-                        Doctor
-                      </th>
-                      <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-slate-500">
-                        Department
-                      </th>
-                      <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-slate-500">
-                        Date &amp; Time
-                      </th>
-                      <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-slate-500">
-                        Status
-                      </th>
-                      <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-slate-500">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-
-                  <tbody className="divide-y divide-slate-100">
-                    {appointments.map((appointment) => (
-                      <AppointmentRow key={appointment.id} {...appointment} />
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50/80 px-6 py-4">
-                <p className="text-xs font-medium text-slate-500">
-                  Showing 1 to 10 of 328 appointments
-                </p>
-
-                <div className="flex gap-2">
-                  <button className="rounded-lg border border-transparent p-1 transition-all hover:border-slate-200 hover:bg-white">
-                    <ChevronLeft size={18} />
-                  </button>
-                  <button className="rounded-lg border border-transparent p-1 transition-all hover:border-slate-200 hover:bg-white">
-                    <ChevronRight size={18} />
-                  </button>
-                </div>
-              </div>
-            </div>
+        <div className="space-y-6">
+          {/* Filters */}
+          <div className="flex flex-wrap items-center gap-4 rounded-2xl bg-slate-100 p-4">
+            <FilterSelect
+              icon={CalendarRange}
+              value={filterDate}
+              onChange={setFilterDate}
+              options={["All Dates", "Today"]}
+            />
+            <FilterSelect
+              icon={Building2}
+              value={filterDept}
+              onChange={setFilterDept}
+              options={[
+                "All Departments",
+                "Cardiology",
+                "Neurology",
+                "Pediatrics",
+                "Dermatology",
+                "Orthopedics",
+              ]}
+            />
+            <FilterSelect
+              icon={Flag}
+              value={filterStatus}
+              onChange={setFilterStatus}
+              options={[
+                "All Status",
+                "Pending",
+                "Scheduled",
+                "Completed",
+                "Cancelled",
+                "Accepted",
+              ]}
+            />
+            <button
+              onClick={fetchAppointments}
+              className="flex items-center gap-2 rounded-xl bg-primary px-6 py-2 text-sm font-bold text-white shadow-lg transition-all hover:opacity-90"
+            >
+              <Activity size={16} />
+              Refresh
+            </button>
           </div>
 
-          <div className="w-full space-y-6 lg:w-80">
-            <div className="rounded-2xl border border-primary/5 bg-white p-6 shadow-[0_4px_20px_rgba(0,101,101,0.03)]">
-              <div className="mb-6 flex items-center justify-between">
-                <h4 className="font-['Manrope',sans-serif] text-lg font-bold text-slate-900">
-                  Today's Schedule
-                </h4>
-                <Clock3 size={20} className="text-primary" />
-              </div>
+          {/* Table Container - Full Width */}
+          <div className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/50">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[1000px] border-collapse text-left">
+                <thead>
+                  <tr className="bg-slate-100/70">
+                    <th className="px-6 py-4 text-xs font-black uppercase tracking-widest text-slate-500">
+                      ID
+                    </th>
+                    <th className="px-6 py-4 text-xs font-black uppercase tracking-widest text-slate-500">
+                      Patient
+                    </th>
+                    <th className="px-6 py-4 text-xs font-black uppercase tracking-widest text-slate-500">
+                      Doctor
+                    </th>
+                    <th className="px-6 py-4 text-xs font-black uppercase tracking-widest text-slate-500">
+                      Department
+                    </th>
+                    <th className="px-6 py-4 text-xs font-black uppercase tracking-widest text-slate-500">
+                      Date & Time
+                    </th>
+                    <th className="px-6 py-4 text-xs font-black uppercase tracking-widest text-slate-500">
+                      Status
+                    </th>
+                    <th className="px-6 py-4 text-xs font-black uppercase tracking-widest text-right">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
 
-              <div className="relative space-y-6 before:absolute before:bottom-2 before:left-[15px] before:top-2 before:w-[2px] before:bg-slate-200">
-                {todaySchedule.map((item, index) => (
-                  <ScheduleItem key={`${item.time}-${index}`} {...item} />
-                ))}
-              </div>
+                <tbody className="divide-y divide-slate-100">
+                  {filteredAppointments.map((app) => {
+                    const statusMeta = getStatusMeta(app);
+                    const isLoadingThis = actionLoading === app.id;
 
-              <button className="mt-8 w-full rounded-xl border-2 border-primary/10 py-3 text-sm font-bold text-primary transition-all hover:bg-primary/5">
-                View Full Calendar
-              </button>
+                    return (
+                      <tr
+                        key={app.id}
+                        className="group transition-colors hover:bg-slate-50/70"
+                      >
+                        <td className="px-6 py-4 text-sm font-bold text-teal-700">
+                          #{app.id}
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-bold uppercase">
+                              {app.patient_name?.charAt(0)}
+                            </div>
+                            <span className="text-sm font-semibold text-slate-900">
+                              {app.patient_name}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-sm font-medium text-slate-900">
+                          {app.doctor_name}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-slate-700">
+                          {app.department_name}
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-sm font-semibold text-slate-900">
+                            {app.date}
+                          </div>
+                          <div className="text-[11px] text-slate-500">
+                            {app.time?.slice(0, 5)}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span
+                            className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider ${statusMeta.className}`}
+                          >
+                            {statusMeta.label}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            {isLoadingThis ? (
+                              <Loader2
+                                size={16}
+                                className="animate-spin text-slate-400"
+                              />
+                            ) : isAwaiting(app) ? (
+                              // r_status === false: patient physically checked in, awaiting receptionist acceptance
+                              <>
+                                <button
+                                  onClick={() => handleAcceptCheckedIn(app.id)}
+                                  className="rounded-lg p-2 text-emerald-600 bg-emerald-50 hover:bg-emerald-600 hover:text-white transition-all"
+                                  title="Accept Check-in"
+                                >
+                                  <Check size={16} />
+                                </button>
+                                <button
+                                  onClick={() =>
+                                    handleStatusUpdate(app.id, "CANCELLED")
+                                  }
+                                  className="rounded-lg p-2 text-red-600 bg-red-50 hover:bg-red-600 hover:text-white transition-all"
+                                  title="Reject"
+                                >
+                                  <X size={16} />
+                                </button>
+                              </>
+                            ) : !isAccepted(app) && app.status === "PENDING" ? (
+                              // r_status is null/undefined (not yet checked in) and still pending scheduling
+                              <>
+                                <button
+                                  onClick={() =>
+                                    handleStatusUpdate(app.id, "SCHEDULED")
+                                  }
+                                  className="rounded-lg p-2 text-emerald-600 bg-emerald-50 hover:bg-emerald-600 hover:text-white transition-all"
+                                  title="Accept"
+                                >
+                                  <Check size={16} />
+                                </button>
+                                <button
+                                  onClick={() =>
+                                    handleStatusUpdate(app.id, "CANCELLED")
+                                  }
+                                  className="rounded-lg p-2 text-red-600 bg-red-50 hover:bg-red-600 hover:text-white transition-all"
+                                  title="Reject"
+                                >
+                                  <X size={16} />
+                                </button>
+                              </>
+                            ) : (
+                              // r_status === true (accepted) or any terminal status → view only
+                              <button
+                                onClick={() => setSelectedApp(app)}
+                                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100"
+                                title="View Details"
+                              >
+                                <Eye size={16} />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
 
-            {/* <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary to-primary-container p-6 text-white shadow-xl shadow-primary/20">
-              <div className="relative z-10">
-                <h4 className="mb-2 text-lg font-bold">Efficiency Tip</h4>
-                <p className="text-xs font-medium leading-relaxed text-white/85">
-                  Use the "Department" filter to quickly manage overcrowding in
-                  specific units during peak hours.
-                </p>
-                <button className="mt-4 rounded-lg bg-white/20 px-3 py-1.5 text-xs font-bold transition-all hover:bg-white/30">
-                  Dismiss
+            <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50/80 px-6 py-4">
+              <p className="text-xs font-medium text-slate-500">
+                Showing {filteredAppointments.length} records
+              </p>
+              <div className="flex gap-2">
+                <button className="rounded-lg border border-slate-200 bg-white p-1 hover:bg-slate-50">
+                  <ChevronLeft size={18} />
+                </button>
+                <button className="rounded-lg border border-slate-200 bg-white p-1 hover:bg-slate-50">
+                  <ChevronRight size={18} />
                 </button>
               </div>
-              <Lightbulb className="absolute -bottom-6 -right-6 h-24 w-24 opacity-10" />
-            </div> */}
+            </div>
           </div>
         </div>
       </div>
 
-      <button className="fixed bottom-8 right-8 z-50 flex items-center justify-center rounded-full bg-primary p-4 text-white shadow-2xl transition-all hover:scale-105 hover:bg-primary-container active:scale-95">
+      {/* Floating Action Button */}
+      <button
+        onClick={() => navigate("/reception/add-appointment")}
+        className="fixed bottom-8 right-8 z-50 flex items-center gap-2 rounded-full bg-primary p-4 text-white shadow-2xl transition-all hover:scale-105 hover:bg-primary-container group"
+      >
         <Plus size={24} />
-        <span className="ml-0 max-w-0 overflow-hidden whitespace-nowrap font-bold transition-all duration-300 hover:max-w-xs group-hover:ml-2">
-          Book Appointment
+        <span className="max-w-0 overflow-hidden whitespace-nowrap font-bold transition-all duration-300 group-hover:max-w-xs group-hover:ml-2">
+          New Appointment
         </span>
       </button>
     </div>

@@ -1,5 +1,12 @@
-import React, { useMemo, useState } from "react";
-import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
+import React, { useMemo, useState, useEffect } from "react";
+import {
+  NavLink,
+  Outlet,
+  useNavigate,
+  useLocation,
+  useSearchParams,
+} from "react-router-dom";
+import { useNotifications } from "../../../component/useNotifications";
 import {
   Bell,
   CircleUserRound,
@@ -39,7 +46,7 @@ const navItems = [
     icon: CalendarDays,
   },
   { label: "Billing", to: "/admin/billing-management", icon: Wallet },
-  { label: "Approvals", to: "/admin/approval-management", icon: ShieldCheck },
+  // { label: "Approvals", to: "/admin/approval-management", icon: ShieldCheck },
   // { label: "Messages", to: "/admin/manage-messages", icon: MessageSquare },
 ];
 
@@ -50,7 +57,7 @@ const pageTitles = {
   "/admin/receptionist-management": "Receptionists",
   "/admin/appointment-management": "Appointments",
   "/admin/billing-management": "Billing",
-  "/admin/approval-management": "Approvals",
+  // "/admin/approval-management": "Approvals",
   // "/admin/manage-messages": "Messages",
 };
 
@@ -60,9 +67,9 @@ const pageTitles = {
 //   { label: "User Management", to: "/admin/user-management", icon: UserCog },
 // ];
 
-function toNameFromEmail(email) {
-  if (!email) return "Sarah Chen";
-  const head = email.split("@")[0]?.replace(/[._-]+/g, " ") || "Admin";
+function toNameFromEmail(username) {
+  if (!username) return "Sarah Chen";
+  const head = username.split("@")[0]?.replace(/[._-]+/g, " ") || "Admin";
   return head
     .split(" ")
     .filter(Boolean)
@@ -74,13 +81,16 @@ export default function AdminLayout() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
 
+  const [searchParams, setSearchParams] = useSearchParams();
+  const searchQuery = searchParams.get("search") || "";
+
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
 
   const displayName = useMemo(
-    () => toNameFromEmail(user?.email),
-    [user?.email],
+    () => toNameFromEmail(user?.username),
+    [user?.username],
   );
 
   const title = useMemo(() => {
@@ -95,26 +105,21 @@ export default function AdminLayout() {
     });
   }, []);
 
-  const notifications = useMemo(
-    () => [
-      {
-        id: 1,
-        message: "3 critical alerts require immediate review.",
-        time: "5 mins ago",
-      },
-      {
-        id: 2,
-        message: "12 appointments are scheduled for today.",
-        time: "20 mins ago",
-      },
-      {
-        id: 3,
-        message: "2 new doctor approval requests were submitted.",
-        time: "1 hour ago",
-      },
-    ],
-    [],
-  );
+  const handleSearchChange = (e) => {
+    const val = e.target.value;
+    if (val) {
+      setSearchParams({ search: val });
+    } else {
+      setSearchParams({});
+    }
+  };
+
+  const { notifications, unreadCount, clearUnread } = useNotifications();
+
+  const handleToggleNotifications = () => {
+    if (!notificationsOpen) clearUnread();
+    setNotificationsOpen(!notificationsOpen);
+  };
 
   const onLogout = () => {
     logout();
@@ -175,22 +180,6 @@ export default function AdminLayout() {
                 </NavLink>
               );
             })}
-
-            {/* <div className="px-4 pt-4 pb-2">
-              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">
-                System
-              </span>
-            </div>
-
-            {systemItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <NavLink key={item.label} to={item.to} className={navLinkClass}>
-                  <Icon size={18} />
-                  <span>{item.label}</span>
-                </NavLink>
-              );
-            })} */}
           </nav>
 
           <div className="mt-auto bg-slate-50 p-4">
@@ -202,7 +191,7 @@ export default function AdminLayout() {
 
                 <div className="min-w-0">
                   <p className="truncate text-sm font-bold text-[#181c1d]">
-                    Dr. {displayName}
+                    {displayName}
                   </p>
                   <p className="text-[11px] font-medium text-slate-500">
                     Super Admin
@@ -253,6 +242,8 @@ export default function AdminLayout() {
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 group-focus-within:text-teal-600" />
                   <input
                     type="text"
+                    value={searchQuery}
+                    onChange={handleSearchChange}
                     placeholder="Search patients, records, or doctors..."
                     className="w-full rounded-xl border-none bg-[#f1f4f4] py-2 pl-10 pr-4 text-sm text-[#181c1d] outline-none ring-0 placeholder:text-slate-400 focus:bg-white"
                   />
@@ -263,12 +254,14 @@ export default function AdminLayout() {
                 <div className="relative">
                   <button
                     type="button"
-                    onClick={() => setNotificationsOpen((prev) => !prev)}
+                    onClick={handleToggleNotifications}
                     className="relative rounded-lg p-2 text-slate-600 transition-colors hover:text-teal-600"
                     aria-label="Notifications"
                   >
                     <Bell size={22} />
-                    <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
+                    {unreadCount > 0 && (
+                      <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
+                    )}
                   </button>
 
                   {notificationsOpen && (
@@ -279,20 +272,32 @@ export default function AdminLayout() {
                         </h4>
                       </div>
 
+                      {/* Change the mapping part of your Notification dropdown */}
                       <div className="max-h-72 overflow-y-auto">
-                        {notifications.map((notification) => (
-                          <div
-                            key={notification.id}
-                            className="border-b border-slate-100 px-4 py-3 hover:bg-slate-50"
-                          >
-                            <p className="text-sm text-[#181c1d]">
-                              {notification.message}
-                            </p>
-                            <p className="mt-1 text-xs text-slate-500">
-                              {notification.time}
-                            </p>
+                        {notifications.length === 0 ? (
+                          <div className="px-4 py-3 text-xs text-slate-500">
+                            No new notifications
                           </div>
-                        ))}
+                        ) : (
+                          notifications.map((notif, index) => (
+                            <div
+                              key={notif.id || index}
+                              className="border-b border-slate-100 px-4 py-3 hover:bg-slate-50"
+                            >
+                              <p className="text-sm font-bold text-teal-800">
+                                {notif.title}
+                              </p>
+                              <p className="text-sm text-[#181c1d]">
+                                {/* FIX: Use .body (as seen in your logs) */}
+                                {notif.body}
+                              </p>
+                              <p className="mt-1 text-[10px] text-slate-500">
+                                {/* FIX: Use .created_at (as seen in your logs) */}
+                                {notif.created_at}
+                              </p>
+                            </div>
+                          ))
+                        )}
                       </div>
 
                       <div className="p-3">

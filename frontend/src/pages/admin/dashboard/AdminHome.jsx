@@ -36,68 +36,68 @@ const quickActions = [
   { label: "View Reports", icon: BarChart3, path: "/admin/view-reports" },
 ];
 
-const approvals = [
-  {
-    id: "REQ-892",
-    description: "Annual Leave - Dr. Harris",
-    status: "Pending",
-    statusClassName: "bg-slate-100 text-slate-600",
-  },
-  {
-    id: "REQ-889",
-    description: "MRI Maintenance (Critical)",
-    status: "Approved",
-    statusClassName: "bg-emerald-100 text-emerald-700",
-  },
-  {
-    id: "REQ-887",
-    description: "Medical Supplies Restock",
-    status: "Denied",
-    statusClassName: "bg-red-100 text-red-700",
-  },
-];
+// const approvals = [
+//   {
+//     id: "REQ-892",
+//     description: "Annual Leave - Dr. Harris",
+//     status: "Pending",
+//     statusClassName: "bg-slate-100 text-slate-600",
+//   },
+//   {
+//     id: "REQ-889",
+//     description: "MRI Maintenance (Critical)",
+//     status: "Approved",
+//     statusClassName: "bg-emerald-100 text-emerald-700",
+//   },
+//   {
+//     id: "REQ-887",
+//     description: "Medical Supplies Restock",
+//     status: "Denied",
+//     statusClassName: "bg-red-100 text-red-700",
+//   },
+// ];
 
-const activities = [
-  {
-    title: "New doctor credentialed",
-    description: "Dr. Mark Walton added to Neurology",
-    time: "10 Minutes Ago",
-    dotClassName: "bg-teal-600 ring-teal-100",
-  },
-  {
-    title: "Insurance policy updated",
-    description: "BlueCross structural fee revision",
-    time: "2 Hours Ago",
-    dotClassName: "bg-slate-400 ring-slate-100",
-  },
-  {
-    title: "System maintenance scheduled",
-    description: "Planned downtime on Sunday, 2AM",
-    time: "4 Hours Ago",
-    dotClassName: "bg-red-600 ring-red-100",
-  },
-];
+// const activities = [
+//   {
+//     title: "New doctor credentialed",
+//     description: "Dr. Mark Walton added to Neurology",
+//     time: "10 Minutes Ago",
+//     dotClassName: "bg-teal-600 ring-teal-100",
+//   },
+//   {
+//     title: "Insurance policy updated",
+//     description: "BlueCross structural fee revision",
+//     time: "2 Hours Ago",
+//     dotClassName: "bg-slate-400 ring-slate-100",
+//   },
+//   {
+//     title: "System maintenance scheduled",
+//     description: "Planned downtime on Sunday, 2AM",
+//     time: "4 Hours Ago",
+//     dotClassName: "bg-red-600 ring-red-100",
+//   },
+// ];
 
-const newStaff = [
-  {
-    name: "Dr. Sarah Jenkins",
-    role: "Cardiology",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuAxk43bt-zpEbZ6EQk9yoeGwFlqwbt2pWbNIo2NxMClzCQ5wAW9L1QH3skedIilDYWV3D-6ARzp5tH0kqRKyIklyxCv_791bSAVP6VVLSSbHBLDvJM9GiUdJwdGpOfOvf8eJNv74H8Z_DzqsbQbG7iMTvbwmn-ERaal-o5N-v45kpTHeRMzR1I3bbg4jSqOMVdjOYgSkSpEX_Asf4GFdeS2BcfAAdVJd2BLcAmkcW37a0PgVodTe4PCz_nFyBgKgqCfZFQjPjjwgSMx",
-  },
-  {
-    name: "Dr. Mark Walton",
-    role: "Neurology",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuBkiYUVYB1SyuEUNz8GgqvmIyp2RpSAqJlmClgP0TfmCaLSCcFw3139MJeyklKaXF-CPKWK1m2Trwiace4X29JqDUvYJmBSSoUSSi_DLJwuadmgAed-s0ArTFpc0TMpZj6TBZ8eNLHCob0OAJw8l9KERkGV4XgLz8yDzHddgUhLH_qk9a6_SorwcsnOISm95NHnp44YhH5A-HT5lDBcmsYuZZMD0b9Otaat_QrYFC13lBtrBB612jE12H5PM3zZ4wG6S05LzLhNO4RK",
-  },
-  {
-    name: "Elena Rodriguez",
-    role: "Front Desk",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuA9W0GR6PkGYf2IQRBfrAybyfcv6CqRk9qfuxjnDaYTz0M0l4jqVz5eihwI3NIUbPk-69NaxBlzibk6BqUr5_4FImMR-UBOml0k3VB65Sg-cKsJbNIsGAgA9PU8zNMuLEDPtjcV_SXSzhGiXgxjIVnip49rWQqYF2L6LL5HIYq_YQ46xEA26NwQQg0rh-7qUh0oUzRNFuGPJPKpGYSiLySRNq3bRTp6yiykIyEM_F39o6nsC63Jhg6EENClzbUNJWqzis9wR7sNLVlU",
-  },
-];
+// const newStaff = [
+//   {
+//     name: "Dr. Sarah Jenkins",
+//     role: "Cardiology",
+//     image:
+//       "https://lh3.googleusercontent.com/aida-public/AB6AXuAxk43bt-zpEbZ6EQk9yoeGwFlqwbt2pWbNIo2NxMClzCQ5wAW9L1QH3skedIilDYWV3D-6ARzp5tH0kqRKyIklyxCv_791bSAVP6VVLSSbHBLDvJM9GiUdJwdGpOfOvf8eJNv74H8Z_DzqsbQbG7iMTvbwmn-ERaal-o5N-v45kpTHeRMzR1I3bbg4jSqOMVdjOYgSkSpEX_Asf4GFdeS2BcfAAdVJd2BLcAmkcW37a0PgVodTe4PCz_nFyBgKgqCfZFQjPjjwgSMx",
+//   },
+//   {
+//     name: "Dr. Mark Walton",
+//     role: "Neurology",
+//     image:
+//       "https://lh3.googleusercontent.com/aida-public/AB6AXuBkiYUVYB1SyuEUNz8GgqvmIyp2RpSAqJlmClgP0TfmCaLSCcFw3139MJeyklKaXF-CPKWK1m2Trwiace4X29JqDUvYJmBSSoUSSi_DLJwuadmgAed-s0ArTFpc0TMpZj6TBZ8eNLHCob0OAJw8l9KERkGV4XgLz8yDzHddgUhLH_qk9a6_SorwcsnOISm95NHnp44YhH5A-HT5lDBcmsYuZZMD0b9Otaat_QrYFC13lBtrBB612jE12H5PM3zZ4wG6S05LzLhNO4RK",
+//   },
+//   {
+//     name: "Elena Rodriguez",
+//     role: "Front Desk",
+//     image:
+//       "https://lh3.googleusercontent.com/aida-public/AB6AXuA9W0GR6PkGYf2IQRBfrAybyfcv6CqRk9qfuxjnDaYTz0M0l4jqVz5eihwI3NIUbPk-69NaxBlzibk6BqUr5_4FImMR-UBOml0k3VB65Sg-cKsJbNIsGAgA9PU8zNMuLEDPtjcV_SXSzhGiXgxjIVnip49rWQqYF2L6LL5HIYq_YQ46xEA26NwQQg0rh-7qUh0oUzRNFuGPJPKpGYSiLySRNq3bRTp6yiykIyEM_F39o6nsC63Jhg6EENClzbUNJWqzis9wR7sNLVlU",
+//   },
+// ];
 
 function StatCard({ label, value, badge, valueClassName = "text-slate-900" }) {
   return (
@@ -209,8 +209,7 @@ export default function AdminHome() {
               Hospital Overview
             </h2>
             <p className="mt-1 font-medium text-slate-600">
-              Welcome back, Admin. Here's what's happening today at Clinical
-              Serenity.
+              Welcome back, Admin. Here's what's happening today at Upachaar.
             </p>
           </section>
 
@@ -245,7 +244,7 @@ export default function AdminHome() {
                 <div className="absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-teal-900/20 blur-2xl" />
               </section>
 
-              <section className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+              {/* <section className="grid grid-cols-1 gap-6 xl:grid-cols-2">
                 <div className="flex h-64 flex-col rounded-2xl bg-[#f1f4f4] p-6">
                   <div className="mb-4 flex items-center justify-between">
                     <h4 className="font-['Manrope',sans-serif] text-lg font-bold">
@@ -275,7 +274,7 @@ export default function AdminHome() {
                     </span>
                   </div>
                 </div>
-              </section>
+              </section> */}
 
               {/* <section className="overflow-hidden rounded-2xl bg-white shadow-[0_4px_20px_rgba(0,101,101,0.02)]">
                 <div className="flex items-center justify-between border-b border-slate-50 px-6 py-5">
@@ -311,7 +310,7 @@ export default function AdminHome() {
             </div>
 
             <div className="space-y-8 2xl:col-span-4">
-              <section className="rounded-2xl bg-white p-6 shadow-[0_4px_20px_rgba(0,101,101,0.02)]">
+              {/* <section className="rounded-2xl bg-white p-6 shadow-[0_4px_20px_rgba(0,101,101,0.02)]">
                 <h4 className="mb-6 font-['Manrope',sans-serif] text-lg font-bold">
                   Recent Activity
                 </h4>
@@ -322,9 +321,9 @@ export default function AdminHome() {
                     <ActivityItem key={activity.title} {...activity} />
                   ))}
                 </div>
-              </section>
+              </section> */}
 
-              <section className="rounded-2xl bg-white p-6 shadow-[0_4px_20px_rgba(0,101,101,0.02)]">
+              {/* <section className="rounded-2xl bg-white p-6 shadow-[0_4px_20px_rgba(0,101,101,0.02)]">
                 <div className="mb-6 flex items-center justify-between">
                   <h4 className="font-['Manrope',sans-serif] text-lg font-bold">
                     New Staff
@@ -346,12 +345,12 @@ export default function AdminHome() {
                 >
                   Manage Directory
                 </button>
-              </section>
+              </section> */}
             </div>
           </div>
 
           <footer className="flex flex-col gap-4 border-t border-slate-100 pt-8 text-[10px] font-medium uppercase tracking-widest text-slate-400 sm:flex-row sm:items-center sm:justify-between">
-            <p>© 2024 Clinical Serenity Ecosystem</p>
+            <p>© 2024 Upachaar Ecosystem</p>
             <div className="flex flex-wrap gap-4 sm:gap-6">
               <a href="#" className="transition-colors hover:text-teal-600">
                 Privacy

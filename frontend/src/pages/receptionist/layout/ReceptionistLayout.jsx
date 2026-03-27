@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { useNotifications } from "../../../component/useNotifications";
 import {
   Bell,
   CalendarClock,
@@ -20,12 +21,6 @@ import { useAuth } from "../../../auth/AuthContext";
 
 const navItems = [
   { label: "Dashboard", to: "/reception", icon: UserCog, end: true },
-  {
-    label: "Approvals",
-    to: "/reception/approvals",
-    icon: ClipboardCheck,
-    end: true,
-  },
   {
     label: "Messages",
     to: "/reception/messages",
@@ -48,16 +43,21 @@ const navItems = [
     to: "/reception/billing",
     icon: CreditCard,
   },
+  {
+    label: "Profile",
+    to: "/reception/profile",
+    icon: CreditCard,
+  },
 ];
 
 const pageTitles = {
   "/reception": "Reception Dashboard",
-  "/reception/approvals": "Appointment Approvals",
   "/reception/assign": "Assign Doctor",
   "/reception/billing": "Billing Management",
   "/reception/records": "Patient Records",
   "/reception/appointments": "Manage Appointments",
   "/reception/messages": "Messages",
+  "/reception/profile": "Profile",
 };
 
 function toNameFromEmail(email) {
@@ -81,26 +81,8 @@ export default function ReceptionistLayout() {
   const location = useLocation();
   const { user, logout } = useAuth();
 
-  const notifications = useMemo(
-    () => [
-      {
-        id: 1,
-        message: "3 new appointment approvals are waiting.",
-        time: "15 minutes ago",
-      },
-      {
-        id: 2,
-        message: "A doctor assignment request needs review.",
-        time: "1 hour ago",
-      },
-      {
-        id: 3,
-        message: "Billing record updated successfully.",
-        time: "Today",
-      },
-    ],
-    [],
-  );
+  // --- Notification Hook Integration ---
+  const { notifications, unreadCount, clearUnread } = useNotifications();
 
   const displayName = useMemo(
     () => toNameFromEmail(user?.email),
@@ -251,12 +233,17 @@ export default function ReceptionistLayout() {
                   <div className="relative">
                     <button
                       type="button"
-                      onClick={() => setNotificationsOpen((prev) => !prev)}
+                      onClick={() => {
+                        if (!notificationsOpen) clearUnread();
+                        setNotificationsOpen((prev) => !prev);
+                      }}
                       className="relative rounded-lg p-2 text-slate-600 transition-colors hover:text-teal-600"
                       aria-label="Notifications"
                     >
                       <Bell size={22} />
-                      <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
+                      {unreadCount > 0 && (
+                        <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
+                      )}
                     </button>
 
                     {notificationsOpen && (
@@ -267,20 +254,32 @@ export default function ReceptionistLayout() {
                           </h4>
                         </div>
 
+                        {/* Change the mapping part of your Notification dropdown */}
                         <div className="max-h-72 overflow-y-auto">
-                          {notifications.map((notif) => (
-                            <div
-                              key={notif.id}
-                              className="border-b border-slate-100 px-4 py-3 hover:bg-slate-50"
-                            >
-                              <p className="text-sm text-[#181c1d]">
-                                {notif.message}
-                              </p>
-                              <p className="mt-1 text-xs text-slate-500">
-                                {notif.time}
-                              </p>
+                          {notifications.length === 0 ? (
+                            <div className="px-4 py-3 text-xs text-slate-500">
+                              No new notifications
                             </div>
-                          ))}
+                          ) : (
+                            notifications.map((notif, index) => (
+                              <div
+                                key={notif.id || index}
+                                className="border-b border-slate-100 px-4 py-3 hover:bg-slate-50"
+                              >
+                                <p className="text-sm font-bold text-teal-800">
+                                  {notif.title}
+                                </p>
+                                <p className="text-sm text-[#181c1d]">
+                                  {/* FIX: Use .body (as seen in your logs) */}
+                                  {notif.body}
+                                </p>
+                                <p className="mt-1 text-[10px] text-slate-500">
+                                  {/* FIX: Use .created_at (as seen in your logs) */}
+                                  {notif.created_at}
+                                </p>
+                              </div>
+                            ))
+                          )}
                         </div>
 
                         <div className="p-3">

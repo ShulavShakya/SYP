@@ -24,7 +24,7 @@ export default function RegisterPatient() {
     dob: "",
     gender: "",
     phone: "",
-    username: "", 
+    username: "",
     password: "",
     address: "",
     blood_group: "",
@@ -37,19 +37,29 @@ export default function RegisterPatient() {
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Validation Helper: Checks if string is exactly 10 digits
+  const isValidPhone = (num) => /^\d{10}$/.test(num);
+
   const canSubmit = useMemo(() => {
     return (
-      form.first_name.trim() &&
-      form.last_name.trim() &&
-      form.gender.trim() &&
-      form.phone.trim() &&
-      form.username.trim() &&
-      form.password.trim()
+      form.first_name.trim() !== "" &&
+      form.last_name.trim() !== "" &&
+      form.gender.trim() !== "" &&
+      isValidPhone(form.phone) && // Strict 10 digit validation
+      form.username.trim() !== "" &&
+      form.password.trim() !== ""
     );
   }, [form]);
 
   const onChange = (key) => (e) => {
-    const value = e.target.value;
+    let value = e.target.value;
+
+    // Phone Number Validation: Only allow digits and max 10 characters
+    if (key === "phone" || key === "emergency_contact_phone") {
+      value = value.replace(/\D/g, ""); // Remove non-numeric characters
+      if (value.length > 10) value = value.slice(0, 10); // Limit to 10 digits
+    }
+
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
@@ -68,8 +78,17 @@ export default function RegisterPatient() {
     e.preventDefault();
     setErr("");
 
-    if (!canSubmit) {
-      setErr("Please fill all required fields.");
+    // Final validation check before submission
+    if (!isValidPhone(form.phone)) {
+      setErr("Phone number must be exactly 10 digits.");
+      return;
+    }
+
+    if (
+      form.emergency_contact_phone &&
+      !isValidPhone(form.emergency_contact_phone)
+    ) {
+      setErr("Emergency contact phone must be 10 digits.");
       return;
     }
 
@@ -77,17 +96,12 @@ export default function RegisterPatient() {
       setLoading(true);
 
       const formData = new FormData();
-      formData.append("first_name", form.first_name);
-      formData.append("last_name", form.last_name);
-      formData.append("username", form.username);
-      formData.append("password", form.password);
-      formData.append("dob", form.dob);
-      formData.append("gender", form.gender);
-      formData.append("phone", form.phone);
-      formData.append("address", form.address);
-      formData.append("blood_group", form.blood_group);
-      formData.append("emergency_contact_name", form.emergency_contact_name);
-      formData.append("emergency_contact_phone", form.emergency_contact_phone);
+      // Append fields...
+      Object.keys(form).forEach((key) => {
+        if (key !== "profile_image") {
+          formData.append(key, form[key]);
+        }
+      });
 
       if (form.profile_image) {
         formData.append("profile_image", form.profile_image);
@@ -97,29 +111,21 @@ export default function RegisterPatient() {
         "/receptionist/patient/create/",
         formData,
         {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
+          headers: { "Content-Type": "multipart/form-data" },
         },
       );
 
-      console.log("Patient created:", response.data);
       navigate("/reception/records");
     } catch (error) {
       console.error(error);
-
       if (error.response?.data) {
         const backendErrors = error.response.data;
         const firstError =
           typeof backendErrors === "string"
             ? backendErrors
             : Object.entries(backendErrors)
-                .map(
-                  ([key, value]) =>
-                    `${key}: ${Array.isArray(value) ? value.join(", ") : value}`,
-                )
+                .map(([k, v]) => `${k}: ${v}`)
                 .join(" | ");
-
         setErr(firstError || "Failed to create patient.");
       } else {
         setErr("Something went wrong while creating the patient.");
@@ -188,7 +194,6 @@ export default function RegisterPatient() {
                   icon={<User size={18} />}
                   required
                 />
-
                 <Field
                   label="Last Name"
                   value={form.last_name}
@@ -197,7 +202,6 @@ export default function RegisterPatient() {
                   icon={<User size={18} />}
                   required
                 />
-
                 <SelectField
                   label="Gender"
                   value={form.gender}
@@ -206,7 +210,6 @@ export default function RegisterPatient() {
                   options={["Male", "Female", "Other", "Prefer not to say"]}
                   required
                 />
-
                 <Field
                   label="Date of Birth"
                   type="date"
@@ -214,7 +217,6 @@ export default function RegisterPatient() {
                   onChange={onChange("dob")}
                   icon={<Calendar size={18} />}
                 />
-
                 <Field
                   label="Blood Group"
                   value={form.blood_group}
@@ -222,7 +224,6 @@ export default function RegisterPatient() {
                   placeholder="A+"
                   icon={<Shield size={18} />}
                 />
-
                 <Field
                   label="Password"
                   type="password"
@@ -234,6 +235,7 @@ export default function RegisterPatient() {
                 />
               </div>
 
+              {/* Profile Image Section */}
               <div className="flex flex-col gap-2">
                 <label className="text-sm font-semibold text-slate-700">
                   Profile Image
@@ -244,14 +246,13 @@ export default function RegisterPatient() {
                       {imagePreview ? (
                         <img
                           src={imagePreview}
-                          alt="Profile preview"
+                          alt="Preview"
                           className="h-full w-full object-cover"
                         />
                       ) : (
                         <ImageIcon size={28} className="text-slate-400" />
                       )}
                     </div>
-
                     <div className="flex-1">
                       <label className="inline-flex cursor-pointer items-center justify-center rounded-xl bg-[#008080] px-4 py-2 text-sm font-semibold text-white hover:bg-[#007070]">
                         Choose Image
@@ -262,14 +263,6 @@ export default function RegisterPatient() {
                           className="hidden"
                         />
                       </label>
-                      <p className="mt-2 text-xs text-slate-500">
-                        Optional, for easier patient identification.
-                      </p>
-                      {form.profile_image && (
-                        <p className="mt-1 text-xs font-medium text-slate-700">
-                          {form.profile_image.name}
-                        </p>
-                      )}
                     </div>
                   </div>
                 </div>
@@ -279,18 +272,17 @@ export default function RegisterPatient() {
                 icon={<Phone size={18} />}
                 title="Contact Information"
               />
-
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <Field
                   label="Phone Number"
                   type="tel"
                   value={form.phone}
                   onChange={onChange("phone")}
-                  placeholder="+1 (555) 000-0000"
+                  placeholder="98XXXXXXXX"
                   icon={<Phone size={18} />}
                   required
+                  maxLength={10} // HTML level restriction
                 />
-
                 <Field
                   label="Email Address"
                   type="email"
@@ -300,13 +292,12 @@ export default function RegisterPatient() {
                   icon={<Mail size={18} />}
                   required
                 />
-
                 <div className="md:col-span-2">
                   <Field
                     label="Residential Address"
                     value={form.address}
                     onChange={onChange("address")}
-                    placeholder="123 Wellness Ave, Suite 100"
+                    placeholder="123 Wellness Ave"
                     icon={<MapPin size={18} />}
                   />
                 </div>
@@ -316,7 +307,6 @@ export default function RegisterPatient() {
                 icon={<Shield size={18} />}
                 title="Emergency Contact"
               />
-
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <Field
                   label="Emergency Contact Name"
@@ -325,35 +315,25 @@ export default function RegisterPatient() {
                   placeholder="Jane Doe"
                   icon={<User size={18} />}
                 />
-
                 <Field
                   label="Emergency Contact Phone"
                   type="tel"
                   value={form.emergency_contact_phone}
                   onChange={onChange("emergency_contact_phone")}
-                  placeholder="+1 (555) 111-2222"
+                  placeholder="98XXXXXXXX"
                   icon={<Phone size={18} />}
+                  maxLength={10}
                 />
               </div>
 
               <div className="flex flex-col items-center justify-end gap-4 border-t border-slate-200 pt-6 md:flex-row">
                 <button
                   type="button"
-                  onClick={() => navigate("/reception/records")}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 md:w-auto"
-                >
-                  <ArrowLeft size={18} />
-                  Back
-                </button>
-
-                <button
-                  type="button"
                   onClick={onReset}
-                  className="w-full rounded-xl border border-slate-300 px-6 py-3 text-sm font-semibold text-slate-700 transition-all hover:bg-slate-100 md:w-auto"
+                  className="w-full rounded-xl border border-slate-300 px-6 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100 md:w-auto"
                 >
                   Clear Form
                 </button>
-
                 <button
                   type="submit"
                   disabled={!canSubmit || loading}
@@ -370,18 +350,13 @@ export default function RegisterPatient() {
               </div>
             </form>
           </div>
-
-          <footer className="py-6 text-center">
-            <p className="text-xs text-slate-400">
-              © 2024 MedFlow Health Systems. Secured by 256-bit encryption.
-            </p>
-          </footer>
         </div>
       </main>
     </div>
   );
 }
 
+// Sub-components (SectionTitle, Field, SelectField) remain the same as your original snippet...
 function SectionTitle({ icon, title }) {
   return (
     <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
