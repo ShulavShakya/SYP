@@ -15,6 +15,7 @@ import {
   Shield,
 } from "lucide-react";
 import { privateAPI } from "../../../auth/config/api";
+import PageLoader from "../../../component/PageLoader";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
 
@@ -136,9 +137,7 @@ export default function PatientRecord() {
   }, [patients]);
 
   if (loading) {
-    return (
-      <div className="p-10 text-center text-slate-600">Loading patients...</div>
-    );
+    return <PageLoader caption="Loading Patients information..." />;
   }
 
   if (error) {

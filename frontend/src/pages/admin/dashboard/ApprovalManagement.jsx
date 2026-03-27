@@ -286,17 +286,9 @@ function ApprovalRow(item) {
 export default function ApprovalManagement() {
   return (
     <div className="min-h-screen bg-[#f7fafa] text-slate-900">
-      <header className="sticky top-0 z-30 border-b border-slate-200/70 bg-white/80 backdrop-blur-xl">
+      {/* <header className="sticky top-0 z-30 border-b border-slate-200/70 bg-white/80 backdrop-blur-xl">
         <div className="flex items-center justify-between px-4 py-4 sm:px-6 lg:px-8 xl:px-10">
-          <div>
-            <h2 className="font-['Manrope',sans-serif] text-2xl font-extrabold tracking-tight text-slate-900">
-              Approval Management
-            </h2>
-            <p className="mt-1 text-sm font-medium text-slate-500">
-              Review and process clinical and administrative requests with
-              surgical precision.
-            </p>
-          </div>
+
 
           <div className="flex items-center gap-3">
             <div className="relative hidden md:block">
@@ -326,7 +318,16 @@ export default function ApprovalManagement() {
             />
           </div>
         </div>
-      </header>
+      </header> */}
+      <div className="flex flex-col px-4 py-4 sm:px-6 lg:px-8 xl:px-10">
+        <h2 className="font-['Manrope',sans-serif] text-2xl font-extrabold tracking-tight text-slate-900">
+          Approval Management
+        </h2>
+        <p className="mt-1 text-sm font-medium text-slate-500">
+          Review and process clinical and administrative requests with surgical
+          precision.
+        </p>
+      </div>
 
       <main className="w-full px-4 py-6 sm:px-6 lg:px-8 xl:px-10">
         {/* <div>

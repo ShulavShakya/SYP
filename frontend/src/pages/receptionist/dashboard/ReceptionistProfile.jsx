@@ -4,7 +4,6 @@ import { privateAPI } from "../../../auth/config/api";
 import { toast } from "react-toastify";
 import {
   ArrowLeft,
-  Briefcase,
   Calendar,
   Camera,
   Image as ImageIcon,
@@ -13,16 +12,15 @@ import {
   MapPin,
   Phone,
   Save,
-  Stethoscope,
   User,
-  Users,
   Eye,
   EyeOff,
   RefreshCcw,
   Loader2,
+  Clock3,
 } from "lucide-react";
 
-// --- Reusable Styled Components ---
+// --- Reusable Styled Components (Unchanged) ---
 const InputField = ({
   label,
   value,
@@ -81,18 +79,14 @@ const SectionWrapper = ({ title, children }) => (
   </section>
 );
 
-const departmentOptions = [
-  "Cardiology",
-  "Neurology",
-  "Pediatrics",
-  "General Surgery",
-  "Dermatology",
-  "Orthopedics",
-];
 const genderOptions = ["Male", "Female", "Other"];
-const availableDayOptions = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
+const shiftOptions = [
+  { label: "Morning (08:00 AM - 04:00 PM)", value: "MORNING" },
+  { label: "Evening (04:00 PM - 12:00 AM)", value: "EVENING" },
+  { label: "Night (12:00 AM - 08:00 AM)", value: "NIGHT" },
+];
 
-export default function EditDoctor() {
+export default function EditReceptionist() {
   const navigate = useNavigate();
 
   const [form, setForm] = useState({
@@ -102,10 +96,7 @@ export default function EditDoctor() {
     phone: "",
     email: "",
     address: "",
-    department: "",
-    experience: "",
-    qualifications: "",
-    availabilityDays: [], // Must remain an array
+    shiftTiming: "",
     username: "",
     password: "",
     confirmPassword: "",
@@ -116,10 +107,11 @@ export default function EditDoctor() {
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
 
+  // 1. Fetching Data from your backend endpoint: /api/receptionist/info/
   useEffect(() => {
-    const fetchDoctorData = async () => {
+    const fetchReceptionistData = async () => {
       try {
-        const response = await privateAPI.get("/doctor/info/");
+        const response = await privateAPI.get("/receptionist/info/");
         const d = response.data;
 
         setForm({
@@ -129,15 +121,7 @@ export default function EditDoctor() {
           phone: d.phone || "",
           email: d.email || "",
           address: d.address || "",
-          department: d.department || "",
-          experience: d.experience_years || "",
-          qualifications: d.qualifications || "",
-          // FIX: Ensure availabilityDays is an array even if backend returns a comma-separated string
-          availabilityDays: Array.isArray(d.availability_days)
-            ? d.availability_days
-            : d.availability_days
-              ? d.availability_days.split(",")
-              : [],
+          shiftTiming: d.shift || "MORNING",
           username: d.username || "",
           password: "",
           confirmPassword: "",
@@ -150,7 +134,7 @@ export default function EditDoctor() {
         setInitialLoading(false);
       }
     };
-    fetchDoctorData();
+    fetchReceptionistData();
   }, []);
 
   const pwMismatch = useMemo(() => {
@@ -159,7 +143,10 @@ export default function EditDoctor() {
 
   const canSubmit = useMemo(() => {
     const basicFields =
-      form.fullName.trim() && form.gender.trim() && form.email.trim();
+      form.fullName.trim() &&
+      form.gender.trim() &&
+      form.email.trim() &&
+      form.phone.trim();
     if (form.password && pwMismatch) return false;
     return basicFields && !loading;
   }, [form, pwMismatch, loading]);
@@ -175,52 +162,46 @@ export default function EditDoctor() {
     }
   };
 
-  // Improved toggle function
-  const toggleAvailableDay = (day) => {
-    setForm((prev) => {
-      const currentDays = [...prev.availabilityDays];
-      const index = currentDays.indexOf(day);
-
-      if (index > -1) {
-        currentDays.splice(index, 1); // Remove if exists
-      } else {
-        currentDays.push(day); // Add if not exists
-      }
-
-      return { ...prev, availabilityDays: currentDays };
-    });
-  };
-
+  // 2. Submission to your backend endpoint: /api/receptionist/update-profile/
   const onSubmit = async (e) => {
     if (e) e.preventDefault();
     setLoading(true);
     try {
       const formData = new FormData();
+      // Mapping frontend state keys to backend Serializer field names
+      formData.append("name", form.fullName);
       formData.append("gender", form.gender);
       formData.append("dob", form.dob || "");
       formData.append("phone", form.phone);
       formData.append("email", form.email);
       formData.append("address", form.address || "");
-      formData.append("department", form.department);
-      formData.append("experience_years", form.experience || "0");
-      formData.append("qualifications", form.qualifications);
+      formData.append("shift", form.shiftTiming); // Included shift
 
-      // Send multiple values for the same key
-      form.availabilityDays.forEach((day) =>
-        formData.append("availability_days", day),
-      );
-
-      if (form.profileImage)
+      if (form.profileImage) {
         formData.append("profile_image", form.profileImage);
-      if (form.password.trim()) formData.append("password", form.password);
-      formData.append("name", form.fullName);
+      }
 
-      await privateAPI.patch("/doctor/profile-update/", formData, {
+      // Backend serializer handles 'username' and 'password' via 'user' source
+      if (form.username) formData.append("username", form.username);
+      if (form.password.trim()) {
+        formData.append("password", form.password);
+      }
+
+      await privateAPI.patch("/receptionist/update-profile/", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
+
       toast.success("Profile updated successfully.");
     } catch (error) {
-      toast.error(error.response?.data?.error || "Failed to update profile.");
+      console.error(error);
+      const serverError = error.response?.data;
+      // Handle nested DRF errors if they exist (e.g., email already exists)
+      const errorMsg =
+        typeof serverError === "object"
+          ? Object.values(serverError)[0]
+          : "Failed to update profile.";
+
+      toast.error(Array.isArray(errorMsg) ? errorMsg[0] : errorMsg);
     } finally {
       setLoading(false);
     }
@@ -238,7 +219,7 @@ export default function EditDoctor() {
     <main className="min-h-screen bg-[#f7fafa] px-6 py-10 md:px-10">
       <div className="mx-auto max-w-5xl pb-10">
         <div className="mb-8">
-          <button
+          {/* <button
             onClick={() => navigate(-1)}
             className="group mb-2 flex items-center gap-2 text-sm font-medium text-[#008080]"
           >
@@ -247,10 +228,15 @@ export default function EditDoctor() {
               className="transition-transform group-hover:-translate-x-1"
             />
             Go Back
-          </button>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900">
-            Edit My Profile
-          </h1>
+          </button> */}
+          <div className="flex items-center justify-between">
+            <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+              Edit My Profile
+            </h1>
+            <span className="rounded-full bg-[#a0f2e3] px-3 py-1 text-xs font-semibold uppercase tracking-wider text-[#137165]">
+              Role: Receptionist
+            </span>
+          </div>
         </div>
 
         {/* Profile Card */}
@@ -295,6 +281,7 @@ export default function EditDoctor() {
                   onChange={onChange("gender")}
                   className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-slate-800 outline-none focus:border-[#008080] focus:ring-2 focus:ring-[#008080]/15"
                 >
+                  <option value="">Select Gender</option>
                   {genderOptions.map((opt) => (
                     <option key={opt} value={opt}>
                       {opt}
@@ -306,54 +293,14 @@ export default function EditDoctor() {
           </div>
         </section>
 
-        <SectionWrapper title="Professional Information">
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            <div className="flex flex-col">
-              <label className="mb-2 text-sm font-semibold text-slate-700">
-                Medical department *
-              </label>
-              <select
-                value={form.department}
-                onChange={onChange("department")}
-                className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-slate-800 outline-none focus:border-[#008080] focus:ring-2 focus:ring-[#008080]/15"
-              >
-                {departmentOptions.map((opt) => (
-                  <option key={opt} value={opt}>
-                    {opt}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <InputField
-              label="Years of Experience"
-              type="number"
-              value={form.experience}
-              onChange={onChange("experience")}
-              icon={Briefcase}
-            />
-            <div className="md:col-span-2">
-              <label className="mb-2 block text-sm font-semibold text-slate-700">
-                Qualifications *
-              </label>
-              <textarea
-                value={form.qualifications}
-                onChange={onChange("qualifications")}
-                rows={3}
-                className="w-full rounded-xl border border-slate-200 bg-white p-4 text-slate-800 outline-none transition focus:border-[#008080] focus:ring-2 focus:ring-[#008080]/15"
-              />
-            </div>
-          </div>
-        </SectionWrapper>
-
-        <SectionWrapper title="Contact & Address">
+        <SectionWrapper title="Personal Information">
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <InputField
-              label="Email Address"
-              type="email"
-              value={form.email}
-              onChange={onChange("email")}
-              required
-              icon={Mail}
+              label="Date of Birth"
+              type="date"
+              value={form.dob}
+              onChange={onChange("dob")}
+              icon={Calendar}
             />
             <InputField
               label="Phone Number"
@@ -365,34 +312,52 @@ export default function EditDoctor() {
             />
             <div className="md:col-span-2">
               <InputField
-                label="Full Address"
+                label="Email Address"
+                type="email"
+                value={form.email}
+                onChange={onChange("email")}
+                required
+                icon={Mail}
+              />
+            </div>
+            <div className="md:col-span-2">
+              <label className="mb-2 block text-sm font-semibold text-slate-700">
+                Residential Address
+              </label>
+              <textarea
                 value={form.address}
                 onChange={onChange("address")}
-                icon={MapPin}
+                rows={3}
+                placeholder="Enter complete home address..."
+                className="w-full rounded-xl border border-slate-200 bg-white p-4 text-slate-800 outline-none transition focus:border-[#008080] focus:ring-2 focus:ring-[#008080]/15"
               />
             </div>
           </div>
         </SectionWrapper>
 
-        <SectionWrapper title="Availability Schedule">
-          <label className="mb-4 block text-sm font-semibold text-slate-700">
-            Working Days *
-          </label>
-          <div className="flex flex-wrap gap-2">
-            {availableDayOptions.map((day) => (
-              <button
-                key={day}
-                type="button"
-                onClick={() => toggleAvailableDay(day)}
-                className={`rounded-xl px-5 py-2.5 text-sm font-bold transition-all ${
-                  form.availabilityDays.includes(day)
-                    ? "bg-[#008080] text-white shadow-md shadow-[#008080]/20"
-                    : "bg-white border border-slate-200 text-slate-500 hover:bg-slate-50"
-                }`}
-              >
-                {day}
-              </button>
-            ))}
+        <SectionWrapper title="Work Assignment">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <div className="flex flex-col">
+              <label className="mb-2 text-sm font-semibold text-slate-700">
+                Shift Timing *
+              </label>
+              <div className="relative">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+                  <Clock3 size={18} />
+                </div>
+                <select
+                  value={form.shiftTiming}
+                  onChange={onChange("shiftTiming")}
+                  className="h-12 w-full rounded-xl border border-slate-200 bg-white pl-11 pr-4 text-slate-800 outline-none focus:border-[#008080] focus:ring-2 focus:ring-[#008080]/15 appearance-none"
+                >
+                  {shiftOptions.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
           </div>
         </SectionWrapper>
 
@@ -421,13 +386,18 @@ export default function EditDoctor() {
               showToggle
               icon={KeyRound}
             />
+            {pwMismatch && form.confirmPassword && (
+              <p className="text-xs font-medium text-red-600 md:col-span-2">
+                Passwords do not match.
+              </p>
+            )}
           </div>
         </SectionWrapper>
 
         <footer className="mt-8 rounded-3xl border border-slate-200 bg-white px-6 py-6 shadow-sm">
           <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
             <p className="text-sm font-medium text-slate-500">
-              Update your profile information accurately.
+              Ensure your contact and shift details are up to date.
             </p>
             <div className="flex w-full items-center gap-3 md:w-auto">
               <button

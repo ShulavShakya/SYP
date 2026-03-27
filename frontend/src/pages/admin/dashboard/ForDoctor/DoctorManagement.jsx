@@ -12,6 +12,7 @@ import {
   ChevronLeft,
   ChevronRight,
   FileText,
+  UserPlus,
   X,
 } from "lucide-react";
 
@@ -176,6 +177,9 @@ export default function DoctorManagement() {
   const [selectedDoctor, setSelectedDoctor] = useState(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const recordsPerPage = 4;
+
   const fetchDoctorData = async () => {
     try {
       setLoading(true);
@@ -194,6 +198,7 @@ export default function DoctorManagement() {
       setTotalDoctors(totalRes.data?.total_doctors || 0);
       setActiveDoctors(activeRes.data?.active_doctors || 0);
       setOnLeaveDoctors(onLeaveRes.data?.on_leave_doctors || 0);
+      setCurrentPage(1);
     } catch (err) {
       console.error("Failed to fetch doctors data:", err);
       setError(
@@ -252,6 +257,29 @@ export default function DoctorManagement() {
     return doctors.filter((doctor) => doctor.specialty === selectedFilter);
   }, [doctors, selectedFilter]);
 
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredDoctors.length / recordsPerPage),
+  );
+
+  const paginatedReceptionists = useMemo(() => {
+    const startIndex = (currentPage - 1) * recordsPerPage;
+    return filteredDoctors.slice(startIndex, startIndex + recordsPerPage);
+  }, [filteredDoctors, currentPage]);
+
+  const startRecord =
+    filteredDoctors.length === 0 ? 0 : (currentPage - 1) * recordsPerPage + 1;
+
+  const endRecord = Math.min(
+    currentPage * recordsPerPage,
+    filteredDoctors.length,
+  );
+
+  const pageNumbers = Array.from(
+    { length: totalPages },
+    (_, index) => index + 1,
+  );
+
   const summaryCards = [
     {
       label: "Total Doctors",
@@ -276,14 +304,14 @@ export default function DoctorManagement() {
       badgeClassName: "text-orange-600",
       accentClassName: "bg-orange-500/10",
     },
-    {
-      label: "New Apps",
-      value: 5,
-      valueClassName: "text-slate-900",
-      pill: "Pending",
-      pillClassName: "bg-cyan-100 text-cyan-700",
-      accentClassName: "bg-cyan-500/10",
-    },
+    // {
+    //   label: "New Apps",
+    //   value: 5,
+    //   valueClassName: "text-slate-900",
+    //   pill: "Pending",
+    //   pillClassName: "bg-cyan-100 text-cyan-700",
+    //   accentClassName: "bg-cyan-500/10",
+    // },
   ];
 
   const getStatusClass = (status) => {
@@ -336,6 +364,20 @@ export default function DoctorManagement() {
     );
   }
 
+  const formatDate = (dateString) => {
+    if (!dateString) return "-";
+    const date = new Date(dateString);
+
+    // Check if date is valid
+    if (isNaN(date.getTime())) return dateString;
+
+    return date.toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  };
+
   return (
     <>
       <div className="w-full bg-[#f7fafa] px-4 py-6 sm:px-6 lg:px-8 xl:px-10">
@@ -351,16 +393,15 @@ export default function DoctorManagement() {
             </div>
 
             <button
-              type="button"
-              className="flex items-center gap-2 self-start rounded-2xl bg-gradient-to-br from-[#006565] to-[#008080] px-6 py-3 font-['Manrope',sans-serif] font-bold text-white shadow-[0px_4px_20px_rgba(0,101,101,0.05)] transition-transform hover:scale-[1.02] active:scale-95 sm:self-auto"
+              className="flex items-center gap-2 self-start rounded-xl bg-gradient-to-br from-[#006565] to-[#008080] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-[#006565]/20 transition-transform active:scale-95 sm:self-auto"
               onClick={() => navigate("/admin/add-doctor")}
             >
-              <Plus size={18} />
-              <span>+ Add Doctor</span>
+              <UserPlus size={18} />
+              Add Doctor
             </button>
           </div>
 
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-4 2xl:grid-cols-4">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-3 2xl:grid-cols-4">
             {summaryCards.map((card) => (
               <SummaryCard key={card.label} {...card} />
             ))}
@@ -385,37 +426,37 @@ export default function DoctorManagement() {
             </div>
           </div>
 
-          <div className="overflow-hidden rounded-2xl bg-white shadow-[0px_4px_20px_rgba(0,101,101,0.05)]">
+          <div className="overflow-hidden rounded-xl border border-primary/5 bg-white shadow-sm">
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[900px] border-collapse text-left">
+              <table className="w-full border-collapse text-left">
                 <thead>
-                  <tr className="bg-[#f1f4f4]/50">
-                    <th className="px-6 py-5 text-xs font-bold uppercase tracking-widest text-slate-500">
+                  <tr className="border-b border-primary/10 bg-mint/30">
+                    <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-primary">
                       Doctor ID
                     </th>
-                    <th className="px-6 py-5 text-xs font-bold uppercase tracking-widest text-slate-500">
+                    <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-primary">
                       Name
                     </th>
-                    <th className="px-6 py-5 text-xs font-bold uppercase tracking-widest text-slate-500">
+                    <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-primary">
                       Specialty
                     </th>
-                    <th className="px-6 py-5 text-xs font-bold uppercase tracking-widest text-slate-500">
+                    <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-primary">
                       Experience
                     </th>
-                    <th className="px-6 py-5 text-xs font-bold uppercase tracking-widest text-slate-500">
+                    <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-primary">
                       Status
                     </th>
-                    <th className="px-6 py-5 text-right text-xs font-bold uppercase tracking-widest text-slate-500">
+                    <th className="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider text-primary">
                       Actions
                     </th>
                   </tr>
                 </thead>
 
-                <tbody className="divide-y divide-slate-100/50">
+                <tbody className="divide-y divide-slate-100">
                   {filteredDoctors.length > 0 ? (
                     filteredDoctors.map((doctor, index) => (
                       <DoctorRow
-                        key={doctor.id ?? doctor.doctor_id ?? index}
+                        key={doctor.id ?? index}
                         doctorCode={doctor.doctor_id}
                         name={doctor.name}
                         username={doctor.username}
@@ -423,6 +464,7 @@ export default function DoctorManagement() {
                         experience={`${doctor.experience_years} Years`}
                         status={formatStatus(doctor.status)}
                         statusClass={getStatusClass(doctor.status)}
+                        striped={index % 2 !== 0} // Matches patient striped logic
                         deleting={deleteLoadingId === doctor.id}
                         onView={() => openViewModal(doctor)}
                         onEdit={() =>
@@ -433,18 +475,11 @@ export default function DoctorManagement() {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={6} className="px-6 py-16 text-center">
-                        <div className="flex flex-col items-center justify-center">
-                          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-100">
-                            <FileText className="text-slate-400" size={24} />
-                          </div>
-                          <h3 className="mt-4 text-lg font-bold text-slate-900">
-                            No doctors match this filter
-                          </h3>
-                          <p className="mt-2 text-sm text-slate-500">
-                            Try selecting another specialty or clear the filter.
-                          </p>
-                        </div>
+                      <td
+                        colSpan={6}
+                        className="px-6 py-10 text-center text-sm text-slate-500"
+                      >
+                        No doctors found matching this criteria.
                       </td>
                     </tr>
                   )}
@@ -452,35 +487,39 @@ export default function DoctorManagement() {
               </table>
             </div>
 
-            <div className="flex flex-col gap-4 border-t border-slate-100/50 bg-[#f1f4f4]/30 p-6 sm:flex-row sm:items-center sm:justify-between">
+            {/* Pagination - Matched with Patient Management */}
+            <div className="flex items-center justify-between border-t border-slate-100 px-6 py-4">
               <p className="text-sm text-slate-500">
                 Showing{" "}
                 <span className="font-bold text-slate-900">
-                  {filteredDoctors.length}
+                  {startRecord}-{endRecord}
                 </span>{" "}
                 of{" "}
-                <span className="font-bold text-slate-900">{totalDoctors}</span>{" "}
+                <span className="font-bold text-slate-900">
+                  {filteredDoctors.length}
+                </span>{" "}
                 doctors
+                {filteredDoctors.length !== 1 ? "s" : ""}
               </p>
 
-              <div className="flex gap-2">
+              <div className="flex items-center gap-2">
                 <button
+                  className="rounded p-2 disabled:cursor-not-allowed disabled:opacity-50"
                   type="button"
-                  className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-400 transition-colors hover:border-primary hover:text-primary"
                 >
                   <ChevronLeft size={18} />
                 </button>
 
                 <button
+                  className="flex h-8 w-8 items-center justify-center rounded bg-primary text-sm font-bold text-white"
                   type="button"
-                  className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary font-['Manrope',sans-serif] font-bold text-white shadow-sm"
                 >
                   1
                 </button>
 
                 <button
+                  className="rounded p-2 disabled:cursor-not-allowed disabled:opacity-50"
                   type="button"
-                  className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-400 transition-colors hover:border-primary hover:text-primary"
                 >
                   <ChevronRight size={18} />
                 </button>
@@ -536,7 +575,10 @@ export default function DoctorManagement() {
                   Professional Details
                 </h4>
                 <div className="space-y-4">
-                  <InfoRow label="Specialty" value={selectedDoctor.specialty} />
+                  <InfoRow
+                    label="Department"
+                    value={selectedDoctor.specialty}
+                  />
                   <InfoRow
                     label="Experience"
                     value={
@@ -548,10 +590,6 @@ export default function DoctorManagement() {
                   <InfoRow
                     label="Qualification"
                     value={selectedDoctor.qualification}
-                  />
-                  <InfoRow
-                    label="Department"
-                    value={selectedDoctor.department}
                   />
                 </div>
               </div>
@@ -567,11 +605,11 @@ export default function DoctorManagement() {
                   />
                   <InfoRow
                     label="Joined Date"
-                    value={selectedDoctor.joined_date}
+                    value={formatDate(selectedDoctor.created_at)}
                   />
                   <InfoRow
                     label="Last Updated"
-                    value={selectedDoctor.updated_at}
+                    value={formatDate(selectedDoctor.updated_at)}
                   />
                 </div>
               </div>

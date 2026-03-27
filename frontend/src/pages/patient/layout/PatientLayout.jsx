@@ -30,7 +30,7 @@ const navItems = [
     to: "/patient/appointment-history",
     icon: CalendarClock,
   },
-  { label: "Prescriptions", to: "/patient/prescriptions", icon: Pill },
+  // { label: "Prescriptions", to: "/patient/prescriptions", icon: Pill },
   { label: "Medical Records", to: "/patient/medical-records", icon: FileText },
   { label: "Billing", to: "/patient/billing", icon: CreditCard },
   { label: "Profile", to: "/patient/profile", icon: Settings },
@@ -39,7 +39,7 @@ const navItems = [
 const pageTitles = {
   "/patient": "Patient Dashboard",
   "/patient/appointment-history": "My Appointments",
-  "/patient/prescriptions": "My Prescriptions",
+  // "/patient/prescriptions": "My Prescriptions",
   "/patient/medical-records": "Medical Records",
   "/patient/billing": "Billing & Payments",
   "/patient/profile": "Profile Settings",
@@ -47,30 +47,39 @@ const pageTitles = {
 
 // ... (getDisplayName and getShortDisplayName stay exactly as you had them)
 function getDisplayName(user) {
+  // Check if explicit name fields exist in your Auth user object
+  if (user?.full_name) return user.full_name;
+  if (user?.username) return user.username;
+
   const email = user?.email?.trim();
-  if (!email) return "John";
+  if (!email) return "Patient"; // Better fallback than "John"
+
   const localPart = email.split("@")[0] || "";
   const cleaned = localPart
     .replace(/[0-9]+/g, " ")
     .replace(/[._-]+/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+
   const words = cleaned
     .split(" ")
     .filter(Boolean)
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase());
-  if (words.length === 0) return "John";
-  return words.length === 1 ? words[0] : `${words[0]} ${words[1]}`;
+
+  if (words.length === 0) return "Patient";
+  return words.join(" ");
 }
 
 function getShortDisplayName(name) {
-  if (!name) return "John";
+  if (!name || name === "Patient") return "Patient";
   const parts = name.trim().split(" ").filter(Boolean);
-  return parts.length === 1
-    ? parts[0].slice(0, 10)
-    : `${parts[0]} ${parts[1][0]}.`;
-}
 
+  // If it's a single name, return it (max 12 chars)
+  if (parts.length === 1) return parts[0].slice(0, 12);
+
+  // If it's multiple names, return "First N."
+  return `${parts[0]} ${parts[1][0]}.`;
+}
 export default function PatientLayout() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -78,6 +87,8 @@ export default function PatientLayout() {
   const [confirmClearChat, setConfirmClearChat] = useState(false);
   const [messageInput, setMessageInput] = useState("");
   const [wsStatus, setWsStatus] = useState("closed"); // "closed", "connecting", "open"
+
+  const [searchQuery, setSearchQuery] = useState("");
 
   // --- Real-time Chat Logic States ---
   const [conversationId, setConversationId] = useState(null);
@@ -95,7 +106,7 @@ export default function PatientLayout() {
     [displayName],
   );
   const firstName = useMemo(
-    () => displayName.split(" ")[0] || "John",
+    () => displayName.split(" ")[0] || "User",
     [displayName],
   );
   const today = useMemo(
@@ -150,7 +161,6 @@ export default function PatientLayout() {
     initChat();
   }, []);
 
-  // 2. History & WebSocket Setup
   // 2. History & WebSocket Setup
   useEffect(() => {
     // Only proceed if the chat is open AND we have the ID
@@ -225,6 +235,12 @@ export default function PatientLayout() {
         chatContainerRef.current.scrollHeight;
     }
   }, [messages]);
+
+  useEffect(() => {
+    setSearchQuery("");
+    setNotificationsOpen(false);
+    setMenuOpen(false);
+  }, [location.pathname]);
 
   const onLogout = () => {
     logout();

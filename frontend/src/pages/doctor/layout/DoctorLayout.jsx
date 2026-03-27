@@ -42,25 +42,25 @@ function toNameFromEmail(email) {
 
 export default function DoctorLayout() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [messagingOpen, setMessagingOpen] = useState(false);
-  const [confirmClearChat, setConfirmClearChat] = useState(false);
+  // const [messagingOpen, setMessagingOpen] = useState(false);
+  // const [confirmClearChat, setConfirmClearChat] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [messageInput, setMessageInput] = useState("");
+  // const [messageInput, setMessageInput] = useState("");
 
-  const [messages, setMessages] = useState([
-    {
-      id: 1,
-      sender: "Patient",
-      text: "Good morning doctor, I have uploaded my latest test report.",
-      time: "9:10 AM",
-    },
-    {
-      id: 2,
-      sender: "You",
-      text: "Thank you. I’ll review it before our appointment.",
-      time: "9:14 AM",
-    },
-  ]);
+  // const [messages, setMessages] = useState([
+  //   {
+  //     id: 1,
+  //     sender: "Patient",
+  //     text: "Good morning doctor, I have uploaded my latest test report.",
+  //     time: "9:10 AM",
+  //   },
+  //   {
+  //     id: 2,
+  //     sender: "You",
+  //     text: "Thank you. I’ll review it before our appointment.",
+  //     time: "9:14 AM",
+  //   },
+  // ]);
 
   const notifications = useMemo(
     () => [
@@ -132,37 +132,37 @@ export default function DoctorLayout() {
 
   const closeMenu = () => setMenuOpen(false);
 
-  const handleSendMessage = () => {
-    if (!messageInput.trim()) return;
+  // const handleSendMessage = () => {
+  //   if (!messageInput.trim()) return;
 
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: prev.length + 1,
-        sender: "You",
-        text: messageInput.trim(),
-        time: new Date().toLocaleTimeString("en-US", {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-      },
-    ]);
+  //   setMessages((prev) => [
+  //     ...prev,
+  //     {
+  //       id: prev.length + 1,
+  //       sender: "You",
+  //       text: messageInput.trim(),
+  //       time: new Date().toLocaleTimeString("en-US", {
+  //         hour: "2-digit",
+  //         minute: "2-digit",
+  //       }),
+  //     },
+  //   ]);
 
-    setMessageInput("");
-  };
+  //   setMessageInput("");
+  // };
 
-  const handleClearChat = () => {
-    setConfirmClearChat(true);
-  };
+  // const handleClearChat = () => {
+  //   setConfirmClearChat(true);
+  // };
 
-  const confirmClear = () => {
-    setMessages([]);
-    setConfirmClearChat(false);
-  };
+  // const confirmClear = () => {
+  //   setMessages([]);
+  //   setConfirmClearChat(false);
+  // };
 
-  const cancelClear = () => {
-    setConfirmClearChat(false);
-  };
+  // const cancelClear = () => {
+  //   setConfirmClearChat(false);
+  // };
 
   const navLinkClass = ({ isActive }) =>
     [
@@ -392,7 +392,7 @@ export default function DoctorLayout() {
         </main>
       </div>
 
-      <div className="fixed bottom-6 right-6 z-40">
+      {/* <div className="fixed bottom-6 right-6 z-40">
         {!messagingOpen && (
           <button
             onClick={() => setMessagingOpen(true)}
@@ -497,7 +497,7 @@ export default function DoctorLayout() {
             )}
           </div>
         )}
-      </div>
+      </div> */}
     </div>
   );
 }

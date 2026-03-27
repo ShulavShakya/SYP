@@ -273,7 +273,7 @@ export default function ReceptionistHome() {
               <Heart size={22} />
             </div>
             <h1 className="font-manrope text-2xl font-bold tracking-tight text-primary">
-              MedFlow
+              Upachaar 
             </h1>
           </div>
 
@@ -329,7 +329,7 @@ export default function ReceptionistHome() {
                   <UserCog size={22} />
                 </div>
                 <h1 className="font-manrope text-2xl font-bold tracking-tight text-primary">
-                  MedFlow
+                  Upachaar
                 </h1>
               </div>
 

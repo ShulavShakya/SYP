@@ -1,321 +1,358 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { privateAPI } from "../../../auth/config/api";
 import {
   FolderOpen,
-  CalendarDays,
   CalendarRange,
-  FilePlus2,
   ChevronLeft,
   ChevronRight,
-  MoreHorizontal,
   X,
   Activity,
   Stethoscope,
   FileText,
+  Star,
+  Send,
 } from "lucide-react";
 
-const records = [
-  {
-    id: 1,
-    date: "Oct 24, 2023",
-    time: "10:30 AM",
-    doctor: "Dr. Jane Aris",
-    initials: "JA",
-    diagnosis: "Hypertension",
-    diagnosisClass: "bg-red-100 text-red-600",
-    notes: "Patient reported mild chest tightness and recurring headaches...",
-    complaint:
-      "Mild chest tightness and recurring headaches for the past week.",
-    detailedDoctorNotes:
-      "Blood pressure was elevated during examination. Patient advised to reduce salt intake, monitor blood pressure at home, and return for follow-up in 2 weeks. No acute distress noted.",
-    generalInstructions:
-      "Avoid oily and salty food, take proper rest, and check BP every morning.",
-    prescriptions: [
-      {
-        medicineName: "Amlodipine 5mg",
-        dosage: "1 Tablet",
-        frequency: "Once daily",
-        duration: "30 days",
-        notes: "After breakfast",
-      },
-      {
-        medicineName: "Paracetamol 500mg",
-        dosage: "1 Tablet",
-        frequency: "As needed (PRN)",
-        duration: "5 days",
-        notes: "Only if headache persists",
-      },
-    ],
-  },
-  {
-    id: 2,
-    date: "Sep 12, 2023",
-    time: "02:15 PM",
-    doctor: "Dr. Robert King",
-    initials: "RK",
-    diagnosis: "Routine Checkup",
-    diagnosisClass: "bg-blue-100 text-blue-600",
-    notes: "All vitals within normal range. Recommended increased hydration...",
-    complaint: "Routine follow-up checkup with no specific complaints.",
-    detailedDoctorNotes:
-      "Vitals stable. Blood pressure, pulse, and temperature within normal range. Encouraged regular exercise and hydration.",
-    generalInstructions:
-      "Drink more water, continue healthy diet, and maintain daily walking routine.",
-    prescriptions: [],
-  },
-  {
-    id: 3,
-    date: "Aug 05, 2023",
-    time: "09:00 AM",
-    doctor: "Dr. Mark Lee",
-    initials: "ML",
-    diagnosis: "Vitamin D Deficiency",
-    diagnosisClass: "bg-amber-100 text-amber-600",
-    notes: "Prescribed 50,000 IU supplements weekly for 8 weeks...",
-    complaint: "Fatigue, low energy, and body aches.",
-    detailedDoctorNotes:
-      "Lab findings suggest Vitamin D deficiency. No neurological deficit noted. Patient advised on sunlight exposure and supplementation.",
-    generalInstructions:
-      "Take supplements regularly and spend at least 15–20 minutes in sunlight daily.",
-    prescriptions: [
-      {
-        medicineName: "Vitamin D3 50,000 IU",
-        dosage: "1 Capsule",
-        frequency: "Once weekly",
-        duration: "8 weeks",
-        notes: "Take after meal",
-      },
-    ],
-  },
-  {
-    id: 4,
-    date: "Jul 20, 2023",
-    time: "11:45 AM",
-    doctor: "Dr. Sarah Wong",
-    initials: "SW",
-    diagnosis: "Post-Surgery Followup",
-    diagnosisClass: "bg-green-100 text-green-600",
-    notes: "Surgical wound healing well. No signs of infection...",
-    complaint: "Follow-up review after recent surgery.",
-    detailedDoctorNotes:
-      "Surgical wound inspected. Healing properly with no discharge or redness. Pain level reduced significantly compared to previous visit.",
-    generalInstructions:
-      "Keep wound area clean, avoid heavy lifting, and return immediately if fever or swelling develops.",
-    prescriptions: [
-      {
-        medicineName: "Ibuprofen 400mg",
-        dosage: "1 Tablet",
-        frequency: "Twice daily (BD)",
-        duration: "5 days",
-        notes: "After food",
-      },
-    ],
-  },
-];
+// Helper: Format Date/Time
+const formatDateTime = (isoString) => {
+  const dateObj = new Date(isoString);
+  return {
+    date: dateObj.toLocaleDateString("en-US", {
+      month: "short",
+      day: "2-digit",
+      year: "numeric",
+    }),
+    time: dateObj.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+    }),
+  };
+};
 
-const mobileNavItems = [
-  { label: "Home", icon: CalendarDays, active: true },
-  { label: "Records", icon: FolderOpen, active: false },
-  { label: "Schedule", icon: CalendarDays, active: false },
-  { label: "More", icon: MoreHorizontal, active: false },
-];
+// Helper: Parse comma-separated medicine strings back into objects for the UI
+const parsePrescriptions = (record) => {
+  if (!record.medicine_name) return [];
+  const names = record.medicine_name.split(", ");
+  const dosages = record.dosage ? record.dosage.split(", ") : [];
+  const frequencies = record.frequency ? record.frequency.split(", ") : [];
+  const durations = record.duration ? record.duration.split(", ") : [];
+
+  return names.map((name, i) => ({
+    medicineName: name,
+    dosage: dosages[i] || "-",
+    frequency: frequencies[i] || "-",
+    duration: durations[i] || "-",
+  }));
+};
 
 export default function MedicalRecords() {
-  const [selectedRecord, setSelectedRecord] = useState(null);
+  const [records, setRecords] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const closeModal = () => setSelectedRecord(null);
+  // Modal States
+  const [selectedRecord, setSelectedRecord] = useState(null); // For Details
+  const [ratingRecord, setRatingRecord] = useState(null); // For Rating
+
+  // Rating Form States
+  const [selectedRating, setSelectedRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
+  const [ratingComment, setRatingComment] = useState("");
+  const [isSubmittingRating, setIsSubmittingRating] = useState(false);
+
+  // Pagination & Filter States
+  const [selectedDept, setSelectedDept] = useState("All Departments");
+  const [currentPage, setCurrentPage] = useState(1);
+  const recordsPerPage = 5;
+
+  useEffect(() => {
+    fetchMedicalRecords();
+  }, []);
+
+  const fetchMedicalRecords = async () => {
+    try {
+      setLoading(true);
+      const response = await privateAPI.get("/patient/consultations/");
+      console.log(response.data);
+      const mappedRecords = response.data.map((item) => {
+        const { date, time } = formatDateTime(item.created_at);
+
+        // Helper to extract symptoms if they were prepended to detailed_notes in previous steps
+        const getSymptomsFromNotes = (notes) => {
+          if (!notes) return "No complaint recorded.";
+          if (notes.includes("Symptoms:")) {
+            // Extracts text between "Symptoms:" and the next double newline
+            return notes.split("Symptoms:")[1].split("\n\n")[0].trim();
+          }
+          return "See clinical notes.";
+        };
+
+        const getCleanNotes = (notes) => {
+          if (!notes) return "No detailed notes recorded.";
+
+          // If "Notes:" exists → extract only that part
+          if (notes.includes("Notes:")) {
+            return notes.split("Notes:")[1].trim();
+          }
+
+          // If "Symptoms:" exists but no Notes label → remove symptoms section
+          if (notes.includes("Symptoms:")) {
+            const parts = notes.split("\n\n");
+            return parts.length > 1 ? parts[1].trim() : notes;
+          }
+
+          return notes;
+        };
+
+        return {
+          ...item,
+          date,
+          time,
+          // If backend doesn't send doctor_name, use doctor_id as a fallback
+          doctorDisplay: item.doctor_name
+            ? `Dr. ${item.doctor_name}`
+            : item.doctor_id
+              ? `Dr. ${item.doctor_id}`
+              : "Dr. n/a",
+
+          diagnosis: item.clinic_diagnosis || "General Observation",
+          diagnosisClass: "bg-teal-100 text-teal-700",
+
+          // FIX: Add this key so the table column "Notes Summary" isn't empty
+          notesSummary: item.detailed_notes
+            ? getCleanNotes(item.detailed_notes)
+            : "No summary available",
+
+          fullNotes: getCleanNotes(item.detailed_notes),
+
+          // Handle full views for the modal
+          fullSymptoms:
+            item.symptoms || getSymptomsFromNotes(item.detailed_notes),
+
+          prescriptions: parsePrescriptions(item),
+        };
+      });
+
+      setRecords(mappedRecords);
+    } catch (error) {
+      console.error("Error fetching records:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // --- Rating Submission (Connected to /patient/rate-doctor/) ---
+  const handleSubmitRating = async () => {
+    if (selectedRating === 0) return alert("Please select a star rating.");
+
+    try {
+      setIsSubmittingRating(true);
+
+      // Aligning payload with your backend RatingSerializer and view logic
+      const payload = {
+        consultation: ratingRecord.id, // Backend expects 'consultation' as the ID
+        doctor_id: ratingRecord.doctor_id, // Passed as required by Serializer fields
+        star: selectedRating, // Matches 'star' in RatingSerializer
+        comment: ratingComment, // Matches 'comment' in RatingSerializer
+      };
+
+      await privateAPI.post("/patient/rate-doctor/", payload);
+
+      alert("Thank you for your feedback!");
+      closeRatingModal();
+
+      // Optional: Refresh records to reflect that it's been rated if your backend
+      // filters them out, though not required for the connection.
+      fetchMedicalRecords();
+    } catch (error) {
+      console.error("Error submitting rating:", error);
+
+      // Specific error handling based on your backend response
+      const errorMessage =
+        error.response?.data?.error ||
+        error.response?.data?.detail ||
+        "Failed to submit rating. Please try again.";
+
+      alert(errorMessage);
+    } finally {
+      setIsSubmittingRating(false);
+    }
+  };
+
+  const closeRatingModal = () => {
+    setRatingRecord(null);
+    setSelectedRating(0);
+    setRatingComment("");
+  };
+
+  // Filter Logic
+  const filteredRecords = records.filter(
+    (r) =>
+      selectedDept === "All Departments" || r.department_name === selectedDept,
+  );
+
+  // Pagination Logic
+  const totalPages = Math.ceil(filteredRecords.length / recordsPerPage);
+  const paginatedRecords = filteredRecords.slice(
+    (currentPage - 1) * recordsPerPage,
+    currentPage * recordsPerPage,
+  );
+
+  const departments = [
+    "All Departments",
+    ...new Set(records.map((r) => r.department_name).filter(Boolean)),
+  ];
 
   return (
-    <div className="flex h-screen overflow-hidden text-slate-900">
+    <div className="flex h-screen overflow-hidden text-slate-900 bg-[#f8fafc]">
       <main className="flex min-w-0 flex-1 flex-col overflow-y-auto">
         <div className="mx-auto w-full max-w-[1440px] p-4 md:p-8">
-          {/* Patient summary */}
-          <div className="mb-8 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+          {/* Patient Header Section (Static) */}
+          {/* <div className="mb-8 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="flex flex-col items-start gap-6 md:flex-row md:items-center">
               <div className="relative">
                 <img
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuB81sCsMvVPDItteAvs9dEjVewgxkXiWpZPdy3F1GxPwJDIqYi9r2A6aDK4x2-IsvkUpWyYbiwoeHy7e8x7hdey4FvzmXN2bmRYZIefoQH3Ml2myyHVLH90d9Jpn70QA7-qplAzyX5A5NmYQtpw2TyDduS3g9-YPL8GA4NyTkRux2OZ4EllFZD2IbWyfhSC2NcI5siaaTiit56Vrc2T5bJOwEuCPiqi5f8--dPaoIaSFckmjvdw61sFLuwSWIrHC2uswmUDQDIYsUgd"
-                  alt="Patient Avatar"
+                  src="https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=400&h=400&fit=crop"
+                  alt="Avatar"
                   className="h-24 w-24 rounded-full border-4 border-white object-cover"
                 />
                 <span className="absolute bottom-1 right-1 h-5 w-5 rounded-full border-2 border-white bg-green-500" />
               </div>
-
-              <div className="grid flex-1 grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="grid flex-1 grid-cols-4 gap-6">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                    Patient Name
+                  <p className="text-xs font-bold text-slate-500 uppercase">
+                    Patient
                   </p>
-                  <p className="text-base font-semibold text-slate-900">
-                    John Doe
-                  </p>
+                  <p className="font-bold">John Doe</p>
                 </div>
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                    Patient ID
+                  <p className="text-xs font-bold text-slate-500 uppercase">
+                    ID
                   </p>
-                  <p className="text-base font-semibold text-slate-900">
-                    #MR-88291
-                  </p>
+                  <p className="font-bold">#MR-88291</p>
                 </div>
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                    Date of Birth
+                  <p className="text-xs font-bold text-slate-500 uppercase">
+                    DOB
                   </p>
-                  <p className="text-base font-semibold text-slate-900">
-                    05/12/1985
-                  </p>
+                  <p className="font-bold">05/12/1985</p>
                 </div>
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                    Blood Group
+                  <p className="text-xs font-bold text-slate-500 uppercase">
+                    Blood
                   </p>
-                  <p className="text-base font-semibold text-slate-900">
-                    O Positive (O+)
-                  </p>
+                  <p className="font-bold text-red-600">O+</p>
                 </div>
               </div>
             </div>
-          </div>
+          </div> */}
 
           {/* Filters */}
-          <div className="mb-6 flex flex-wrap items-center gap-4">
+          <div className="mb-6 flex gap-4">
             <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2">
-              <CalendarRange size={16} className="text-primary" />
-              <select className="border-none bg-transparent text-sm text-slate-600 outline-none focus:ring-0">
-                <option>Last 6 Months</option>
-                <option>Last 12 Months</option>
-                <option>All Time</option>
+              <FolderOpen size={16} className="text-[#008080]" />
+              <select
+                value={selectedDept}
+                onChange={(e) => {
+                  setSelectedDept(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="bg-transparent text-sm text-slate-600 outline-none"
+              >
+                {departments.map((d) => (
+                  <option key={d}>{d}</option>
+                ))}
               </select>
             </div>
-
-            <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2">
-              <FolderOpen size={16} className="text-primary" />
-              <select className="border-none bg-transparent text-sm text-slate-600 outline-none focus:ring-0">
-                <option>All Departments</option>
-                <option>Cardiology</option>
-                <option>Neurology</option>
-                <option>Orthopedics</option>
-              </select>
-            </div>
-
-            <button
-              type="button"
-              className="ml-auto inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-white transition hover:bg-primary/90"
-            >
-              <FilePlus2 size={16} />
-              New Entry
-            </button>
           </div>
 
           {/* Table */}
           <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse text-left">
-                <thead>
-                  <tr className="border-b border-slate-200 bg-slate-50">
-                    <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                      Date
-                    </th>
-                    <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                      Doctor
-                    </th>
-                    <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                      Diagnosis
-                    </th>
-                    <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                      Notes Summary
-                    </th>
-                    <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">
-                      Action
-                    </th>
+            <table className="w-full text-left">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-200 text-xs font-bold uppercase text-slate-500">
+                  <th className="px-6 py-4">Date</th>
+                  <th className="px-6 py-4">Doctor</th>
+                  <th className="px-6 py-4">Diagnosis</th>
+                  <th className="px-6 py-4">Notes Summary</th>
+                  <th className="px-6 py-4 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {loading ? (
+                  <tr>
+                    <td
+                      colSpan="5"
+                      className="px-6 py-10 text-center text-slate-400"
+                    >
+                      Loading records...
+                    </td>
                   </tr>
-                </thead>
-
-                <tbody className="divide-y divide-slate-100">
-                  {records.map((record) => (
+                ) : (
+                  paginatedRecords.map((record) => (
                     <tr
                       key={record.id}
-                      className="group cursor-pointer transition-colors hover:bg-slate-50"
+                      className="hover:bg-slate-50 transition-colors group"
                     >
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <p className="text-sm font-medium text-slate-900">
-                          {record.date}
-                        </p>
-                        <p className="text-xs text-slate-500">{record.time}</p>
+                      <td className="px-6 py-4">
+                        <p className="text-sm font-bold">{record.date}</p>
+                        <p className="text-xs text-slate-400">{record.time}</p>
                       </td>
-
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-3">
-                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
-                            {record.initials}
-                          </div>
-                          <span className="text-sm font-medium text-slate-900">
-                            {record.doctor}
-                          </span>
-                        </div>
+                      <td className="px-6 py-4 text-sm font-medium">
+                        {record.doctorDisplay}
                       </td>
-
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${record.diagnosisClass}`}
-                        >
+                      <td className="px-6 py-4">
+                        <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-teal-50 text-teal-700">
                           {record.diagnosis}
                         </span>
                       </td>
-
-                      <td className="max-w-xs truncate px-6 py-4 text-sm text-slate-600">
-                        {record.notes}
+                      <td className="px-6 py-4 text-sm text-slate-500">
+                        {record.notesSummary}
                       </td>
-
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                        <button
-                          type="button"
-                          onClick={() => setSelectedRecord(record)}
-                          className="font-medium text-primary hover:underline"
-                        >
-                          Details
-                        </button>
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex justify-end gap-3">
+                          <button
+                            onClick={() => setSelectedRecord(record)}
+                            className="text-sm font-bold text-[#008080] hover:underline"
+                          >
+                            Details
+                          </button>
+                          <button
+                            onClick={() => setRatingRecord(record)}
+                            disabled={record.is_rated} // ✅ disables the button
+                            className={`text-sm font-bold flex items-center gap-1 ${
+                              record.is_rated
+                                ? "text-slate-400 cursor-not-allowed" // ✅ greyed out + unclickable
+                                : "text-amber-600 hover:underline"
+                            }`}
+                          >
+                            <Star size={14} fill="currentColor" />
+                            {record.is_rated ? "Rated" : "Rate"}
+                          </button>
+                        </div>
                       </td>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  ))
+                )}
+              </tbody>
+            </table>
 
-            {/* Pagination */}
-            <div className="flex items-center justify-between border-t border-slate-100 px-6 py-4">
-              <p className="text-sm text-slate-500">
-                Showing 1 to 4 of 24 entries
+            {/* Pagination Controls */}
+            <div className="flex items-center justify-between px-6 py-4 border-t border-slate-100">
+              <p className="text-sm text-slate-400">
+                Total {filteredRecords.length} records
               </p>
-
               <div className="flex gap-2">
                 <button
-                  type="button"
-                  className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:bg-slate-50"
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage((p) => p - 1)}
+                  className="p-2 border rounded-lg disabled:opacity-30"
                 >
                   <ChevronLeft size={16} />
                 </button>
                 <button
-                  type="button"
-                  className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-sm font-medium text-white"
-                >
-                  1
-                </button>
-                <button
-                  type="button"
-                  className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
-                >
-                  2
-                </button>
-                <button
-                  type="button"
-                  className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
-                >
-                  3
-                </button>
-                <button
-                  type="button"
-                  className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition hover:bg-slate-50"
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage((p) => p + 1)}
+                  className="p-2 border rounded-lg disabled:opacity-30"
                 >
                   <ChevronRight size={16} />
                 </button>
@@ -325,214 +362,206 @@ export default function MedicalRecords() {
         </div>
       </main>
 
-      {/* Details Modal */}
+      {/* --- DETAILS MODAL (FULL VIEW) --- */}
       {selectedRecord && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6">
-          <div className="max-h-[90vh] w-full max-w-4xl overflow-hidden rounded-2xl bg-white shadow-2xl">
-            <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm">
+          <div className="max-h-[90vh] w-full max-w-4xl overflow-hidden rounded-3xl bg-white shadow-2xl flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-slate-100 px-8 py-6">
               <div>
-                <h2 className="text-xl font-bold text-slate-900">
+                <h2 className="text-2xl font-bold text-slate-900">
                   Consultation Record Details
                 </h2>
-                <p className="text-sm text-slate-500">
-                  Full details added by the doctor during consultation
+                <p className="text-sm text-slate-400 font-medium">
+                  Clinical summary of your visit
                 </p>
               </div>
-
               <button
-                type="button"
-                onClick={closeModal}
-                className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"
+                onClick={() => setSelectedRecord(null)}
+                className="p-2 text-slate-400 hover:bg-slate-50 rounded-full transition-colors"
               >
-                <X size={18} />
+                <X size={20} />
               </button>
             </div>
 
-            <div className="max-h-[calc(90vh-80px)] overflow-y-auto p-6">
-              <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <div className="rounded-xl bg-slate-50 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+            {/* Scrollable Content */}
+            <div className="flex-1 overflow-y-auto p-8 space-y-8">
+              {/* Top Info Grid */}
+              <div className="grid grid-cols-4 gap-4">
+                <div className="bg-slate-50/80 p-5 rounded-2xl border border-slate-100">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
                     Date
                   </p>
-                  <p className="mt-1 text-sm font-semibold text-slate-900">
+                  <p className="text-sm font-bold text-slate-800">
                     {selectedRecord.date}
                   </p>
-                  <p className="text-xs text-slate-500">
-                    {selectedRecord.time}
-                  </p>
                 </div>
-
-                <div className="rounded-xl bg-slate-50 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <div className="bg-slate-50/80 p-5 rounded-2xl border border-slate-100">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
                     Doctor
                   </p>
-                  <p className="mt-1 text-sm font-semibold text-slate-900">
-                    {selectedRecord.doctor}
+                  <p className="text-sm font-bold text-slate-800">
+                    {selectedRecord.doctorDisplay}
                   </p>
                 </div>
-
-                <div className="rounded-xl bg-slate-50 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <div className="bg-slate-50/80 p-5 rounded-2xl border border-slate-100">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
                     Diagnosis
                   </p>
-                  <span
-                    className={`mt-2 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${selectedRecord.diagnosisClass}`}
-                  >
+                  <p className="text-sm font-bold text-[#008080]">
                     {selectedRecord.diagnosis}
-                  </span>
-                </div>
-
-                <div className="rounded-xl bg-slate-50 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                    Record ID
                   </p>
-                  <p className="mt-1 text-sm font-semibold text-slate-900">
-                    #{selectedRecord.id}
+                </div>
+                <div className="bg-slate-50/80 p-5 rounded-2xl border border-slate-100">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                    Consult ID
+                  </p>
+                  <p className="text-sm font-bold text-slate-800">
+                    #CR-{selectedRecord.id}
                   </p>
                 </div>
               </div>
 
-              <div className="space-y-6">
-                <section className="rounded-xl border border-slate-200 bg-white p-5">
-                  <div className="mb-3 flex items-center gap-2">
-                    <Activity size={18} className="text-primary" />
-                    <h3 className="font-semibold text-slate-900">
-                      Symptoms / Chief Complaint
-                    </h3>
-                  </div>
-                  <p className="text-sm leading-6 text-slate-600">
-                    {selectedRecord.complaint || "No complaint recorded."}
+              {/* Symptoms Section */}
+              <section className="rounded-2xl border border-slate-100 p-6 space-y-4">
+                <div className="flex items-center gap-2 text-[#008080]">
+                  <Activity size={20} strokeWidth={2.5} />
+                  <h3 className="font-bold text-lg">
+                    Symptoms / Chief Complaint
+                  </h3>
+                </div>
+                <p className="text-sm text-slate-500 font-medium leading-relaxed">
+                  {selectedRecord.fullSymptoms}
+                </p>
+              </section>
+
+              {/* Diagnosis & Clinical Notes Section */}
+              <section className="rounded-2xl border border-slate-100 p-6 space-y-4">
+                <div className="flex items-center gap-2 text-[#008080]">
+                  <Stethoscope size={20} strokeWidth={2.5} />
+                  <h3 className="font-bold text-lg">
+                    Diagnosis & Clinical Notes
+                  </h3>
+                </div>
+                <div className="bg-slate-50/80 rounded-xl p-5 border border-slate-100">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+                    Detailed Doctor Notes
                   </p>
-                </section>
+                  <p className="text-sm text-slate-700 font-medium whitespace-pre-line leading-relaxed">
+                    {selectedRecord.fullNotes}
+                  </p>
+                </div>
+              </section>
 
-                <section className="rounded-xl border border-slate-200 bg-white p-5">
-                  <div className="mb-3 flex items-center gap-2">
-                    <Stethoscope size={18} className="text-primary" />
-                    <h3 className="font-semibold text-slate-900">
-                      Diagnosis & Clinical Notes
-                    </h3>
-                  </div>
+              {/* Prescriptions Section */}
+              <section className="rounded-2xl border border-slate-100 p-6 space-y-4">
+                <div className="flex items-center gap-2 text-[#008080]">
+                  <FileText size={20} strokeWidth={2.5} />
+                  <h3 className="font-bold text-lg">Prescriptions</h3>
+                </div>
 
-                  <div className="grid grid-cols-1 gap-4">
-                    <div className="rounded-lg bg-slate-50 p-4">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                        Clinical Diagnosis
-                      </p>
-                      <p className="mt-1 text-sm font-medium text-slate-800">
-                        {selectedRecord.diagnosis || "No diagnosis recorded."}
-                      </p>
-                    </div>
-
-                    <div className="rounded-lg bg-slate-50 p-4">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                        Detailed Doctor Notes
-                      </p>
-                      <p className="mt-1 text-sm leading-6 text-slate-700 whitespace-pre-line">
-                        {selectedRecord.detailedDoctorNotes ||
-                          "No detailed notes recorded."}
-                      </p>
-                    </div>
-                  </div>
-                </section>
-
-                <section className="rounded-xl border border-slate-200 bg-white p-5">
-                  <div className="mb-4 flex items-center gap-2">
-                    <FileText size={18} className="text-primary" />
-                    <h3 className="font-semibold text-slate-900">
-                      Prescriptions
-                    </h3>
-                  </div>
-
-                  {selectedRecord.prescriptions?.length ? (
-                    <div className="overflow-x-auto rounded-lg border border-slate-200">
-                      <table className="w-full border-collapse text-left text-sm">
-                        <thead className="bg-slate-50">
-                          <tr className="border-b border-slate-200">
-                            <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                              Medicine
-                            </th>
-                            <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                              Dosage
-                            </th>
-                            <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                              Frequency
-                            </th>
-                            <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                              Duration
-                            </th>
-                            <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                              Notes
-                            </th>
+                <div className="overflow-hidden rounded-xl border border-slate-100">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-50 border-b border-slate-100">
+                      <tr className="text-slate-400 font-bold uppercase tracking-wider">
+                        <th className="px-6 py-4">Medicine</th>
+                        <th className="px-6 py-4">Dosage</th>
+                        <th className="px-6 py-4">Frequency</th>
+                        <th className="px-6 py-4">Duration</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-50">
+                      {selectedRecord.prescriptions.length > 0 ? (
+                        selectedRecord.prescriptions.map((med, idx) => (
+                          <tr
+                            key={idx}
+                            className="hover:bg-slate-50/30 transition-colors"
+                          >
+                            <td className="px-6 py-4 font-bold text-slate-900">
+                              {med.medicineName}
+                            </td>
+                            <td className="px-6 py-4 text-slate-600 font-medium">
+                              {med.dosage}
+                            </td>
+                            <td className="px-6 py-4 text-slate-600 font-medium">
+                              {med.frequency}
+                            </td>
+                            <td className="px-6 py-4 text-slate-600 font-medium">
+                              {med.duration}
+                            </td>
                           </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                          {selectedRecord.prescriptions.map(
-                            (medicine, index) => (
-                              <tr key={index}>
-                                <td className="px-4 py-3 text-slate-800">
-                                  {medicine.medicineName || "-"}
-                                </td>
-                                <td className="px-4 py-3 text-slate-600">
-                                  {medicine.dosage || "-"}
-                                </td>
-                                <td className="px-4 py-3 text-slate-600">
-                                  {medicine.frequency || "-"}
-                                </td>
-                                <td className="px-4 py-3 text-slate-600">
-                                  {medicine.duration || "-"}
-                                </td>
-                                <td className="px-4 py-3 text-slate-600">
-                                  {medicine.notes || "-"}
-                                </td>
-                              </tr>
-                            ),
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
-                  ) : (
-                    <div className="rounded-lg bg-slate-50 p-4 text-sm text-slate-500">
-                      No medicines were prescribed for this consultation.
-                    </div>
-                  )}
-                </section>
-
-                <section className="rounded-xl border border-slate-200 bg-white p-5">
-                  <div className="mb-3 flex items-center gap-2">
-                    <FileText size={18} className="text-primary" />
-                    <h3 className="font-semibold text-slate-900">
-                      General Instructions / Diagnosis
-                    </h3>
-                  </div>
-                  <p className="text-sm leading-6 text-slate-600 whitespace-pre-line">
-                    {selectedRecord.generalInstructions ||
-                      "No general instructions recorded."}
-                  </p>
-                </section>
-              </div>
+                        ))
+                      ) : (
+                        <tr>
+                          <td
+                            colSpan="4"
+                            className="px-6 py-8 text-center text-slate-400 italic"
+                          >
+                            No medications prescribed for this visit.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
             </div>
           </div>
         </div>
       )}
 
-      {/* Mobile bottom nav */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around border-t border-slate-200 bg-white px-4 py-2 md:hidden">
-        {mobileNavItems.map((item) => {
-          const Icon = item.icon;
-          return (
+      {/* --- RATING MODAL --- */}
+      {ratingRecord && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm">
+          <div className="w-full max-w-md bg-white rounded-3xl p-8 shadow-2xl text-center">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold">Rate Your Doctor</h2>
+              <button onClick={closeRatingModal} className="text-slate-400">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="flex h-16 w-16 bg-amber-50 text-amber-500 rounded-full items-center justify-center mx-auto mb-4">
+              <Star size={32} fill="currentColor" />
+            </div>
+            <h3 className="font-bold text-lg">{ratingRecord.doctorDisplay}</h3>
+            <div className="flex justify-center gap-2 my-8">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  onClick={() => setSelectedRating(star)}
+                  onMouseEnter={() => setHoverRating(star)}
+                  onMouseLeave={() => setHoverRating(0)}
+                  className="transition-transform active:scale-90"
+                >
+                  <Star
+                    size={36}
+                    className={
+                      (hoverRating || selectedRating) >= star
+                        ? "text-amber-400 fill-amber-400"
+                        : "text-slate-200"
+                    }
+                  />
+                </button>
+              ))}
+            </div>
+            <textarea
+              value={ratingComment}
+              onChange={(e) => setRatingComment(e.target.value)}
+              placeholder="Write a brief review..."
+              className="w-full border rounded-2xl p-4 text-sm mb-6 outline-none focus:ring-2 focus:ring-amber-400/20"
+              rows={3}
+            />
             <button
-              key={item.label}
-              type="button"
-              className={`flex flex-col items-center gap-1 ${
-                item.active ? "text-primary" : "text-slate-500"
-              }`}
+              disabled={isSubmittingRating || !selectedRating}
+              onClick={handleSubmitRating}
+              className="w-full bg-amber-500 py-4 rounded-2xl font-bold text-white shadow-lg hover:bg-amber-600 disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              <Icon size={18} />
-              <span className="text-[10px] font-medium">{item.label}</span>
+              <Send size={18} />{" "}
+              {isSubmittingRating ? "Submitting..." : "Submit Review"}
             </button>
-          );
-        })}
-      </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
