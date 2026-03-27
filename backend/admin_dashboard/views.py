@@ -394,6 +394,7 @@ def update_patient(request, patient_id):
     user.first_name = data.get("first_name", user.first_name)
     user.last_name = data.get("last_name", user.last_name)
    
+   
 
     # 🔹 Password update (optional)
     password = data.get("password")
@@ -415,3 +416,16 @@ def update_patient(request, patient_id):
         },
         status=status.HTTP_200_OK
     )
+
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from accounts.models import Appointment
+from .serializers import AppointmentListSerializer
+
+@api_view(['GET'])
+def get_all_appointments(request):
+    appointments = Appointment.objects.all().order_by('-created_at')
+
+    serializer = AppointmentListSerializer(appointments, many=True)
+
+    return Response(serializer.data)

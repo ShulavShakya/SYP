@@ -305,3 +305,103 @@ def change_password(request):
     user.save()
 
     return Response({"message": "Password updated successfully"})
+
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from accounts.models import Doctor
+from .serializer import DoctorListSerializer
+
+@api_view(['GET'])
+def get_all_doctors(request):
+    doctors = Doctor.objects.all()
+    serializer = DoctorListSerializer(doctors, many=True)
+    return Response(serializer.data)
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from accounts.models import Appointment
+from .serializer import AppointmentFilteredSerializer
+
+@api_view(['GET'])
+def get_active_appointments(request):
+    appointments = Appointment.objects.filter(
+        status__in=['PENDING', 'SCHEDULED']
+    ).order_by('date', 'time')
+
+    serializer = AppointmentFilteredSerializer(appointments, many=True)
+    return Response(serializer.data)
+
+
+
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework import status
+from accounts.models import Appointment
+from .serializer import AppointmentCreateSerializer
+from accounts.models import Patient  # adjust if needed
+
+@api_view(['POST'])
+def create_appointment(request):
+    try:
+        patient = Patient.objects.get(user=request.user)
+    except Patient.DoesNotExist:
+        return Response({"error": "Patient not found"}, status=400)
+
+    serializer = AppointmentCreateSerializer(data=request.data)
+
+    if serializer.is_valid():
+        serializer.save(patient=patient)  # ✅ link via FK
+        return Response(
+            {
+                "message": "Appointment created successfully",
+                "data": serializer.data
+            },
+            status=status.HTTP_201_CREATED
+        )
+
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from accounts.models import Appointment
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_patient_appointments(request):
+    try:
+        patient = request.user.patient
+
+        appointments = Appointment.objects.filter(
+            patient=patient
+        ).values(
+            "id",
+            "department_name",
+            "doctor_name",
+            "doctor_id",
+            "date",
+            "time",
+            "reason",
+            "status",
+            "sstatus",
+            "created_at",
+            "updated_at"
+        ).order_by('-created_at')
+
+        return Response({
+            "message": "Appointments fetched successfully",
+            "data": list(appointments)
+        })
+
+    except AttributeError:
+        return Response({
+            "error": "Patient profile not found for this user"
+        }, status=400)
+
+    except Exception as e:
+        return Response({
+            "error": str(e)
+        }, status=500)

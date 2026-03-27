@@ -5,7 +5,7 @@ from accounts.models import Doctor, Patient
 class DoctorBasicSerializer(serializers.ModelSerializer):
     class Meta:
         model = Doctor
-        fields = ['name','doctor_id', 'specialty', 'profile_image']  # department = specialty
+        fields = ['name','doctor_id', 'specialty', 'profile_image'] 
 
 # serializers.py
 from rest_framework import serializers
@@ -68,3 +68,39 @@ class ChangePasswordSerializer(serializers.Serializer):
     def validate_new_password(self, value):
         validate_password(value)
         return value
+
+
+from rest_framework import serializers
+from accounts.models import Doctor
+
+class DoctorListSerializer(serializers.ModelSerializer):
+    doctor_name = serializers.CharField(source='name')
+
+    class Meta:
+        model = Doctor
+        fields = ['doctor_id', 'doctor_name', 'specialty', 'profile_image']
+
+
+from rest_framework import serializers
+from accounts.models import Appointment
+
+class AppointmentFilteredSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Appointment
+        fields = ['doctor_id', 'doctor_name', 'date', 'time']
+
+from rest_framework import serializers
+from accounts.models import Appointment
+
+class AppointmentCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Appointment
+        fields = [
+            'department_name',
+            'doctor_name',
+            'doctor_id',
+            'date',
+            'time',
+            'reason',
+            'status'
+        ]
