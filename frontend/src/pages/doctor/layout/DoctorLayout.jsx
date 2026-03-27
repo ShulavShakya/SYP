@@ -42,25 +42,7 @@ function toNameFromEmail(email) {
 
 export default function DoctorLayout() {
   const [menuOpen, setMenuOpen] = useState(false);
-  // const [messagingOpen, setMessagingOpen] = useState(false);
-  // const [confirmClearChat, setConfirmClearChat] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-  // const [messageInput, setMessageInput] = useState("");
-
-  // const [messages, setMessages] = useState([
-  //   {
-  //     id: 1,
-  //     sender: "Patient",
-  //     text: "Good morning doctor, I have uploaded my latest test report.",
-  //     time: "9:10 AM",
-  //   },
-  //   {
-  //     id: 2,
-  //     sender: "You",
-  //     text: "Thank you. I’ll review it before our appointment.",
-  //     time: "9:14 AM",
-  //   },
-  // ]);
 
   const notifications = useMemo(
     () => [
@@ -131,38 +113,6 @@ export default function DoctorLayout() {
   };
 
   const closeMenu = () => setMenuOpen(false);
-
-  // const handleSendMessage = () => {
-  //   if (!messageInput.trim()) return;
-
-  //   setMessages((prev) => [
-  //     ...prev,
-  //     {
-  //       id: prev.length + 1,
-  //       sender: "You",
-  //       text: messageInput.trim(),
-  //       time: new Date().toLocaleTimeString("en-US", {
-  //         hour: "2-digit",
-  //         minute: "2-digit",
-  //       }),
-  //     },
-  //   ]);
-
-  //   setMessageInput("");
-  // };
-
-  // const handleClearChat = () => {
-  //   setConfirmClearChat(true);
-  // };
-
-  // const confirmClear = () => {
-  //   setMessages([]);
-  //   setConfirmClearChat(false);
-  // };
-
-  // const cancelClear = () => {
-  //   setConfirmClearChat(false);
-  // };
 
   const navLinkClass = ({ isActive }) =>
     [
@@ -391,113 +341,6 @@ export default function DoctorLayout() {
           </div>
         </main>
       </div>
-
-      {/* <div className="fixed bottom-6 right-6 z-40">
-        {!messagingOpen && (
-          <button
-            onClick={() => setMessagingOpen(true)}
-            className="flex h-14 w-14 items-center justify-center rounded-full bg-[#006565] text-white shadow-lg transition-colors hover:bg-[#005454]"
-            aria-label="Open messaging"
-          >
-            <MessageSquare size={24} />
-          </button>
-        )}
-
-        {messagingOpen && (
-          <div className="flex h-[32rem] w-[28rem] flex-col overflow-hidden rounded-2xl border border-[#e6eaef] bg-white shadow-2xl">
-            <div className="flex items-center justify-between bg-[#006565] p-4 text-white">
-              <h3 className="font-bold">Patient Messages</h3>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handleClearChat}
-                  className="rounded-lg p-1 transition-colors hover:bg-[#005454]"
-                  title="Clear chat"
-                >
-                  <Trash2 size={18} />
-                </button>
-                <button
-                  onClick={() => setMessagingOpen(false)}
-                  className="rounded-lg p-1 transition-colors hover:bg-[#005454]"
-                >
-                  <X size={20} />
-                </button>
-              </div>
-            </div>
-
-            <div className="flex-1 space-y-4 overflow-y-auto bg-[#f4f6f8] p-4">
-              {messages.map((msg) => (
-                <div
-                  key={msg.id}
-                  className={`flex ${msg.sender === "You" ? "justify-end" : "justify-start"}`}
-                >
-                  <div
-                    className={`max-w-xs rounded-lg px-4 py-2 ${
-                      msg.sender === "You"
-                        ? "bg-[#006565] text-white"
-                        : "border border-[#e6eaef] bg-white text-[#1f2a44]"
-                    }`}
-                  >
-                    <p className="text-sm">{msg.text}</p>
-                    <p
-                      className={`mt-1 text-xs ${
-                        msg.sender === "You"
-                          ? "text-teal-100"
-                          : "text-[#62708b]"
-                      }`}
-                    >
-                      {msg.time}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="flex gap-2 border-t border-[#e6eaef] bg-white p-4">
-              <input
-                type="text"
-                placeholder="Reply to patient..."
-                value={messageInput}
-                onChange={(e) => setMessageInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-                className="flex-1 rounded-lg border border-[#e6eaef] px-4 py-2 text-sm focus:border-[#006565] focus:outline-none focus:ring-2 focus:ring-[#006565]/20"
-              />
-              <button
-                onClick={handleSendMessage}
-                className="flex items-center justify-center rounded-lg bg-[#006565] px-3 py-2 text-white transition-colors hover:bg-[#005454]"
-              >
-                <Send size={18} />
-              </button>
-            </div>
-
-            {confirmClearChat && (
-              <div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-black/40">
-                <div className="w-60 rounded-lg border border-[#e6eaef] bg-white p-3 shadow-lg">
-                  <h4 className="mb-1 text-sm font-bold text-[#1f2a44]">
-                    Clear Chat?
-                  </h4>
-                  <p className="mb-3 text-xs text-[#62708b]">
-                    Delete all messages from this conversation?
-                  </p>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={cancelClear}
-                      className="flex-1 rounded-lg border border-[#e6eaef] px-3 py-1.5 text-xs text-[#62708b] transition-colors hover:bg-[#f4f6f8]"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={confirmClear}
-                      className="flex-1 rounded-lg bg-red-500 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-red-600"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-      </div> */}
     </div>
   );
 }

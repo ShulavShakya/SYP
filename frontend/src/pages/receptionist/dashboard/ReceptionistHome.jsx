@@ -156,14 +156,6 @@ const actionConfig = {
   },
 };
 
-// const sidebarItems = [
-//   { label: "Dashboard", icon: Home, active: false },
-//   { label: "Appointments", icon: CalendarDays, active: false },
-//   { label: "Medical Records", icon: ClipboardCheck, active: false },
-//   { label: "Prescriptions", icon: Stethoscope, active: true },
-//   { label: "Billing", icon: CreditCard, active: false },
-// ];
-
 function SummaryCard({ title, value, meta, metaClass, icon: Icon, iconWrap }) {
   return (
     <div className="flex items-center gap-5 rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
@@ -264,116 +256,8 @@ export default function ReceptionistHome() {
   };
 
   return (
-    // <div className="min-h-screen bg-[#F7FAFA] text-[#2C3E50]">
     <div className="flex h-screen overflow-hidden">
-      {/* Sidebar */}
-      {/* <aside className="hidden w-64 shrink-0 flex-col border-r border-slate-200 bg-white lg:flex">
-          <div className="flex items-center gap-3 p-6">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-white shadow-lg">
-              <Heart size={22} />
-            </div>
-            <h1 className="font-manrope text-2xl font-bold tracking-tight text-primary">
-              Upachaar 
-            </h1>
-          </div>
-
-          <nav className="flex-1 px-4 py-4">
-            <ul className="space-y-2">
-              {sidebarItems.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <li key={item.label}>
-                    <button
-                      type="button"
-                      className={[
-                        "flex w-full items-center gap-3 rounded-lg p-3 text-left transition-colors",
-                        item.active
-                          ? "bg-primary text-white shadow-sm"
-                          : "text-[#2C3E50] hover:bg-slate-100",
-                      ].join(" ")}
-                    >
-                      <Icon size={20} />
-                      <span className="font-medium">{item.label}</span>
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          </nav>
-
-          <div className="mt-auto border-t border-slate-200 p-4">
-            <div className="flex items-center gap-3 px-2">
-              <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border-2 border-mint/50 bg-mint/30">
-                <img
-                  alt="Receptionist Profile"
-                  className="h-full w-full object-cover"
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuD4iV67aPqhsA4J76n-HvracNoV3Lr10LrsvRRpJZwimvqCLF0k_qryihzJV9xWHvksjlvn_PZYLD9e-KOnuXh20Xr5ozsMXLDiBxRTjBmQSnYuNqSJyHLWBR-gRJtpbyyA-i18Hnk1FyUuIetX2nmcJAqDn-JISfNVQi6Z1ebd9mDGdA2nXAA2GFzZuYgAnFikxfFG_WMhKpAoZjqKBBfGgh51jriodXV_7TCePmz6QB-aRGa1gU3Z2Gt31CNm8K_lBaEputFzZtAm"
-                />
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-[#2C3E50]">
-                  Sarah Jenkins
-                </p>
-                <p className="text-xs text-slate-500">Receptionist</p>
-              </div>
-            </div>
-          </div>
-        </aside> */}
-
       <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        {/* Topbar */}
-        {/* <header className="flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-8">
-            <div className="flex items-center gap-10">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-white shadow-lg">
-                  <UserCog size={22} />
-                </div>
-                <h1 className="font-manrope text-2xl font-bold tracking-tight text-primary">
-                  Upachaar
-                </h1>
-              </div>
-
-              <div className="relative hidden w-96 md:block">
-                <Search
-                  size={18}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                />
-                <input
-                  type="text"
-                  placeholder="Search patients, doctors or ID..."
-                  className="w-full rounded-lg border-none bg-[#F7FAFA] py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-primary/50"
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center gap-6">
-              <button className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100">
-                <Bell size={20} />
-              </button>
-              <button className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100">
-                <Settings size={20} />
-              </button>
-
-              <div className="flex items-center gap-3 border-l border-slate-200 pl-4">
-                <div className="hidden text-right sm:block">
-                  <p className="text-sm font-semibold leading-none text-[#2C3E50]">
-                    Sarah Jenkins
-                  </p>
-                  <p className="mt-1 text-xs font-medium uppercase tracking-wider text-slate-500">
-                    Receptionist
-                  </p>
-                </div>
-                <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border-2 border-mint/50 bg-mint/30">
-                  <img
-                    alt="Receptionist Profile"
-                    className="h-full w-full object-cover"
-                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuD4iV67aPqhsA4J76n-HvracNoV3Lr10LrsvRRpJZwimvqCLF0k_qryihzJV9xWHvksjlvn_PZYLD9e-KOnuXh20Xr5ozsMXLDiBxRTjBmQSnYuNqSJyHLWBR-gRJtpbyyA-i18Hnk1FyUuIetX2nmcJAqDn-JISfNVQi6Z1ebd9mDGdA2nXAA2GFzZuYgAnFikxfFG_WMhKpAoZjqKBBfGgh51jriodXV_7TCePmz6QB-aRGa1gU3Z2Gt31CNm8K_lBaEputFzZtAm"
-                  />
-                </div>
-              </div>
-            </div>
-          </header> */}
-
         {/* Content */}
         <main className="flex-1 overflow-y-auto p-8 space-y-8">
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
@@ -488,74 +372,9 @@ export default function ReceptionistHome() {
                 </table>
               </div>
             </div>
-
-            {/* Right sidebar */}
-            {/* <aside className="w-full space-y-6 lg:w-80">
-                <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
-                  <h2 className="mb-6 font-manrope text-lg font-bold text-[#2C3E50]">
-                    Quick Actions
-                  </h2>
-
-                  <div className="flex flex-col gap-4">
-                    <button className="group flex w-full items-center gap-4 rounded-xl bg-primary p-4 text-white shadow-lg transition-all hover:scale-[1.02]">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/20">
-                        <UserPlus size={20} />
-                      </div>
-                      <span className="font-semibold">Register Patient</span>
-                    </button>
-
-                    <button className="group flex w-full items-center gap-4 rounded-xl bg-mint p-4 text-white shadow-lg transition-all hover:scale-[1.02]">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/20">
-                        <CalendarDays size={20} />
-                      </div>
-                      <span className="font-semibold">Book Appointment</span>
-                    </button>
-
-                    <button className="group flex w-full items-center gap-4 rounded-xl bg-[#2C3E50] p-4 text-white shadow-lg transition-all hover:scale-[1.02]">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/20">
-                        <ClipboardCheck size={20} />
-                      </div>
-                      <span className="font-semibold">Check-in Patient</span>
-                    </button>
-                  </div>
-                </div>
-
-                <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
-                  <h3 className="mb-4 text-sm font-bold uppercase tracking-widest text-slate-500">
-                    Urgent Tasks
-                  </h3>
-
-                  <div className="space-y-4">
-                    <div className="flex items-start gap-3 rounded-lg border-l-4 border-red-500 bg-red-50 p-3">
-                      <AlertTriangle size={18} className="mt-1 text-red-500" />
-                      <div>
-                        <p className="text-sm font-bold text-red-900">
-                          Room 402 Clearance
-                        </p>
-                        <p className="text-xs text-red-700">
-                          New emergency arrival pending room assignment.
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-3 rounded-lg border-l-4 border-blue-500 bg-blue-50 p-3">
-                      <Package size={18} className="mt-1 text-blue-500" />
-                      <div>
-                        <p className="text-sm font-bold text-blue-900">
-                          Supplies Restock
-                        </p>
-                        <p className="text-xs text-blue-700">
-                          Notify facility manager about PPE levels.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </aside> */}
           </div>
         </main>
       </main>
-      {/* </div> */}
     </div>
   );
 }

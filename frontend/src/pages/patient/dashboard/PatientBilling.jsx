@@ -10,15 +10,13 @@ import {
   ArrowDownToLine,
 } from "lucide-react";
 
-// Helper: Format amount from paisa to currency string
 const formatCurrency = (paisa) => {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: "NPR", // or USD based on your preference
+    currency: "NPR",
   }).format(paisa / 100);
 };
 
-// Helper: Map backend status to your design classes
 const getStatusStyles = (status) => {
   switch (status?.toUpperCase()) {
     case "COMPLETED":
@@ -245,7 +243,6 @@ export default function BillingPaymentsContent() {
   );
 }
 
-// Sub-components kept exactly the same
 function SummaryCard({
   title,
   value,

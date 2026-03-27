@@ -3,17 +3,14 @@ import axios from "axios";
 // const BASE_URL = "http://10.113.201.239:8000/api";
 const BASE_URL = "http://localhost:8000/api";
 
-// Public API
 export const publicAPI = axios.create({
   baseURL: BASE_URL,
 });
 
-// Private API
 export const privateAPI = axios.create({
   baseURL: BASE_URL,
 });
 
-// Attach JWT token from storage
 privateAPI.interceptors.request.use(
   (config) => {
     const token =
@@ -28,7 +25,6 @@ privateAPI.interceptors.request.use(
   (error) => Promise.reject(error),
 );
 
-// Optional: response interceptor (pass-through only)
 publicAPI.interceptors.response.use(
   (response) => response,
   (error) => Promise.reject(error),

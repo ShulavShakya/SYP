@@ -52,7 +52,7 @@ export default function Appointments() {
   const [submitError, setSubmitError] = useState("");
   const [bookedSlots, setBookedSlots] = useState([]);
   const [ratings, setRatings] = useState([]);
-  const [doctorAvgRatings, setDoctorAvgRatings] = useState({}); // { doctor_id: avgRating }
+  const [doctorAvgRatings, setDoctorAvgRatings] = useState({});
 
   useEffect(() => {
     const fetchRatings = async () => {
@@ -61,7 +61,6 @@ export default function Appointments() {
         const data = Array.isArray(response.data) ? response.data : [];
         setRatings(data);
 
-        // Calculate average rating per doctor
         const avgRatings = data.reduce((acc, rating) => {
           if (!acc[rating.doctor_id])
             acc[rating.doctor_id] = { total: 0, count: 0 };
@@ -175,7 +174,7 @@ export default function Appointments() {
     const month = String(date.getMonth() + 1).padStart(2, "0");
     const day = String(date.getDate()).padStart(2, "0");
 
-    return `${year}-${month}-${day}`; // Always "2023-10-25" in Nepal time
+    return `${year}-${month}-${day}`;
   };
 
   const formatTimeForBackend = (time12h) => {
@@ -202,14 +201,12 @@ export default function Appointments() {
     });
   };
 
-  // Add this inside your component to prevent selecting a slot that becomes booked
   useEffect(() => {
     if (selectedTime && isSlotBooked(selectedTime)) {
-      setSelectedTime(null); // Clear selection if it's now busy on the new date/doctor
+      setSelectedTime(null);
     }
   }, [selectedDate, selectedDoctorId, bookedSlots]);
 
-  // Also reset everything when department changes
   useEffect(() => {
     setSelectedDoctorId(null);
     setSelectedTime(null);
@@ -238,7 +235,6 @@ export default function Appointments() {
         return;
       }
 
-      // MATCHES YOUR AppointmentCreateSerializer
       const payload = {
         department_name: department,
         doctor_name: selectedDoctor.name,
@@ -247,17 +243,14 @@ export default function Appointments() {
         time: formatTimeForBackend(selectedTime),
         reason: reason.trim() || "Regular Checkup",
         status: "PENDING",
-        // Note: 'patient' usually handled by backend request.user,
-        // but if your serializer requires it explicitly, you'd add patient ID here.
       };
 
       setSubmitting(true);
 
-      // POST TO YOUR NEW BACKEND ENDPOINT
       await privateAPI.post("/patient/create-appointment/", payload);
 
       alert("Appointment requested successfully!");
-      navigate(-1); // Or wherever you want to go
+      navigate(-1);
     } catch (error) {
       console.error("Booking error:", error?.response?.data || error.message);
       setSubmitError(
@@ -351,7 +344,6 @@ export default function Appointments() {
                             />
                             <span className="text-xs font-bold">
                               {doctorAvgRatings[doc.id] || doc.rating}{" "}
-                              {/* Use calculated average if exists */}
                             </span>
                           </div>
                         </div>

@@ -46,8 +46,6 @@ const navItems = [
     icon: CalendarDays,
   },
   { label: "Billing", to: "/admin/billing-management", icon: Wallet },
-  // { label: "Approvals", to: "/admin/approval-management", icon: ShieldCheck },
-  // { label: "Messages", to: "/admin/manage-messages", icon: MessageSquare },
 ];
 
 const pageTitles = {
@@ -57,15 +55,7 @@ const pageTitles = {
   "/admin/receptionist-management": "Receptionists",
   "/admin/appointment-management": "Appointments",
   "/admin/billing-management": "Billing",
-  // "/admin/approval-management": "Approvals",
-  // "/admin/manage-messages": "Messages",
 };
-
-// const systemItems = [
-//   { label: "Settings", to: "/admin/settings", icon: Settings },
-//   { label: "Reports", to: "/admin/reports", icon: FileText },
-//   { label: "User Management", to: "/admin/user-management", icon: UserCog },
-// ];
 
 function toNameFromEmail(username) {
   if (!username) return "Sarah Chen";
@@ -272,7 +262,6 @@ export default function AdminLayout() {
                         </h4>
                       </div>
 
-                      {/* Change the mapping part of your Notification dropdown */}
                       <div className="max-h-72 overflow-y-auto">
                         {notifications.length === 0 ? (
                           <div className="px-4 py-3 text-xs text-slate-500">
@@ -288,11 +277,9 @@ export default function AdminLayout() {
                                 {notif.title}
                               </p>
                               <p className="text-sm text-[#181c1d]">
-                                {/* FIX: Use .body (as seen in your logs) */}
                                 {notif.body}
                               </p>
                               <p className="mt-1 text-[10px] text-slate-500">
-                                {/* FIX: Use .created_at (as seen in your logs) */}
                                 {notif.created_at}
                               </p>
                             </div>

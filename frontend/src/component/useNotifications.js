@@ -15,13 +15,11 @@ export const useNotifications = () => {
     const token = sessionStorage.getItem("access");
     if (!token) return;
 
-    // Use the specific IP from your logs
     const socket = new WebSocket(
       `ws://10.113.201.239:8000/ws/notifications/?token=${token}`,
     );
     socketRef.current = socket;
 
-    // useNotifications.js
     socket.onmessage = (event) => {
       const payload = JSON.parse(event.data);
 
@@ -34,7 +32,6 @@ export const useNotifications = () => {
             payload.notifications.filter((n) => !n.is_read).length,
           );
         } else {
-          // It's a single new notification (from create_notification)
           setNotifications((prev) => [payload.notifications, ...prev]);
           setUnreadCount((prev) => prev + 1);
         }
@@ -50,7 +47,6 @@ export const useNotifications = () => {
 
   const clearUnread = async () => {
     try {
-      // 1. Update UI immediately for responsiveness
       setUnreadCount(0);
       setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
 

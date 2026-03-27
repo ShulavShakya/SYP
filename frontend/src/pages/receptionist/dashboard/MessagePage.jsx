@@ -27,17 +27,15 @@ export default function MessagesPage() {
   const outletContext = useOutletContext();
   const setHideTopbar = outletContext?.setHideTopbar ?? (() => {});
 
-  // --- State ---
   const [activeConversationId, setActiveConversationId] = useState(null);
   const [messageInput, setMessageInput] = useState("");
-  const [conversations, setConversations] = useState([]); // Start empty, fetch from API
+  const [conversations, setConversations] = useState([]);
   const [messages, setMessages] = useState([]);
   const [search, setSearch] = useState("");
 
   const socketRef = useRef(null);
   const chatContainerRef = useRef(null);
 
-  // --- 1. Load Conversation List (Sidebar) ---
   useEffect(() => {
     const fetchConversations = async () => {
       try {
@@ -50,14 +48,12 @@ export default function MessagesPage() {
     fetchConversations();
   }, []);
 
-  // --- 2. WebSocket & History Logic ---
   useEffect(() => {
     if (!activeConversationId) {
       setMessages([]);
       return;
     }
 
-    // A. Load Real History from API
     const fetchHistory = async () => {
       try {
         const res = await privateAPI.get(
@@ -70,7 +66,6 @@ export default function MessagesPage() {
     };
     fetchHistory();
 
-    // B. Initialize WebSocket with JWT Auth
     const token = sessionStorage.getItem("access");
     const protocol = window.location.protocol === "https:" ? "wss" : "ws";
     const wsUrl = `${protocol}://10.113.201.239:8000/ws/chat/${activeConversationId}/?token=${token}`;
@@ -80,7 +75,6 @@ export default function MessagesPage() {
     socketRef.current.onmessage = (event) => {
       const data = JSON.parse(event.data);
 
-      // Add new message to list
       setMessages((prev) => [
         ...prev,
         {
@@ -89,11 +83,10 @@ export default function MessagesPage() {
           sender_id: data.sender_id,
           sender_name: data.sender_name,
           message: data.message,
-          created_at: new Date().toISOString(), // Backend sends ISO, JS formats below
+          created_at: new Date().toISOString(),
         },
       ]);
 
-      // Update the "Last Message" snippet in the sidebar list
       setConversations((prevList) =>
         prevList.map((c) =>
           c.id === activeConversationId
@@ -112,7 +105,6 @@ export default function MessagesPage() {
     };
   }, [activeConversationId]);
 
-  // --- 3. Auto-scroll ---
   useEffect(() => {
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollTop =
@@ -120,11 +112,9 @@ export default function MessagesPage() {
     }
   }, [messages]);
 
-  // --- 4. Actions ---
   const handleSend = () => {
     if (!messageInput.trim() || !socketRef.current) return;
 
-    // We only need to send the message; backend identifies us via JWT
     const payload = {
       message: messageInput,
     };
@@ -149,7 +139,6 @@ export default function MessagesPage() {
   return (
     <div className="h-[calc(100vh-64px)] overflow-hidden bg-[#f7fafa] font-body text-on-surface">
       <div className="flex h-full min-h-0">
-        {/* --- Sidebar: Conversation List --- */}
         <section
           className={`flex h-full shrink-0 flex-col bg-[#f7fafa] md:w-[380px] md:border-r border-slate-100 ${showChatView ? "hidden md:flex" : "flex w-full"}`}
         >
@@ -195,13 +184,11 @@ export default function MessagesPage() {
           </div>
         </section>
 
-        {/* --- Main Chat Area --- */}
         <section
           className={`flex-1 flex-col bg-white ${showChatView ? "flex" : "hidden md:flex"}`}
         >
           {activeConversation ? (
             <>
-              {/* Header */}
               <header className="flex items-center justify-between px-6 py-4 border-b border-slate-50">
                 <div className="flex items-center gap-4">
                   <button
@@ -225,7 +212,6 @@ export default function MessagesPage() {
                 </div>
               </header>
 
-              {/* Messages List */}
               <div
                 ref={chatContainerRef}
                 className="flex-1 overflow-y-auto p-6 space-y-4 bg-[#fcfdfd]"
@@ -244,7 +230,6 @@ export default function MessagesPage() {
                             : "bg-[#006565] text-white rounded-tr-none"
                         }`}
                       >
-                        {/* Show which staff member sent the message to colleagues */}
                         {!isPatient && (
                           <div className="text-[10px] font-bold mb-1 opacity-70">
                             Staff: {msg.sender_name}
@@ -267,7 +252,6 @@ export default function MessagesPage() {
                 })}
               </div>
 
-              {/* Input Area */}
               <div className="p-6 border-t border-slate-100">
                 <div className="flex items-center gap-4 bg-[#f1f4f4] rounded-2xl px-4 py-2">
                   <input

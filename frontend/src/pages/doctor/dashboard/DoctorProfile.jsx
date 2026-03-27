@@ -22,7 +22,6 @@ import {
   Loader2,
 } from "lucide-react";
 
-// --- Reusable Styled Components ---
 const InputField = ({
   label,
   value,
@@ -105,7 +104,7 @@ export default function EditDoctor() {
     department: "",
     experience: "",
     qualifications: "",
-    availabilityDays: [], // Must remain an array
+    availabilityDays: [],
     username: "",
     password: "",
     confirmPassword: "",
@@ -132,7 +131,6 @@ export default function EditDoctor() {
           department: d.department || "",
           experience: d.experience_years || "",
           qualifications: d.qualifications || "",
-          // FIX: Ensure availabilityDays is an array even if backend returns a comma-separated string
           availabilityDays: Array.isArray(d.availability_days)
             ? d.availability_days
             : d.availability_days
@@ -175,16 +173,15 @@ export default function EditDoctor() {
     }
   };
 
-  // Improved toggle function
   const toggleAvailableDay = (day) => {
     setForm((prev) => {
       const currentDays = [...prev.availabilityDays];
       const index = currentDays.indexOf(day);
 
       if (index > -1) {
-        currentDays.splice(index, 1); // Remove if exists
+        currentDays.splice(index, 1);
       } else {
-        currentDays.push(day); // Add if not exists
+        currentDays.push(day);
       }
 
       return { ...prev, availabilityDays: currentDays };
@@ -205,7 +202,6 @@ export default function EditDoctor() {
       formData.append("experience_years", form.experience || "0");
       formData.append("qualifications", form.qualifications);
 
-      // Send multiple values for the same key
       form.availabilityDays.forEach((day) =>
         formData.append("availability_days", day),
       );

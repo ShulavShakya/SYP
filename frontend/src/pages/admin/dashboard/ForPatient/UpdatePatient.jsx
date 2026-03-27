@@ -183,7 +183,7 @@ export default function UpdatePatient() {
         gender: patient.gender || "",
         dob: patient.dob || "",
         phone: patient.phone || "",
-        email: patient.username || "", // Mapping username to email field
+        email: patient.username || "",
         address: patient.address || "",
         emergencyContactName: patient.emergency_contact_name || "",
         emergencyContactPhone: patient.emergency_contact_phone || "",
@@ -230,7 +230,7 @@ export default function UpdatePatient() {
       formData.append("gender", editForm.gender);
       formData.append("dob", editForm.dob);
       formData.append("phone", editForm.phone);
-      formData.append("username", editForm.email); // Backend uses 'username' for the email
+      formData.append("username", editForm.email);
       formData.append("address", editForm.address);
       formData.append("emergency_contact_name", editForm.emergencyContactName);
       formData.append(

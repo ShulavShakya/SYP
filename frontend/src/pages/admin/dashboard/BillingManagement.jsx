@@ -14,7 +14,6 @@ import {
   ChevronRight,
 } from "lucide-react";
 
-// Helper functions for formatting
 const formatCurrency = (paisa) => {
   return new Intl.NumberFormat("en-NP", {
     style: "currency",
@@ -73,7 +72,7 @@ export default function BillingManagement() {
   const fetchPayments = async () => {
     try {
       setLoading(true);
-      // Replace with your actual API URL and ensure your Auth Token is handled
+
       const response = await privateAPI.get(
         "/admin/billing/get_all_payments/",
         {},
@@ -87,7 +86,6 @@ export default function BillingManagement() {
     }
   };
 
-  // Dynamic Summary Calculations
   const stats = {
     totalRevenue: payments
       .filter((p) => p.status === "COMPLETED")

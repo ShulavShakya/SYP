@@ -61,7 +61,6 @@ export default function ScheduleAppointment() {
     return d;
   }, []);
 
-  // 1. Fetch Patients and Doctors
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -78,7 +77,6 @@ export default function ScheduleAppointment() {
     fetchData();
   }, []);
 
-  // 2. Fetch Busy Slots
   useEffect(() => {
     const fetchSlots = async () => {
       try {
@@ -95,7 +93,6 @@ export default function ScheduleAppointment() {
     fetchSlots();
   }, [selectedDate, selectedDoctorId]);
 
-  // --- NEPAL TIMEZONE SAFE FORMATTING ---
   const formatDateForNepal = (date) => {
     if (!date) return "";
     const y = date.getFullYear();
@@ -113,32 +110,24 @@ export default function ScheduleAppointment() {
     return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:00`;
   };
 
-  // --- THE SLOT CHECKER ---
   const isSlotBooked = (time12h) => {
     if (!selectedDoctorId || !selectedDate || bookedSlots.length === 0)
       return false;
 
     const dStr = formatDateForNepal(selectedDate);
-    const tStr = formatTimeForBackend(time12h).slice(0, 5); // "HH:mm"
+    const tStr = formatTimeForBackend(time12h).slice(0, 5);
 
     return bookedSlots.some((s) => {
-      // Comparison 1: ID (Convert both to string to be safe)
       const doctorMatches = String(s.doctor_id) === String(selectedDoctorId);
 
-      // Comparison 2: Date
       const dateMatches = s.date === dStr;
 
-      // Comparison 3: Time (Compare only HH:mm to ignore seconds)
       const timeMatches = s.time?.slice(0, 5) === tStr;
-
-      // UNCOMMENT THIS LINE TO DEBUG IN BROWSER CONSOLE:
-      // if (doctorMatches && dateMatches) console.log(`Checking ${time12h}:`, { doctorMatches, dateMatches, timeMatches, backendTime: s.time, uiTime: tStr });
 
       return doctorMatches && dateMatches && timeMatches;
     });
   };
 
-  // Logic: Reset selected time if doctor or date changes
   useEffect(() => {
     setSelectedTime(null);
   }, [selectedDoctorId, selectedDate]);

@@ -3,7 +3,6 @@ import { useOutletContext } from "react-router-dom";
 
 const tabs = ["All", "Unread", "Active"];
 
-// Change this to "patient" or get it from auth/user context
 const viewerRole = "patient";
 
 const conversations = [

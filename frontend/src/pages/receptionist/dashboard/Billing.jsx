@@ -1,119 +1,71 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { privateAPI } from "../../../auth/config/api";
 import {
-  FileText,
-  Heart,
-  Mail,
-  Pill,
-  PlusCircle,
-  Printer,
-  ShieldCheck,
-  TrendingUp,
+  Download,
+  Wallet,
   CheckCircle2,
   Clock3,
   AlertCircle,
-  Wallet,
+  FileText,
+  Heart,
+  Pill,
+  PlusCircle,
   X,
+  Mail,
+  Printer,
 } from "lucide-react";
 
-const initialInvoiceItems = [
-  {
-    service: "Consultation Fee",
-    description: "General Physician Visit",
-    provider: "Dr. Aris Thorne",
-    cost: "$85.00",
-    qty: 1,
-    total: "$85.00",
-    icon: Heart,
-    iconWrap: "bg-primary/10 text-primary",
-  },
-  {
-    service: "Blood Profile (Lipid)",
-    description: "Diagnostic Laboratory",
-    provider: "Lab Unit 2",
-    cost: "$120.00",
-    qty: 1,
-    total: "$120.00",
-    icon: FileText,
-    iconWrap: "bg-mint/10 text-mint",
-  },
-  {
-    service: "Lisinopril 10mg",
-    description: "Pharmacy - 30 Tabs",
-    provider: "In-house Pharmacy",
-    cost: "$15.50",
-    qty: 2,
-    total: "$31.00",
-    icon: Pill,
-    iconWrap: "bg-green-100 text-green-600",
-  },
-  {
-    service: "X-Ray Chest (PA)",
-    description: "Radiology Imaging",
-    provider: "Dr. Mira Vane",
-    cost: "$145.00",
-    qty: 1,
-    total: "$145.00",
-    icon: FileText,
-    iconWrap: "bg-yellow-50 text-yellow-600",
-  },
-];
-
-const stats = [
-  {
-    title: "Daily Billing",
-    value: "$12,450.00",
-    meta: "Updated this shift",
-    metaClass: "text-slate-500",
-    icon: TrendingUp,
-    iconWrap: "bg-blue-100 text-blue-600",
-  },
-  {
-    title: "Paid Today",
-    value: "42 Patients",
-    meta: "Strong collection rate",
-    metaClass: "text-green-600",
-    icon: CheckCircle2,
-    iconWrap: "bg-green-100 text-green-600",
-  },
-  {
-    title: "Pending Invoices",
-    value: "8",
-    meta: "Needs follow-up",
-    metaClass: "text-red-500",
-    icon: AlertCircle,
-    iconWrap: "bg-orange-100 text-orange-600",
-  },
-  {
-    title: "Avg Proc Time",
-    value: "4.5 Minutes",
-    meta: "Front desk average",
-    metaClass: "text-slate-500",
-    icon: Clock3,
-    iconWrap: "bg-primary/10 text-primary",
-  },
-];
-
-function StatCard({ title, value, meta, metaClass, icon: Icon, iconWrap }) {
-  return (
-    <div className="flex items-center gap-5 rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
-      <div
-        className={`flex h-14 w-14 items-center justify-center rounded-2xl ${iconWrap}`}
-      >
-        <Icon size={28} />
-      </div>
-      <div>
-        <p className="text-sm font-medium text-slate-500">{title}</p>
-        <h3 className="font-manrope text-2xl font-bold text-[#2C3E50]">
-          {value}
-        </h3>
-        <p className={`mt-1 text-xs font-semibold ${metaClass}`}>{meta}</p>
-      </div>
-    </div>
+// Format currency helper
+const formatCurrency = (amount) =>
+  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(
+    amount,
   );
-}
+
+// Get initials from patient name
+const getInitials = (name) =>
+  name
+    ? name
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+        .substring(0, 2)
+    : "??";
+
+// Status styles
+const getStatusStyles = (status) => {
+  switch (status) {
+    case "PAID":
+      return {
+        bg: "bg-emerald-100 text-emerald-700",
+        dot: "bg-emerald-600",
+        label: "Paid",
+      };
+    case "PENDING":
+      return {
+        bg: "bg-orange-100 text-orange-700",
+        dot: "bg-orange-600",
+        label: "Pending",
+      };
+    case "UNPAID":
+      return {
+        bg: "bg-red-100 text-red-700",
+        dot: "bg-red-600",
+        label: "Unpaid",
+      };
+    default:
+      return {
+        bg: "bg-slate-100 text-slate-600",
+        dot: "bg-slate-500",
+        label: status,
+      };
+  }
+};
 
 export default function BillingPage() {
-  const [invoiceItems, setInvoiceItems] = useState(initialInvoiceItems);
+  const [invoiceItems, setInvoiceItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({
     service: "",
@@ -123,10 +75,102 @@ export default function BillingPage() {
     qty: 1,
   });
 
-  const subtotal = 381.0;
-  const taxes = 19.05;
-  const insuranceDiscount = 40.0;
-  const totalDue = 360.05;
+  useEffect(() => {
+    fetchInvoices();
+  }, []);
+
+  const fetchInvoices = async () => {
+    try {
+      setLoading(true);
+      const response = await privateAPI.get(
+        "/receptionist/billing/get_all_payments/",
+      );
+      setInvoiceItems(response.data.data);
+    } catch (error) {
+      console.error("Error fetching invoices:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const stats = {
+    totalRevenue: invoiceItems
+      .filter((p) => p.status === "PAID")
+      .reduce((acc, curr) => acc + curr.amount, 0),
+    paidCount: invoiceItems.filter((p) => p.status === "PAID").length,
+    pendingAmount: invoiceItems
+      .filter((p) => p.status === "PENDING")
+      .reduce((acc, curr) => acc + curr.amount, 0),
+    unpaidCount: invoiceItems.filter((p) => p.status === "UNPAID").length,
+  };
+
+  const summaryCards = [
+    {
+      label: "Total Revenue",
+      value: formatCurrency(stats.totalRevenue),
+      accentClassName: "bg-teal-100",
+      icon: Wallet,
+      iconClassName: "bg-teal-50 text-teal-700",
+    },
+    {
+      label: "Paid Invoices",
+      value: stats.paidCount.toString(),
+      accentClassName: "bg-emerald-100",
+      icon: CheckCircle2,
+      iconClassName: "bg-emerald-50 text-emerald-700",
+    },
+    {
+      label: "Pending Payments",
+      value: formatCurrency(stats.pendingAmount),
+      subtext: `${invoiceItems.filter((p) => p.status === "PENDING").length} items`,
+      accentClassName: "bg-orange-100",
+      icon: Clock3,
+      iconClassName: "bg-orange-50 text-orange-700",
+    },
+    {
+      label: "Unpaid Invoices",
+      value: stats.unpaidCount.toString(),
+      pill: stats.unpaidCount > 0 ? "Needs Attention" : null,
+      pillClassName: "bg-red-100 text-red-700",
+      accentClassName: "bg-red-100",
+      icon: AlertCircle,
+      iconClassName: "bg-red-50 text-red-700",
+    },
+  ];
+
+  const filteredItems = invoiceItems.filter(
+    (p) =>
+      p.patient_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.pidx?.toLowerCase().includes(searchTerm.toLowerCase()),
+  );
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: name === "qty" ? Number(value) : value,
+    }));
+  };
+
+  const handleAddItem = (e) => {
+    e.preventDefault();
+    const { service, description, provider, cost, qty } = formData;
+    if (!service || !description || !provider || !cost || !qty) return;
+
+    const newItem = {
+      service,
+      description,
+      provider,
+      cost: Number(cost),
+      qty,
+      total: Number(cost) * qty,
+      patient_name: "Temp Patient",
+      pidx: `INV-${Math.floor(Math.random() * 10000)}`,
+      status: "UNPAID",
+    };
+    setInvoiceItems((prev) => [...prev, newItem]);
+    closeModal();
+  };
 
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => {
@@ -140,346 +184,298 @@ export default function BillingPage() {
     });
   };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: name === "qty" ? Number(value) : value,
-    }));
-  };
-
-  const handleAddItem = (e) => {
-    e.preventDefault();
-
-    const numericCost = Number(formData.cost);
-    const qty = Number(formData.qty);
-
-    if (
-      !formData.service.trim() ||
-      !formData.description.trim() ||
-      !formData.provider.trim() ||
-      !numericCost ||
-      !qty
-    ) {
-      return;
-    }
-
-    const total = (numericCost * qty).toFixed(2);
-
-    const newItem = {
-      service: formData.service,
-      description: formData.description,
-      provider: formData.provider,
-      cost: `$${numericCost.toFixed(2)}`,
-      qty,
-      total: `$${total}`,
-      icon: FileText,
-      iconWrap: "bg-primary/10 text-primary",
-    };
-
-    setInvoiceItems((prev) => [...prev, newItem]);
-    closeModal();
-  };
-
   return (
-    <div className="min-h-screen text-[#2C3E50]">
-      <div className="flex min-h-screen overflow-hidden">
-        <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
-          <main className="flex-1 space-y-8 overflow-y-auto p-8">
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-              {stats.map((card) => (
-                <StatCard key={card.title} {...card} />
-              ))}
-            </div>
-
-            <div className="flex flex-col gap-8 lg:flex-row">
-              <div className="flex-1 overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
-                <div className="flex flex-col gap-4 border-b border-slate-100 p-6 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <h3 className="font-manrope text-xl font-bold text-[#2C3E50]">
-                      Active Invoice: #INV-99021
-                    </h3>
-                    <p className="text-sm text-slate-500">
-                      Patient: Sarah Jenkins (ID: MW-2210)
-                    </p>
-                  </div>
-
-                  <span className="inline-flex w-fit rounded-full bg-orange-100 px-3 py-1 text-xs font-bold uppercase tracking-wider text-orange-700">
-                    Unpaid
-                  </span>
-                </div>
-
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left">
-                    <thead className="bg-slate-50">
-                      <tr>
-                        <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">
-                          Service / Item
-                        </th>
-                        <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">
-                          Doctor / Dept
-                        </th>
-                        <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">
-                          Cost
-                        </th>
-                        <th className="px-6 py-4 text-center text-xs font-bold uppercase tracking-wider text-slate-500">
-                          Qty
-                        </th>
-                        <th className="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider text-slate-500">
-                          Total
-                        </th>
-                      </tr>
-                    </thead>
-
-                    <tbody className="divide-y divide-slate-100">
-                      {invoiceItems.map((item) => {
-                        const Icon = item.icon;
-                        return (
-                          <tr
-                            key={`${item.service}-${item.provider}-${item.total}`}
-                            className="transition-colors hover:bg-slate-50/60"
-                          >
-                            <td className="px-6 py-5">
-                              <div className="flex items-center gap-4">
-                                <div>
-                                  <p className="text-sm font-semibold text-slate-700">
-                                    {item.service}
-                                  </p>
-                                  <p className="text-xs text-slate-400">
-                                    {item.description}
-                                  </p>
-                                </div>
-                              </div>
-                            </td>
-                            <td className="px-6 py-5 text-sm text-slate-600">
-                              {item.provider}
-                            </td>
-                            <td className="px-6 py-5 text-sm text-slate-600">
-                              {item.cost}
-                            </td>
-                            <td className="px-6 py-5 text-center text-sm font-medium text-slate-700">
-                              {item.qty}
-                            </td>
-                            <td className="px-6 py-5 text-right text-sm font-bold text-[#2C3E50]">
-                              {item.total}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-
-                <div className="flex flex-col gap-3 border-t border-slate-100 bg-slate-50/70 p-6 sm:flex-row sm:items-center sm:justify-between">
-                  <button
-                    onClick={openModal}
-                    className="flex items-center gap-2 text-sm font-semibold text-primary transition-colors hover:text-primary/70"
-                  >
-                    <PlusCircle size={18} />
-                    Add Service / Medication
-                  </button>
-
-                  <p className="text-xs text-slate-400">
-                    Last updated: 2 mins ago by reception_02
-                  </p>
-                </div>
-              </div>
-
-              <aside className="w-full space-y-6 lg:w-96">
-                <div className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
-                  <div className="bg-primary px-6 py-5 text-white">
-                    <h3 className="font-manrope text-lg font-bold">
-                      Billing Summary
-                    </h3>
-                  </div>
-
-                  <div className="space-y-4 p-6">
-                    <div className="flex items-center justify-between text-sm text-slate-600">
-                      <span>Subtotal</span>
-                      <span className="font-semibold">
-                        ${subtotal.toFixed(2)}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between text-sm text-slate-600">
-                      <span>Taxes (5%)</span>
-                      <span className="font-semibold">${taxes.toFixed(2)}</span>
-                    </div>
-
-                    <div className="flex items-center justify-between text-sm text-slate-600">
-                      <span>Insurance Discount</span>
-                      <span className="font-semibold text-green-600">
-                        -${insuranceDiscount.toFixed(2)}
-                      </span>
-                    </div>
-
-                    <div className="flex items-end justify-between border-t border-slate-100 pt-5">
-                      <div>
-                        <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400">
-                          Total Amount Due
-                        </p>
-                        <p className="mt-1 text-4xl font-bold text-primary">
-                          ${totalDue.toFixed(2)}
-                        </p>
-                      </div>
-
-                      <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-bold uppercase text-red-700">
-                        Unpaid
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
-                  <h3 className="mb-5 font-manrope text-lg font-bold text-[#2C3E50]">
-                    Actions
-                  </h3>
-
-                  <div className="flex flex-col gap-3">
-                    <button className="flex w-full items-center justify-center gap-3 rounded-xl bg-primary px-4 py-4 font-semibold text-white shadow-lg transition-all hover:opacity-90">
-                      <Wallet size={18} />
-                      Record Payment
-                    </button>
-
-                    <div className="grid grid-cols-2 gap-3">
-                      <button className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100">
-                        <FileText size={18} />
-                        Invoice
-                      </button>
-
-                      <button className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100">
-                        <Printer size={18} />
-                        Receipt
-                      </button>
-                    </div>
-
-                    <button className="flex w-full items-center justify-center gap-2 rounded-xl bg-mint/15 px-4 py-3 font-semibold text-primary transition-colors hover:bg-mint/25">
-                      <Mail size={18} />
-                      Send to Patient Email
-                    </button>
-                  </div>
-                </div>
-              </aside>
-            </div>
-          </main>
-        </main>
-      </div>
-
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4">
-          <div className="w-full max-w-2xl rounded-2xl bg-white shadow-2xl">
-            <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5">
-              <div>
-                <h3 className="text-xl font-bold text-[#2C3E50]">
-                  Add Service / Medication
-                </h3>
-                <p className="text-sm text-slate-500">
-                  Enter invoice item details below.
-                </p>
-              </div>
-
-              <button
-                onClick={closeModal}
-                className="rounded-lg p-2 text-slate-500 transition hover:bg-slate-100"
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            <form onSubmit={handleAddItem} className="space-y-5 p-6">
-              <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-                <div>
-                  <label className="mb-2 block text-sm font-semibold text-slate-700">
-                    Service / Item
-                  </label>
-                  <input
-                    type="text"
-                    name="service"
-                    value={formData.service}
-                    onChange={handleChange}
-                    placeholder="Enter service or medication"
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-semibold text-slate-700">
-                    Doctor / Dept
-                  </label>
-                  <input
-                    type="text"
-                    name="provider"
-                    value={formData.provider}
-                    onChange={handleChange}
-                    placeholder="Enter doctor or department"
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-                  />
-                </div>
-
-                <div className="md:col-span-2">
-                  <label className="mb-2 block text-sm font-semibold text-slate-700">
-                    Description
-                  </label>
-                  <input
-                    type="text"
-                    name="description"
-                    value={formData.description}
-                    onChange={handleChange}
-                    placeholder="Enter item description"
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-semibold text-slate-700">
-                    Cost
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    name="cost"
-                    value={formData.cost}
-                    onChange={handleChange}
-                    placeholder="Enter cost"
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-semibold text-slate-700">
-                    Quantity
-                  </label>
-                  <input
-                    type="number"
-                    min="1"
-                    name="qty"
-                    value={formData.qty}
-                    onChange={handleChange}
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-3 border-t border-slate-100 pt-4">
-                <button
-                  type="button"
-                  onClick={closeModal}
-                  className="rounded-xl border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-600 transition hover:bg-slate-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-white transition hover:bg-primary/90"
-                >
-                  Add Item
-                </button>
-              </div>
-            </form>
+    <div className="w-full bg-[#f7fafa] px-4 py-6 text-slate-900 sm:px-6 lg:px-8 xl:px-10">
+      <div className="mx-auto w-full max-w-7xl space-y-8">
+        <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
+          <div className="space-y-1">
+            <h2 className="text-3xl font-extrabold tracking-tight text-slate-900">
+              Billing & Revenue
+            </h2>
+            <p className="font-medium text-slate-500">
+              Manage and track all financial transactions.
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <button className="flex items-center gap-2 rounded-xl bg-slate-200 px-5 py-2.5 font-semibold text-slate-800 hover:bg-slate-300">
+              <Download size={18} /> Export
+            </button>
           </div>
         </div>
-      )}
+
+        {/* Summary */}
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+          {summaryCards.map((card) => (
+            <SummaryCard key={card.label} {...card} />
+          ))}
+        </div>
+
+        {/* Search */}
+        <div className="flex flex-col gap-4 rounded-2xl bg-slate-100 p-4 lg:flex-row lg:items-center">
+          <div className="relative flex-1">
+            <FileText
+              size={18}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+            />
+            <input
+              type="text"
+              placeholder="Search by Patient or Invoice ID..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full rounded-xl border-none bg-white py-3 pl-11 pr-4 text-sm shadow-sm outline-none focus:ring-2 focus:ring-teal-700/20"
+            />
+          </div>
+        </div>
+
+        {/* Table */}
+        <div className="overflow-hidden rounded-2xl bg-white shadow-[0px_4px_20px_rgba(0,101,101,0.05)]">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[1100px] border-collapse text-left">
+              <thead>
+                <tr className="bg-slate-100/70">
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-slate-500">
+                    ID (PIDX)
+                  </th>
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-slate-500">
+                    Patient
+                  </th>
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-slate-500">
+                    Service/Appt ID
+                  </th>
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-slate-500">
+                    Amount
+                  </th>
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-slate-500">
+                    Method
+                  </th>
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-slate-500">
+                    Date
+                  </th>
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-widest text-slate-500">
+                    Status
+                  </th>
+                  <th className="px-6 py-4 text-right text-xs font-bold uppercase tracking-widest text-slate-500">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {loading ? (
+                  <tr>
+                    <td
+                      colSpan="8"
+                      className="py-10 text-center text-slate-500"
+                    >
+                      Loading invoices...
+                    </td>
+                  </tr>
+                ) : (
+                  filteredItems.map((item) => (
+                    <InvoiceRow key={item.pidx} payment={item} />
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Add Invoice Modal */}
+        {isModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4">
+            <div className="w-full max-w-2xl rounded-2xl bg-white shadow-2xl">
+              <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5">
+                <div>
+                  <h3 className="text-xl font-bold text-[#2C3E50]">
+                    Add Service / Medication
+                  </h3>
+                  <p className="text-sm text-slate-500">
+                    Enter invoice item details below.
+                  </p>
+                </div>
+
+                <button
+                  onClick={closeModal}
+                  className="rounded-lg p-2 text-slate-500 transition hover:bg-slate-100"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <form onSubmit={handleAddItem} className="space-y-5 p-6">
+                <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                  <div>
+                    <label className="mb-2 block text-sm font-semibold text-slate-700">
+                      Service / Item
+                    </label>
+                    <input
+                      type="text"
+                      name="service"
+                      value={formData.service}
+                      onChange={handleChange}
+                      placeholder="Enter service or medication"
+                      className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-2 block text-sm font-semibold text-slate-700">
+                      Doctor / Dept
+                    </label>
+                    <input
+                      type="text"
+                      name="provider"
+                      value={formData.provider}
+                      onChange={handleChange}
+                      placeholder="Enter doctor or department"
+                      className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="mb-2 block text-sm font-semibold text-slate-700">
+                      Description
+                    </label>
+                    <input
+                      type="text"
+                      name="description"
+                      value={formData.description}
+                      onChange={handleChange}
+                      placeholder="Enter item description"
+                      className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-2 block text-sm font-semibold text-slate-700">
+                      Cost
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      name="cost"
+                      value={formData.cost}
+                      onChange={handleChange}
+                      placeholder="Enter cost"
+                      className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-2 block text-sm font-semibold text-slate-700">
+                      Quantity
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      name="qty"
+                      value={formData.qty}
+                      onChange={handleChange}
+                      className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                    />
+                  </div>
+                </div>
+                <div className="flex justify-end gap-3 border-t border-slate-100 pt-4">
+                  <button
+                    type="button"
+                    onClick={closeModal}
+                    className="rounded-xl border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-600 transition hover:bg-slate-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-white transition hover:bg-primary/90"
+                  >
+                    Add Item
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
+  );
+}
+
+// Components
+function SummaryCard({
+  label,
+  value,
+  subtext,
+  pill,
+  pillClassName,
+  accentClassName,
+  icon: Icon,
+  iconClassName,
+}) {
+  return (
+    <div className="group relative overflow-hidden rounded-2xl border border-slate-200/60 bg-white p-6 shadow-sm hover:shadow-md">
+      <div
+        className={`absolute right-0 top-0 h-24 w-24 rounded-bl-full opacity-60 ${accentClassName}`}
+      />
+      <div className="mb-4 flex items-start justify-between">
+        <div className={`rounded-xl p-2.5 ${iconClassName}`}>
+          <Icon size={18} />
+        </div>
+      </div>
+      <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-slate-500">
+        {label}
+      </p>
+      <div className="flex items-baseline gap-2">
+        <h3 className="text-2xl font-extrabold text-slate-900">{value}</h3>
+        {subtext && (
+          <span className="text-xs font-medium text-slate-400">{subtext}</span>
+        )}
+        {pill && (
+          <span
+            className={`ml-2 rounded-full px-2 py-0.5 text-[10px] font-bold ${pillClassName}`}
+          >
+            {pill}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function InvoiceRow({ payment }) {
+  const styles = getStatusStyles(payment.status);
+  return (
+    <tr className="group transition-colors hover:bg-slate-50/70">
+      <td className="px-6 py-5 font-bold text-teal-700 text-xs">
+        {payment.pidx}
+      </td>
+      <td className="px-6 py-5">
+        <div className="flex items-center gap-3">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-teal-100 text-teal-700 text-xs font-bold">
+            {getInitials(payment.patient_name)}
+          </div>
+          <span className="font-medium text-slate-900">
+            {payment.patient_name}
+          </span>
+        </div>
+      </td>
+      <td className="px-6 py-5 text-slate-600">
+        Appt #{payment.appointment?.id || "-"}
+      </td>
+      <td className="px-6 py-5 font-bold text-slate-900">
+        {formatCurrency(payment.amount)}
+      </td>
+      <td className="px-6 py-5">{payment.payment_method || "N/A"}</td>
+      <td className="px-6 py-5 text-slate-600">
+        {new Date(payment.created_at).toLocaleDateString()}
+      </td>
+      <td className="px-6 py-5">
+        <span
+          className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold ${styles.bg}`}
+        >
+          <span className={`h-1.5 w-1.5 rounded-full ${styles.dot}`} />
+          {styles.label}
+        </span>
+      </td>
+      <td className="px-6 py-5 text-right">
+        <button className="rounded-lg p-2 text-teal-700 hover:bg-teal-50">
+          <FileText size={18} />
+        </button>
+      </td>
+    </tr>
   );
 }

@@ -20,7 +20,6 @@ import {
   Clock3,
 } from "lucide-react";
 
-// --- Reusable Styled Components (Unchanged) ---
 const InputField = ({
   label,
   value,
@@ -107,7 +106,6 @@ export default function EditReceptionist() {
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
 
-  // 1. Fetching Data from your backend endpoint: /api/receptionist/info/
   useEffect(() => {
     const fetchReceptionistData = async () => {
       try {
@@ -162,26 +160,23 @@ export default function EditReceptionist() {
     }
   };
 
-  // 2. Submission to your backend endpoint: /api/receptionist/update-profile/
   const onSubmit = async (e) => {
     if (e) e.preventDefault();
     setLoading(true);
     try {
       const formData = new FormData();
-      // Mapping frontend state keys to backend Serializer field names
       formData.append("name", form.fullName);
       formData.append("gender", form.gender);
       formData.append("dob", form.dob || "");
       formData.append("phone", form.phone);
       formData.append("email", form.email);
       formData.append("address", form.address || "");
-      formData.append("shift", form.shiftTiming); // Included shift
+      formData.append("shift", form.shiftTiming);
 
       if (form.profileImage) {
         formData.append("profile_image", form.profileImage);
       }
 
-      // Backend serializer handles 'username' and 'password' via 'user' source
       if (form.username) formData.append("username", form.username);
       if (form.password.trim()) {
         formData.append("password", form.password);
@@ -195,7 +190,7 @@ export default function EditReceptionist() {
     } catch (error) {
       console.error(error);
       const serverError = error.response?.data;
-      // Handle nested DRF errors if they exist (e.g., email already exists)
+
       const errorMsg =
         typeof serverError === "object"
           ? Object.values(serverError)[0]
@@ -219,16 +214,6 @@ export default function EditReceptionist() {
     <main className="min-h-screen bg-[#f7fafa] px-6 py-10 md:px-10">
       <div className="mx-auto max-w-5xl pb-10">
         <div className="mb-8">
-          {/* <button
-            onClick={() => navigate(-1)}
-            className="group mb-2 flex items-center gap-2 text-sm font-medium text-[#008080]"
-          >
-            <ArrowLeft
-              size={16}
-              className="transition-transform group-hover:-translate-x-1"
-            />
-            Go Back
-          </button> */}
           <div className="flex items-center justify-between">
             <h1 className="text-3xl font-bold tracking-tight text-slate-900">
               Edit My Profile
@@ -239,7 +224,6 @@ export default function EditReceptionist() {
           </div>
         </div>
 
-        {/* Profile Card */}
         <section className="rounded-3xl border border-gray-200 bg-[#f8fafb] p-7 shadow-sm">
           <div className="flex flex-col gap-6 md:flex-row md:items-center">
             <div className="relative">
