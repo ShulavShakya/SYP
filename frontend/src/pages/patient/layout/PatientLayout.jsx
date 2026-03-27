@@ -22,7 +22,6 @@ import {
 import { useAuth } from "../../../auth/AuthContext";
 import { privateAPI } from "../../../auth/config/api";
 
-// ... (navItems and pageTitles stay exactly as you had them)
 const navItems = [
   { label: "Home", to: "/patient", icon: Home, end: true },
   {
@@ -30,7 +29,7 @@ const navItems = [
     to: "/patient/appointment-history",
     icon: CalendarClock,
   },
-  // { label: "Prescriptions", to: "/patient/prescriptions", icon: Pill },
+
   { label: "Medical Records", to: "/patient/medical-records", icon: FileText },
   { label: "Billing", to: "/patient/billing", icon: CreditCard },
   { label: "Profile", to: "/patient/profile", icon: Settings },
@@ -39,20 +38,18 @@ const navItems = [
 const pageTitles = {
   "/patient": "Patient Dashboard",
   "/patient/appointment-history": "My Appointments",
-  // "/patient/prescriptions": "My Prescriptions",
+
   "/patient/medical-records": "Medical Records",
   "/patient/billing": "Billing & Payments",
   "/patient/profile": "Profile Settings",
 };
 
-// ... (getDisplayName and getShortDisplayName stay exactly as you had them)
 function getDisplayName(user) {
-  // Check if explicit name fields exist in your Auth user object
   if (user?.full_name) return user.full_name;
   if (user?.username) return user.username;
 
   const email = user?.email?.trim();
-  if (!email) return "Patient"; // Better fallback than "John"
+  if (!email) return "Patient";
 
   const localPart = email.split("@")[0] || "";
   const cleaned = localPart
@@ -74,10 +71,8 @@ function getShortDisplayName(name) {
   if (!name || name === "Patient") return "Patient";
   const parts = name.trim().split(" ").filter(Boolean);
 
-  // If it's a single name, return it (max 12 chars)
   if (parts.length === 1) return parts[0].slice(0, 12);
 
-  // If it's multiple names, return "First N."
   return `${parts[0]} ${parts[1][0]}.`;
 }
 export default function PatientLayout() {
@@ -86,11 +81,10 @@ export default function PatientLayout() {
   const [messagingOpen, setMessagingOpen] = useState(false);
   const [confirmClearChat, setConfirmClearChat] = useState(false);
   const [messageInput, setMessageInput] = useState("");
-  const [wsStatus, setWsStatus] = useState("closed"); // "closed", "connecting", "open"
+  const [wsStatus, setWsStatus] = useState("closed");
 
   const [searchQuery, setSearchQuery] = useState("");
 
-  // --- Real-time Chat Logic States ---
   const [conversationId, setConversationId] = useState(null);
   const [messages, setMessages] = useState([]);
   const socketRef = useRef(null);
@@ -144,7 +138,6 @@ export default function PatientLayout() {
     [],
   );
 
-  // 1. Fetch Conversation ID
   useEffect(() => {
     const initChat = async () => {
       try {
@@ -161,14 +154,11 @@ export default function PatientLayout() {
     initChat();
   }, []);
 
-  // 2. History & WebSocket Setup
   useEffect(() => {
-    // Only proceed if the chat is open AND we have the ID
     if (!messagingOpen || !conversationId) return;
 
     setWsStatus("connecting");
 
-    // --- ADDED: Fetch Message History from API ---
     const fetchHistory = async () => {
       try {
         const token = sessionStorage.getItem("access");
@@ -178,20 +168,21 @@ export default function PatientLayout() {
             headers: { Authorization: `Bearer ${token}` },
           },
         );
-        // Set the messages state with the past history
+
         setMessages(res.data);
       } catch (err) {
         console.error("Error loading history:", err);
       }
     };
 
-    fetchHistory(); // Execute the history fetch
+    fetchHistory();
 
     // --- WebSocket Logic ---
     const token = sessionStorage.getItem("access");
     const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-    // Using the IP provided in your code
-    const wsUrl = `${protocol}://10.113.201.239:8000/ws/chat/${conversationId}/?token=${token}`;
+
+    // const wsUrl = `${protocol}://10.113.201.239:8000/ws/chat/${conversationId}/?token=${token}`;
+    const wsUrl = `${protocol}://localhost:8000/ws/chat/${conversationId}/?token=${token}`;
 
     socketRef.current = new WebSocket(wsUrl);
 
@@ -266,7 +257,6 @@ export default function PatientLayout() {
         : "text-slate-500 hover:text-teal-600 hover:bg-teal-50"
     }`;
 
-  // Close menus on navigation
   useEffect(() => {
     setNotificationsOpen(false);
     setMenuOpen(false);

@@ -31,7 +31,7 @@ const createEmptyMedicine = () => ({
 });
 
 export default function ConsultationSession() {
-  const { id } = useParams(); // This is the appointment_id from the URL
+  const { id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -74,7 +74,6 @@ export default function ConsultationSession() {
     }
   };
 
-  // --- CONNECTED SUBMIT LOGIC ---
   const handleCompleteConsultation = async () => {
     if (!diagnosis) {
       alert("Please enter a clinical diagnosis.");
@@ -85,9 +84,8 @@ export default function ConsultationSession() {
       setIsSubmitting(true);
 
       const payload = {
-        appointment_id: id, // Extracted from useParams
+        appointment_id: id,
         clinic_diagnosis: diagnosis,
-        // Combining symptoms and detailed notes as backend only has detailed_notes
         detailed_notes: `Symptoms: ${symptoms}\n\nNotes: ${detailedNotes}`,
         medicine_name: medicines
           .map((m) => m.medicineName)
@@ -386,19 +384,6 @@ export default function ConsultationSession() {
                   </tbody>
                 </table>
               </div>
-              {/* General Instructions Area */}
-              {/* <div className="bg-[#F7FAFA]/50 p-6 border-t border-[#E0E6ED]">
-                <label className="mb-2 block text-xs font-bold uppercase text-[#7F8C8D]">
-                  General Instructions
-                </label>
-                <textarea
-                  rows={3}
-                  value={generalNotes}
-                  onChange={(e) => setGeneralNotes(e.target.value)}
-                  placeholder="Additional lifestyle advice or follow-up instructions..."
-                  className={inputBaseStyles}
-                />
-              </div> */}
             </div>
           </div>
         </div>

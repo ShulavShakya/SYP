@@ -4,8 +4,8 @@ export default {
   theme: {
     extend: {
       colors: {
-        primary: "#008080", //Used for the header, primary buttons
-        mint: "#70C1B3", //Used for highlights, hover states, and supporting UI elements
+        primary: "#008080",
+        mint: "#70C1B3",
         background: "#F7FAFA",
         card: "#FFFFFF",
         textMain: "#2C3E50",

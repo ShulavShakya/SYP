@@ -1,6 +1,5 @@
 import React from "react";
 import Landing from "../pages/shared/Landing.jsx";
-import AboutUsPage from "../pages/shared/AboutUsPage.jsx";
 import Login from "../pages/shared/Login.jsx";
 import Signup from "../pages/patient/auth/Signup.jsx";
 import ProtectedRoute from "../auth/ProtectedRoute.jsx";
@@ -38,10 +37,8 @@ import PatientManagement from "../pages/admin/dashboard/ForPatient/PatientManage
 import ReceptionistManagement from "../pages/admin/dashboard/ForReceptionist/ReceptionistManagement.jsx";
 import AdminAppointmentManagement from "../pages/admin/dashboard/AdminAppointmentManagement.jsx";
 import BillingManagement from "../pages/admin/dashboard/BillingManagement.jsx";
-import ManageMessages from "../pages/admin/dashboard/ManageMessages.jsx";
 import AddDoctor from "../pages/admin/dashboard/ForDoctor/AddDoctor.jsx";
 import AddReceptionist from "../pages/admin/dashboard/ForReceptionist/AddReceptionist.jsx";
-import ApprovalManagement from "../pages/admin/dashboard/ApprovalManagement.jsx";
 import AddPatient from "../pages/admin/dashboard/ForPatient/AddPatient.jsx";
 import UpdateReceptionist from "../pages/admin/dashboard/ForReceptionist/UpdateReceptionist.jsx";
 import UpdateDoctor from "../pages/admin/dashboard/ForDoctor/UpdateDoctor.jsx";
@@ -51,7 +48,6 @@ import ReceptionistProfile from "../pages/receptionist/dashboard/ReceptionistPro
 
 export default [
   { path: "/", element: <Landing /> },
-  { path: "/about-us", element: <AboutUsPage /> },
   { path: "/login", element: <Login /> },
   { path: "/patient/signup", element: <Signup /> },
   {
@@ -133,11 +129,9 @@ export default [
         element: <AdminAppointmentManagement />,
       },
       { path: "billing-management", element: <BillingManagement /> },
-      { path: "manage-messages", element: <ManageMessages /> },
       { path: "add-doctor", element: <AddDoctor /> },
       { path: "add-receptionist", element: <AddReceptionist /> },
       { path: "add-patient", element: <AddPatient /> },
-      { path: "approval-management", element: <ApprovalManagement /> },
       { path: "update-receptionist/:id", element: <UpdateReceptionist /> },
       { path: "update-doctor/:id", element: <UpdateDoctor /> },
       { path: "update-patient/:id", element: <UpdatePatient /> },

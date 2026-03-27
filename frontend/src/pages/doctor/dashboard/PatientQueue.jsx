@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-// Helper to map backend status to frontend design
 const getStatusDetails = (status) => {
   switch (status?.toLowerCase()) {
     case "scheduled":
@@ -67,10 +66,9 @@ export default function PatientQueue() {
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(10); // number of rows per page
+  const [pageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
 
-  // Filtered appointments based on active filter
   const filteredAppointments = useMemo(() => {
     switch (activeFilter) {
       case "WAITING":
@@ -88,7 +86,6 @@ export default function PatientQueue() {
     }
   }, [appointments, activeFilter]);
 
-  // Paginate filtered appointments
   const paginatedAppointments = useMemo(() => {
     const startIndex = (currentPage - 1) * pageSize;
     return filteredAppointments.slice(startIndex, startIndex + pageSize);
@@ -96,7 +93,7 @@ export default function PatientQueue() {
 
   useEffect(() => {
     setTotalPages(Math.ceil(filteredAppointments.length / pageSize));
-    setCurrentPage(1); // reset to first page when filter changes
+    setCurrentPage(1);
   }, [filteredAppointments, pageSize]);
 
   useEffect(() => {
@@ -120,7 +117,6 @@ export default function PatientQueue() {
     });
   };
 
-  // Dynamic Summary Calculations
   const stats = {
     total: appointments.length,
     waiting: appointments.filter(

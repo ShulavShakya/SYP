@@ -304,14 +304,6 @@ export default function DoctorManagement() {
       badgeClassName: "text-orange-600",
       accentClassName: "bg-orange-500/10",
     },
-    // {
-    //   label: "New Apps",
-    //   value: 5,
-    //   valueClassName: "text-slate-900",
-    //   pill: "Pending",
-    //   pillClassName: "bg-cyan-100 text-cyan-700",
-    //   accentClassName: "bg-cyan-500/10",
-    // },
   ];
 
   const getStatusClass = (status) => {
@@ -368,7 +360,6 @@ export default function DoctorManagement() {
     if (!dateString) return "-";
     const date = new Date(dateString);
 
-    // Check if date is valid
     if (isNaN(date.getTime())) return dateString;
 
     return date.toLocaleDateString("en-GB", {

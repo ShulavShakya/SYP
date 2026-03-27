@@ -37,7 +37,6 @@ export default function RegisterPatient() {
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Validation Helper: Checks if string is exactly 10 digits
   const isValidPhone = (num) => /^\d{10}$/.test(num);
 
   const canSubmit = useMemo(() => {
@@ -45,7 +44,7 @@ export default function RegisterPatient() {
       form.first_name.trim() !== "" &&
       form.last_name.trim() !== "" &&
       form.gender.trim() !== "" &&
-      isValidPhone(form.phone) && // Strict 10 digit validation
+      isValidPhone(form.phone) &&
       form.username.trim() !== "" &&
       form.password.trim() !== ""
     );
@@ -54,10 +53,9 @@ export default function RegisterPatient() {
   const onChange = (key) => (e) => {
     let value = e.target.value;
 
-    // Phone Number Validation: Only allow digits and max 10 characters
     if (key === "phone" || key === "emergency_contact_phone") {
-      value = value.replace(/\D/g, ""); // Remove non-numeric characters
-      if (value.length > 10) value = value.slice(0, 10); // Limit to 10 digits
+      value = value.replace(/\D/g, "");
+      if (value.length > 10) value = value.slice(0, 10);
     }
 
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -78,7 +76,6 @@ export default function RegisterPatient() {
     e.preventDefault();
     setErr("");
 
-    // Final validation check before submission
     if (!isValidPhone(form.phone)) {
       setErr("Phone number must be exactly 10 digits.");
       return;
@@ -96,7 +93,7 @@ export default function RegisterPatient() {
       setLoading(true);
 
       const formData = new FormData();
-      // Append fields...
+
       Object.keys(form).forEach((key) => {
         if (key !== "profile_image") {
           formData.append(key, form[key]);
@@ -281,7 +278,7 @@ export default function RegisterPatient() {
                   placeholder="98XXXXXXXX"
                   icon={<Phone size={18} />}
                   required
-                  maxLength={10} // HTML level restriction
+                  maxLength={10}
                 />
                 <Field
                   label="Email Address"
@@ -356,7 +353,6 @@ export default function RegisterPatient() {
   );
 }
 
-// Sub-components (SectionTitle, Field, SelectField) remain the same as your original snippet...
 function SectionTitle({ icon, title }) {
   return (
     <div className="flex items-center gap-2 border-b border-slate-100 pb-3">

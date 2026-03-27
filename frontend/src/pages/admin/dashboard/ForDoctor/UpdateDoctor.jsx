@@ -587,14 +587,6 @@ export default function UpdateDoctor() {
                   icon={<KeyRound size={18} />}
                   error={passwordMismatch ? "Passwords do not match." : ""}
                 />
-
-                {/* <div className="md:col-span-2 flex items-start gap-3 rounded-xl border border-teal-100 bg-teal-50 p-4">
-                  <Info size={18} className="mt-0.5 text-[#006565]" />
-                  <p className="text-xs font-medium leading-relaxed text-teal-800">
-                    Leave password fields empty if you do not want to change the
-                    current password.
-                  </p>
-                </div> */}
               </div>
             </section>
           </div>

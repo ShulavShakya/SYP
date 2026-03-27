@@ -6,30 +6,26 @@ import { Loader2, CheckCircle, XCircle } from "lucide-react";
 export default function PaymentVerify() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const [status, setStatus] = useState("verifying"); // verifying, success, error
+  const [status, setStatus] = useState("verifying");
 
   useEffect(() => {
     const verifyPaymentOnBackend = async () => {
-      // 1. Extract parameters provided by Khalti redirect
       const pidx = searchParams.get("pidx");
       const appointmentId = searchParams.get("purchase_order_id");
 
-      // 2. Basic validation before calling backend
       if (!pidx || !appointmentId) {
         setStatus("error");
         return;
       }
 
       try {
-        // 3. Call your backend verify_payment view
-        // Using GET as your backend is decorated with @api_view(['GET', 'POST'])
         const response = await privateAPI.get(
           `/patient/payment/verify/?pidx=${pidx}&purchase_order_id=${appointmentId}`,
         );
 
         if (response.data.success) {
           setStatus("success");
-          // Redirect back to history after success
+
           setTimeout(() => navigate("/patient/appointment-history"), 3000);
         } else {
           setStatus("error");

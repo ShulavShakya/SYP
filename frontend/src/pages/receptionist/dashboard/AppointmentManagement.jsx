@@ -23,12 +23,10 @@ import {
 import { privateAPI } from "../../../auth/config/api.js";
 import PageLoader from "../../../component/PageLoader.jsx";
 
-// --- Helpers (Logic Updated to use r_status) ---
 const isAwaiting = (app) => app.r_status === false;
 const isAccepted = (app) => app.r_status === true;
 
 const getStatusMeta = (app) => {
-  // Logic updated: prioritize the Accepted (Checked-in) state
   if (isAccepted(app)) {
     return {
       label: "Accepted",
@@ -49,7 +47,6 @@ const getStatusMeta = (app) => {
   }
 };
 
-// --- Modal (Design Untouched, Logic Updated) ---
 function AppointmentDetailsModal({ app, onClose }) {
   if (!app) return null;
 
@@ -153,7 +150,6 @@ function FilterSelect({ icon: Icon, options, value, onChange }) {
   );
 }
 
-/* -------------------- Main Component -------------------- */
 export default function AppointmentManagement() {
   const navigate = useNavigate();
   const [appointments, setAppointments] = useState([]);
@@ -376,7 +372,6 @@ export default function AppointmentManagement() {
                                 className="animate-spin text-slate-400"
                               />
                             ) : isAwaiting(app) ? (
-                              /* Case 1: Patient checked in (r_status false), awaiting acceptance */
                               <>
                                 <button
                                   onClick={() => handleAcceptCheckedIn(app.id)}
@@ -396,7 +391,6 @@ export default function AppointmentManagement() {
                                 </button>
                               </>
                             ) : !isAccepted(app) && app.status === "PENDING" ? (
-                              /* Case 2: Standard pending scheduling approval */
                               <>
                                 <button
                                   onClick={() =>
@@ -418,7 +412,6 @@ export default function AppointmentManagement() {
                                 </button>
                               </>
                             ) : (
-                              /* Case 3: Accepted or Terminal Status */
                               <button
                                 onClick={() => setSelectedApp(app)}
                                 className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100"

@@ -438,25 +438,6 @@ export default function PatientManagement() {
           </button>
         </div>
 
-        {/* <div className="flex flex-wrap items-center gap-4 rounded-2xl bg-surface-container-low/50 p-2 backdrop-blur-sm">
-          <div className="flex items-center gap-2 rounded-xl border border-[#bdc9c8]/20 bg-white px-3 py-2">
-            <span className="text-xs font-bold uppercase text-slate-400">
-              Gender
-            </span>
-            <select className="border-none bg-transparent p-0 pr-8 text-sm font-semibold focus:ring-0">
-              <option>All</option>
-              <option>Male</option>
-              <option>Female</option>
-              <option>Other</option>
-            </select>
-          </div>
-
-          <button className="ml-auto flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold text-primary transition-colors hover:bg-white">
-            <FilterX size={18} />
-            Reset Filters
-          </button>
-        </div> */}
-
         <div className="overflow-hidden rounded-xl border border-primary/5 bg-white shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-left">

@@ -266,7 +266,7 @@ export default function AdminAppointmentManagement() {
     };
   }, [appointments]);
 
-  // Filtering — uses getStatusMeta so "Accepted" (r_status-based) filter works
+  // Filtering
   const filteredAppointments = useMemo(() => {
     const now = new Date();
     const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
@@ -469,7 +469,6 @@ export default function AdminAppointmentManagement() {
                                 className="animate-spin text-slate-400"
                               />
                             ) : isAwaiting(app) ? (
-                              // r_status === false: patient physically checked in, awaiting receptionist acceptance
                               <>
                                 <button
                                   onClick={() => handleAcceptCheckedIn(app.id)}
@@ -489,7 +488,6 @@ export default function AdminAppointmentManagement() {
                                 </button>
                               </>
                             ) : !isAccepted(app) && app.status === "PENDING" ? (
-                              // r_status is null/undefined (not yet checked in) and still pending scheduling
                               <>
                                 <button
                                   onClick={() =>
@@ -511,7 +509,6 @@ export default function AdminAppointmentManagement() {
                                 </button>
                               </>
                             ) : (
-                              // r_status === true (accepted) or any terminal status → view only
                               <button
                                 onClick={() => setSelectedApp(app)}
                                 className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100"

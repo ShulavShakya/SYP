@@ -6,11 +6,11 @@ import { privateAPI } from "../../../auth/config/api";
 // Change these to match your Django model exactly!
 const getStatusClasses = (status) => {
   switch (status) {
-    case "SCHEDULED": // Matches your model choice 'SCHEDULED'
+    case "SCHEDULED":
       return "bg-primary/10 text-primary";
-    case "COMPLETED": // Matches your model choice 'COMPLETED'
+    case "COMPLETED":
       return "bg-mint/10 text-mint";
-    case "PENDING": // Matches your model choice 'PENDING'
+    case "PENDING":
       return "bg-amber-100 text-amber-600";
     default:
       return "bg-slate-100 text-slate-600";
@@ -28,7 +28,7 @@ export default function AppointmentHistory() {
   const [error, setError] = useState(null);
   const [filter, setFilter] = useState("All");
   const [selectedAppointment, setSelectedAppointment] = useState(null);
-  const [payingId, setPayingId] = useState(null); // To show loading on the specific button
+  const [payingId, setPayingId] = useState(null);
 
   useEffect(() => {
     fetchAppointments();
@@ -56,7 +56,6 @@ export default function AppointmentHistory() {
     }
   };
 
-  // --- NEW: HANDLE PAYMENT LOGIC ---
   const handlePayNow = async (appointmentId) => {
     if (!appointmentId) {
       alert("Invalid appointment ID");

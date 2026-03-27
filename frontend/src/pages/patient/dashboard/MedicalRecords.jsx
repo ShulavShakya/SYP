@@ -13,7 +13,6 @@ import {
   Send,
 } from "lucide-react";
 
-// Helper: Format Date/Time
 const formatDateTime = (isoString) => {
   const dateObj = new Date(isoString);
   return {
@@ -29,7 +28,6 @@ const formatDateTime = (isoString) => {
   };
 };
 
-// Helper: Parse comma-separated medicine strings back into objects for the UI
 const parsePrescriptions = (record) => {
   if (!record.medicine_name) return [];
   const names = record.medicine_name.split(", ");
@@ -50,8 +48,8 @@ export default function MedicalRecords() {
   const [loading, setLoading] = useState(true);
 
   // Modal States
-  const [selectedRecord, setSelectedRecord] = useState(null); // For Details
-  const [ratingRecord, setRatingRecord] = useState(null); // For Rating
+  const [selectedRecord, setSelectedRecord] = useState(null);
+  const [ratingRecord, setRatingRecord] = useState(null);
 
   // Rating Form States
   const [selectedRating, setSelectedRating] = useState(0);
@@ -76,11 +74,9 @@ export default function MedicalRecords() {
       const mappedRecords = response.data.map((item) => {
         const { date, time } = formatDateTime(item.created_at);
 
-        // Helper to extract symptoms if they were prepended to detailed_notes in previous steps
         const getSymptomsFromNotes = (notes) => {
           if (!notes) return "No complaint recorded.";
           if (notes.includes("Symptoms:")) {
-            // Extracts text between "Symptoms:" and the next double newline
             return notes.split("Symptoms:")[1].split("\n\n")[0].trim();
           }
           return "See clinical notes.";
@@ -89,12 +85,10 @@ export default function MedicalRecords() {
         const getCleanNotes = (notes) => {
           if (!notes) return "No detailed notes recorded.";
 
-          // If "Notes:" exists → extract only that part
           if (notes.includes("Notes:")) {
             return notes.split("Notes:")[1].trim();
           }
 
-          // If "Symptoms:" exists but no Notes label → remove symptoms section
           if (notes.includes("Symptoms:")) {
             const parts = notes.split("\n\n");
             return parts.length > 1 ? parts[1].trim() : notes;
@@ -107,7 +101,7 @@ export default function MedicalRecords() {
           ...item,
           date,
           time,
-          // If backend doesn't send doctor_name, use doctor_id as a fallback
+
           doctorDisplay: item.doctor_name
             ? `Dr. ${item.doctor_name}`
             : item.doctor_id
@@ -117,14 +111,12 @@ export default function MedicalRecords() {
           diagnosis: item.clinic_diagnosis || "General Observation",
           diagnosisClass: "bg-teal-100 text-teal-700",
 
-          // FIX: Add this key so the table column "Notes Summary" isn't empty
           notesSummary: item.detailed_notes
             ? getCleanNotes(item.detailed_notes)
             : "No summary available",
 
           fullNotes: getCleanNotes(item.detailed_notes),
 
-          // Handle full views for the modal
           fullSymptoms:
             item.symptoms || getSymptomsFromNotes(item.detailed_notes),
 
@@ -140,19 +132,17 @@ export default function MedicalRecords() {
     }
   };
 
-  // --- Rating Submission (Connected to /patient/rate-doctor/) ---
   const handleSubmitRating = async () => {
     if (selectedRating === 0) return alert("Please select a star rating.");
 
     try {
       setIsSubmittingRating(true);
 
-      // Aligning payload with your backend RatingSerializer and view logic
       const payload = {
-        consultation: ratingRecord.id, // Backend expects 'consultation' as the ID
-        doctor_id: ratingRecord.doctor_id, // Passed as required by Serializer fields
-        star: selectedRating, // Matches 'star' in RatingSerializer
-        comment: ratingComment, // Matches 'comment' in RatingSerializer
+        consultation: ratingRecord.id,
+        doctor_id: ratingRecord.doctor_id,
+        star: selectedRating,
+        comment: ratingComment,
       };
 
       await privateAPI.post("/patient/rate-doctor/", payload);
@@ -160,13 +150,10 @@ export default function MedicalRecords() {
       alert("Thank you for your feedback!");
       closeRatingModal();
 
-      // Optional: Refresh records to reflect that it's been rated if your backend
-      // filters them out, though not required for the connection.
       fetchMedicalRecords();
     } catch (error) {
       console.error("Error submitting rating:", error);
 
-      // Specific error handling based on your backend response
       const errorMessage =
         error.response?.data?.error ||
         error.response?.data?.detail ||
@@ -184,13 +171,11 @@ export default function MedicalRecords() {
     setRatingComment("");
   };
 
-  // Filter Logic
   const filteredRecords = records.filter(
     (r) =>
       selectedDept === "All Departments" || r.department_name === selectedDept,
   );
 
-  // Pagination Logic
   const totalPages = Math.ceil(filteredRecords.length / recordsPerPage);
   const paginatedRecords = filteredRecords.slice(
     (currentPage - 1) * recordsPerPage,
@@ -206,46 +191,6 @@ export default function MedicalRecords() {
     <div className="flex h-screen overflow-hidden text-slate-900 bg-[#f8fafc]">
       <main className="flex min-w-0 flex-1 flex-col overflow-y-auto">
         <div className="mx-auto w-full max-w-[1440px] p-4 md:p-8">
-          {/* Patient Header Section (Static) */}
-          {/* <div className="mb-8 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="flex flex-col items-start gap-6 md:flex-row md:items-center">
-              <div className="relative">
-                <img
-                  src="https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=400&h=400&fit=crop"
-                  alt="Avatar"
-                  className="h-24 w-24 rounded-full border-4 border-white object-cover"
-                />
-                <span className="absolute bottom-1 right-1 h-5 w-5 rounded-full border-2 border-white bg-green-500" />
-              </div>
-              <div className="grid flex-1 grid-cols-4 gap-6">
-                <div>
-                  <p className="text-xs font-bold text-slate-500 uppercase">
-                    Patient
-                  </p>
-                  <p className="font-bold">John Doe</p>
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-slate-500 uppercase">
-                    ID
-                  </p>
-                  <p className="font-bold">#MR-88291</p>
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-slate-500 uppercase">
-                    DOB
-                  </p>
-                  <p className="font-bold">05/12/1985</p>
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-slate-500 uppercase">
-                    Blood
-                  </p>
-                  <p className="font-bold text-red-600">O+</p>
-                </div>
-              </div>
-            </div>
-          </div> */}
-
           {/* Filters */}
           <div className="mb-6 flex gap-4">
             <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2">
@@ -318,10 +263,10 @@ export default function MedicalRecords() {
                           </button>
                           <button
                             onClick={() => setRatingRecord(record)}
-                            disabled={record.is_rated} // ✅ disables the button
+                            disabled={record.is_rated}
                             className={`text-sm font-bold flex items-center gap-1 ${
                               record.is_rated
-                                ? "text-slate-400 cursor-not-allowed" // ✅ greyed out + unclickable
+                                ? "text-slate-400 cursor-not-allowed"
                                 : "text-amber-600 hover:underline"
                             }`}
                           >
@@ -362,7 +307,7 @@ export default function MedicalRecords() {
         </div>
       </main>
 
-      {/* --- DETAILS MODAL (FULL VIEW) --- */}
+      {/* --- DETAILS MODAL --- */}
       {selectedRecord && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm">
           <div className="max-h-[90vh] w-full max-w-4xl overflow-hidden rounded-3xl bg-white shadow-2xl flex flex-col">
@@ -386,7 +331,6 @@ export default function MedicalRecords() {
 
             {/* Scrollable Content */}
             <div className="flex-1 overflow-y-auto p-8 space-y-8">
-              {/* Top Info Grid */}
               <div className="grid grid-cols-4 gap-4">
                 <div className="bg-slate-50/80 p-5 rounded-2xl border border-slate-100">
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
