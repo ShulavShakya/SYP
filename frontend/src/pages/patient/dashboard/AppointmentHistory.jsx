@@ -44,7 +44,7 @@ export default function AppointmentHistory() {
         doctor: app.doctor_name,
         department: app.department_name,
         doctorImage: `https://ui-avatars.com/api/?name=${app.doctor_name}&background=random`,
-        bookingFee: 25000 / 100,
+        bookingFee: 25000,
         formattedDate: formatDate(app.date),
       }));
 

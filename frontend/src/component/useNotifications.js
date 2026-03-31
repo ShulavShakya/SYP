@@ -16,8 +16,11 @@ export const useNotifications = () => {
     if (!token) return;
 
     const socket = new WebSocket(
-      `ws://10.113.201.239:8000/ws/notifications/?token=${token}`,
+      `ws://10.124.177.239:8000/ws/notifications/?token=${token}`,
     );
+    // const socket = new WebSocket(
+    //   `ws://localhost:8000/ws/notifications/?token=${token}`,
+    // );
     socketRef.current = socket;
 
     socket.onmessage = (event) => {
@@ -26,7 +29,6 @@ export const useNotifications = () => {
       if (payload.notifications) {
         console.log(payload.notifications);
         if (Array.isArray(payload.notifications)) {
-          // It's the history list (from connect)
           setNotifications(payload.notifications);
           setUnreadCount(
             payload.notifications.filter((n) => !n.is_read).length,

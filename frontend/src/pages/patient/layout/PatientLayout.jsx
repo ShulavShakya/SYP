@@ -18,6 +18,7 @@ import {
   HelpCircle,
   Send,
   Trash2,
+  HeartPulse,
 } from "lucide-react";
 import { useAuth } from "../../../auth/AuthContext";
 import { privateAPI } from "../../../auth/config/api";
@@ -117,27 +118,6 @@ export default function PatientLayout() {
     [location.pathname, firstName],
   );
 
-  const notifications = useMemo(
-    () => [
-      {
-        id: 1,
-        message: "Your appointment with Dr. Sarah Jenkins is confirmed.",
-        time: "2 hours ago",
-      },
-      {
-        id: 2,
-        message: "New message from Dr. Michael Chen.",
-        time: "1 day ago",
-      },
-      {
-        id: 3,
-        message: "Billing statement is ready for download.",
-        time: "3 days ago",
-      },
-    ],
-    [],
-  );
-
   useEffect(() => {
     const initChat = async () => {
       try {
@@ -181,8 +161,8 @@ export default function PatientLayout() {
     const token = sessionStorage.getItem("access");
     const protocol = window.location.protocol === "https:" ? "wss" : "ws";
 
-    // const wsUrl = `${protocol}://10.113.201.239:8000/ws/chat/${conversationId}/?token=${token}`;
-    const wsUrl = `${protocol}://localhost:8000/ws/chat/${conversationId}/?token=${token}`;
+    const wsUrl = `${protocol}://10.124.177.239:8000/ws/chat/${conversationId}/?token=${token}`;
+    // const wsUrl = `${protocol}://localhost:8000/ws/chat/${conversationId}/?token=${token}`;
 
     socketRef.current = new WebSocket(wsUrl);
 
@@ -229,7 +209,6 @@ export default function PatientLayout() {
 
   useEffect(() => {
     setSearchQuery("");
-    setNotificationsOpen(false);
     setMenuOpen(false);
   }, [location.pathname]);
 
@@ -272,8 +251,8 @@ export default function PatientLayout() {
               className="flex cursor-pointer items-center gap-3"
               onClick={() => navigate("/patient")}
             >
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#006565] text-white shadow-lg">
-                <Heart size={20} />
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#008080]/10">
+                <HeartPulse className="text-[#008080]" size={22} />
               </div>
               <div>
                 <h1 className="text-xl font-bold leading-none tracking-tight text-teal-800">
@@ -344,9 +323,6 @@ export default function PatientLayout() {
                   className="hidden md:inline-flex bg-teal-50 px-4 py-2 text-xs font-semibold text-teal-700 rounded-lg"
                 >
                   Support
-                </button>
-                <button className="p-2 text-slate-600">
-                  <Bell size={22} />
                 </button>
               </div>
             </div>

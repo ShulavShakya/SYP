@@ -16,6 +16,7 @@ import {
   LayoutDashboard,
   Stethoscope,
   HelpCircle,
+  HeartPulse,
 } from "lucide-react";
 import { useAuth } from "../../../auth/AuthContext";
 
@@ -136,8 +137,8 @@ export default function DoctorLayout() {
               className="flex cursor-pointer items-center gap-3"
               onClick={() => navigate("/doctor")}
             >
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#006565] text-white shadow-lg">
-                <Stethoscope size={20} />
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#008080]/10">
+                <HeartPulse className="text-[#008080]" size={22} />
               </div>
 
               <div>
@@ -235,7 +236,7 @@ export default function DoctorLayout() {
               </div>
 
               <div className="flex items-center gap-3 md:gap-4">
-                <div className="relative">
+                <div className="relative ">
                   <button
                     type="button"
                     onClick={() => setNotificationsOpen((prev) => !prev)}
@@ -254,7 +255,7 @@ export default function DoctorLayout() {
                         </h4>
                       </div>
 
-                      <div className="max-h-72 overflow-y-auto">
+                      <div className="max-h-72 overflow-y-auto z-10000">
                         {notifications.map((notif) => (
                           <div
                             key={notif.id}
@@ -282,22 +283,6 @@ export default function DoctorLayout() {
                     </div>
                   )}
                 </div>
-
-                <button
-                  type="button"
-                  className="rounded-lg p-2 text-slate-600 transition-colors hover:text-teal-600"
-                  aria-label="Help"
-                >
-                  <HelpCircle size={22} />
-                </button>
-
-                <button
-                  type="button"
-                  className="hidden rounded-lg bg-teal-50 px-4 py-2 text-xs font-semibold text-teal-700 transition-all hover:bg-[#006565] hover:text-white md:inline-flex"
-                  onClick={() => setMessagingOpen(true)}
-                >
-                  Patient Messages
-                </button>
               </div>
             </div>
           </header>

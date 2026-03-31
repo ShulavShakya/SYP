@@ -16,6 +16,7 @@ import {
   HelpCircle,
   Activity,
   MessageSquare,
+  HeartPulse,
 } from "lucide-react";
 import { useAuth } from "../../../auth/AuthContext";
 
@@ -130,8 +131,8 @@ export default function ReceptionistLayout() {
               className="flex cursor-pointer items-center gap-3"
               onClick={() => navigate("/reception")}
             >
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#006565] text-white shadow-lg">
-                <Heart size={20} />
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#008080]/10">
+                <HeartPulse className="text-[#008080]" size={22} />
               </div>
 
               <div>

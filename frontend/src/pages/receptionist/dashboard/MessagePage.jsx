@@ -68,7 +68,7 @@ export default function MessagesPage() {
 
     const token = sessionStorage.getItem("access");
     const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-    const wsUrl = `${protocol}://10.113.201.239:8000/ws/chat/${activeConversationId}/?token=${token}`;
+    const wsUrl = `${protocol}://10.124.177.239:8000/ws/chat/${activeConversationId}/?token=${token}`;
 
     socketRef.current = new WebSocket(wsUrl);
 

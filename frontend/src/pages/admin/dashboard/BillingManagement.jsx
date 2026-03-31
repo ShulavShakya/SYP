@@ -14,11 +14,11 @@ import {
   ChevronRight,
 } from "lucide-react";
 
-const formatCurrency = (paisa) => {
+const formatCurrency = (amount) => {
   return new Intl.NumberFormat("en-NP", {
     style: "currency",
     currency: "NPR",
-  }).format(paisa / 100);
+  }).format((amount || 0) / 100);
 };
 
 const getInitials = (name) => {
